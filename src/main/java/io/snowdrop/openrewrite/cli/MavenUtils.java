@@ -146,9 +146,6 @@ public class MavenUtils {
         locator.addService(TransporterFactory.class, FileTransporterFactory.class);
 
         // Add Maven-specific services for artifact and dependency resolution
-        locator.addService(VersionResolver.class, DefaultVersionResolver.class);
-        locator.addService(VersionRangeResolver.class, DefaultVersionRangeResolver.class);
-        locator.addService(ArtifactDescriptorReader.class, DefaultArtifactDescriptorReader.class);
         locator.addService(DependencyCollector.class, DefaultDependencyCollector.class);
         locator.addService(ArtifactResolver.class, DefaultArtifactResolver.class);
 

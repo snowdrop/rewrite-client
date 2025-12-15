@@ -462,7 +462,7 @@ public class RewriteCommand implements Runnable {
 
             // Load the Java source files
             JavaParser jp = javaParserBuilder.build();
-            sourceFiles.addAll(jp.parse(javaFiles, projectRoot, ctx).collect(toList()));
+            sourceFiles.addAll(jp.parse(javaFiles, projectRoot, ctx).toList());
             System.out.println("Parsed " + javaFiles.size() + " Java files");
         }
 
@@ -470,7 +470,7 @@ public class RewriteCommand implements Runnable {
         List<Path> kotlinFiles = findFiles(projectRoot, ".kt");
         if (!kotlinFiles.isEmpty()) {
             KotlinParser kotlinParser = KotlinParser.builder().build();
-            sourceFiles.addAll(kotlinParser.parse(kotlinFiles, projectRoot, ctx).collect(toList()));
+            sourceFiles.addAll(kotlinParser.parse(kotlinFiles, projectRoot, ctx).toList());
             System.out.println("Parsed " + kotlinFiles.size() + " Kotlin files");
         }
 
@@ -486,7 +486,7 @@ public class RewriteCommand implements Runnable {
         .build();
 
         List<Path> otherFiles = omniParser.acceptedPaths(projectRoot, projectRoot);
-        sourceFiles.addAll(omniParser.parse(otherFiles, projectRoot, ctx).collect(toList()));
+        sourceFiles.addAll(omniParser.parse(otherFiles, projectRoot, ctx).toList());
 
         // Add provenance markers
         List<Marker> provenance = generateProvenance();
@@ -517,7 +517,7 @@ public class RewriteCommand implements Runnable {
 
         Collection<PathMatcher> exclusionMatchers = exclusions.stream()
             .map(pattern -> root.getFileSystem().getPathMatcher("glob:" + pattern))
-            .collect(toList());
+            .toList();
 
         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
             @Override

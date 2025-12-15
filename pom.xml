@@ -55,12 +55,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-picocli</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.quarkus</groupId>
-                    <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -133,21 +127,18 @@
             <artifactId>maven-model</artifactId>
             <version>${maven.version}</version>
         </dependency>
-        <!--        <dependency>
-                    <groupId>org.apache.maven</groupId>
-                    <artifactId>maven-embedder</artifactId>
-                    <version>${maven.version}</version>
-                </dependency>-->
+        <!-- -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-embedder</artifactId>
+            <version>${maven.version}</version>
+        </dependency>
+
 
         <!-- Maven Resolver dependencies - explicit versions needed -->
         <dependency>
             <groupId>org.apache.maven.resolver</groupId>
             <artifactId>maven-resolver-supplier</artifactId>
-            <version>${maven-resolver-supplier.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.resolver</groupId>
-            <artifactId>maven-resolver-impl</artifactId>
             <version>${maven-resolver-supplier.version}</version>
         </dependency>
 
@@ -165,12 +156,6 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.quarkus</groupId>
-                    <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 

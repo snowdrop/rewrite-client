@@ -17,7 +17,6 @@ package io.snowdrop.openrewrite.cli;
 
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
@@ -272,18 +271,6 @@ public class RewriteCommand implements Runnable {
         });
     }
 
-    /**
-      Recipe recipe = new FindAnnotations("org.springframework.boot.autoconfigure.SpringBootApplication",false);
-      Openrewrite way to load recipe(s) with resource loaders
-      The class, constructor, etc will be created using the RecipeLoader.load()
-      Recipe recipe = env.activateRecipes(activeRecipes);
-
-      We can create the recipe using the recipe name = FQN of the class
-      Recipe recipe = createRecipeInstance(activeRecipes.stream().findFirst().get());
-
-      Let's make a test using recipe packaged in another jar - NOK => java.lang.NoSuchMethodException: dev.snowdrop.openrewrite.java.search.FindAnnotations.<init>(java.lang.String)
-      Recipe recipe = createRecipeInstance("dev.snowdrop.openrewrite.java.search.FindAnnotations");
-     **/
     private ResultsContainer listResults(ExecutionContext ctx) throws Exception {
         System.out.println("Using active recipe(s): " + activeRecipes);
 
@@ -464,23 +451,14 @@ public class RewriteCommand implements Runnable {
             Model model = mavenUtils.setupProject(Paths.get(projectRoot.toString(), "pom.xml").toFile());
 
             // Collect the GAVs and their transitive dependencies
-            MavenArtifactResolver mar =  new MavenArtifactResolver();
-            mar.resolveArtifactsWithDependencies(mavenUtils.convertModelDependenciesToAetherDependencies(model.getDependencies()));
-
-            // Create a list of classpath containing the gav defined part of the dependencies
-            RepositoryModelResolver rmp = new RepositoryModelResolver();
-
-            Set<Artifact> artifacts = mavenUtils.convertDependenciesToArtifacts(model.getDependencies());
-            List<Path> classPaths = new ArrayList<>();
-            for (Artifact a : artifacts) {
-                classPaths.add(Paths.get(rmp.resolveArtifactFile(a.getGroupId(),a.getArtifactId(),a.getVersion()).getAbsolutePath()));
-            }
+            MavenArtifactResolver mar = new MavenArtifactResolver();
+            List<Path> classpaths = mar.resolveArtifactsWithDependencies(mavenUtils.convertModelDependenciesToAetherDependencies(model.getDependencies()));
 
             // Create the JavaParser and set the classpaths
             JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion()
                 .styles(styles).logCompilationWarningsAndErrors(false);
             JavaTypeCache typeCache = new JavaTypeCache();
-            javaParserBuilder.classpath(classPaths).typeCache(typeCache);
+            javaParserBuilder.classpath(classpaths).typeCache(typeCache);
 
             // Load the Java source files
             JavaParser jp = javaParserBuilder.build();

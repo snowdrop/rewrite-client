@@ -2,7 +2,7 @@ package io.snowdrop.openrewrite.cli;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
-//import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.*;
@@ -54,7 +54,7 @@ public class MavenUtils {
     public static Set<Artifact> convertDependenciesToArtifacts(List<Dependency> dependencies) {
         return dependencies.stream()
             .map(dep -> {
-                return new DefaultArtifact(dep.getGroupId(),dep.getArtifactId(),dep.getVersion(),dep.getScope(),dep.getType(),dep.getClassifier(),null);
+                return new DefaultArtifact(dep.getGroupId(),dep.getArtifactId(),dep.getVersion(),dep.getScope(),dep.getType(),dep.getClassifier(),new DefaultArtifactHandler(dep.getType()));
             })
             .filter(java.util.Objects::nonNull)
             .collect(Collectors.toSet());

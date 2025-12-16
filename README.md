@@ -1,11 +1,17 @@
+## Quarkus Openrewrite client
+
+This project support to execute an Openrewrite Recipe without the need to use the maven goal `rewrite:dryrun or rewrite:run`
+
+## Prerequisite:
+- JDK 21 
+- Apache maven 3.9
+
 ## Instructions
 
-Prerequisite:
-- JDK 21 and maven 3.9
-
-Compile the project and launch the Quarkus Picocli client using the command: `mvn quarkus:dev`
+Git clone this project compile the project. Next launch the Quarkus Picocli client using the command: `mvn quarkus:dev`
 
 ```shell
+mvn clean install
 mvn quarkus:dev -Dquarkus.args="test-project/simple org.openrewrite.java.format.AutoFormat"
 ```
 
@@ -34,6 +40,4 @@ The command lone application also supports to load the recipes from an external 
 mvn quarkus:dev -Dquarkus.args="--jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT test-project/demo-spring-boot-todo-app dev.snowdrop.openrewrite.java.search.FindAnnotations pattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchId=1234"
 ```
 
-## Issue
-
-- FIXED: There is a Java Module issue with Maven and Quarkus:dev as command works using `java -jar` - https://github.com/ch007m/rewrite-standalone-cli/issues/1
+Enjoy :-)

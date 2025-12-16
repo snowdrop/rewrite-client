@@ -15,13 +15,6 @@ mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app org.openr
 > Pass the parameters to the Recipe object initialized (class introspection, etc.)
 > Load the recipe(s) from an external jar file
 
-## Issue
-
-- There is a Java Module issue with Maven and Quarkus:dev as command works using `java -jar`
-```shell
-java.lang.LinkageError: loader constraint violation: when resolving method 'void org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory.<init>(org.eclipse.aether.spi.connector.checksum.ChecksumAlgorithmFactorySelector)' the class loader io.quarkus.bootstrap.classloading.QuarkusClassLoader @3a6bb9bf of the current class, org/eclipse/aether/supplier/RepositorySystemSupplier, and the class loader 'app' for the method's defining class, org/eclipse/aether/internal/impl/Maven2RepositoryLayoutFactory, have different Class objects for the type org/eclipse/aether/spi/connector/checksum/ChecksumAlgorithmFactorySelector used in the signature (org.eclipse.aether.supplier.RepositorySystemSupplier is in unnamed module of loader io.quarkus.bootstrap.classloading.QuarkusClassLoader @3a6bb9bf, parent loader 'app'; org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory is in unnamed module of loader 'app') at org.eclipse.aether.supplier.RepositorySystemSupplier.getRepositoryLayoutFactories(RepositorySystemSupplier.java:223) at org.eclipse.aether.supplier.RepositorySystemSupplier.get(RepositorySystemSupplier.java:541)
-```
-
 ## Trick for the developers
 
 ```shell
@@ -31,3 +24,7 @@ set qrun java -jar target/quarkus-app/quarkus-run.jar
 $qdebug test-project/demo-spring-boot-todo-app org.openrewrite.java.search.FindAnnotations
 $qrun test-project/demo-spring-boot-todo-app org.openrewrite.java.search.FindAnnotations
 ```
+
+## Issue
+
+- FIXED: There is a Java Module issue with Maven and Quarkus:dev as command works using `java -jar` - https://github.com/ch007m/rewrite-standalone-cli/issues/1

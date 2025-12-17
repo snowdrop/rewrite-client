@@ -1,4 +1,4 @@
-package dev.snowdrop.openrewrite.cli;
+package dev.snowdrop.openrewrite.cli.toolbox;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Parent;

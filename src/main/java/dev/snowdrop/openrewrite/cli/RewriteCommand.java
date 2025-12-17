@@ -179,6 +179,7 @@ public class RewriteCommand implements Runnable {
         cfg.setAppPath(projectRoot);
         cfg.setAdditionalJarPaths(additionalJarPaths);
         cfg.setActiveRecipes(List.of(activeRecipe));
+        cfg.setRecipeOptions(recipeOptions);
         cfg.setYamlRecipes(configLocation);
         cfg.setExportDatatables(exportDatatables);
         cfg.setExclusions(exclusions);

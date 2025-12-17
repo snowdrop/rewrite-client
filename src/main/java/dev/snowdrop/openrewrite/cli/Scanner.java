@@ -1,6 +1,8 @@
 package dev.snowdrop.openrewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
+import dev.snowdrop.openrewrite.cli.toolbox.MavenUtils;
 import org.apache.maven.model.Model;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;

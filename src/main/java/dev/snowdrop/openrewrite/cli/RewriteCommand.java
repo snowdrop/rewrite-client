@@ -131,23 +131,31 @@ public class RewriteCommand implements Runnable {
         }
     }
 
+    public void execute(Config config) throws Exception {
+        runScanner(config);
+    }
+
     public void execute() throws Exception {
         Config cfg = new Config();
         cfg.setAppPath(projectRoot);
         cfg.setAdditionalJarPaths(additionalJarPaths);
-        cfg.setActiveRecipes(Arrays.asList(activeRecipe));
+        cfg.setActiveRecipes(List.of(activeRecipe));
         cfg.setRecipeOptions(recipeOptions);
         if (configLocation != null) {cfg.setYamlRecipes(configLocation);}
         cfg.setExportDatatables(exportDatatables);
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);
 
-        System.out.println("Starting OpenRewrite ...");
-        System.out.println("Project root: " + projectRoot.toAbsolutePath());
-        System.out.println("Active recipe: " + activeRecipe);
+        runScanner(cfg);
+    }
 
-        if (!additionalJarPaths.isEmpty()) {
-            System.out.println("Additional JAR files: " + additionalJarPaths);
+    private void runScanner(Config cfg) throws Exception {
+        System.out.println("Starting OpenRewrite ...");
+        System.out.println("Project root: " + cfg.getAppPath().toAbsolutePath());
+        System.out.println("Active recipe: " + cfg.getActiveRecipes());
+
+        if (!cfg.getAdditionalJarPaths().isEmpty()) {
+            System.out.println("Additional JAR files: " + cfg.getAdditionalJarPaths());
         }
 
         Scanner scanner = new Scanner(cfg);

@@ -18,5 +18,5 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Build
-        run: mvn clean install -ntp -DskipTests
+      - name: Build and test
+        run: mvn clean install

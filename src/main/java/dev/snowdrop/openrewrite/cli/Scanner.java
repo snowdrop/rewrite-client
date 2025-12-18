@@ -314,7 +314,8 @@ public class Scanner {
     }
 
     private LargeSourceSet loadSourceSet(Environment env, ExecutionContext ctx) throws Exception {
-        List<NamedStyles> styles = env.activateStyles(emptySet());
+        // TODO: Do we need such Styles for the Java parser. To be investigated !
+        // List<NamedStyles> styles = env.activateStyles(emptySet());
 
         System.out.println("Parsing source files...");
         List<SourceFile> sourceFiles = new ArrayList<>();
@@ -331,8 +332,7 @@ public class Scanner {
             List<Path> classpaths = mar.resolveArtifactsWithDependencies(mavenUtils.convertModelDependenciesToAetherDependencies(model.getDependencies()));
 
             // Create the JavaParser and set the classpaths
-            JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion()
-                .styles(styles).logCompilationWarningsAndErrors(false);
+            JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);
             JavaTypeCache typeCache = new JavaTypeCache();
             javaParserBuilder.classpath(classpaths).typeCache(typeCache);
 

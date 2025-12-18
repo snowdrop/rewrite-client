@@ -1,33 +1,50 @@
 package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.RewriteCommand;
-import dev.snowdrop.openrewrite.cli.RewriteConfiguration;
+import dev.snowdrop.openrewrite.cli.model.Config;
 import io.quarkus.test.junit.QuarkusTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Set;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 public class CommandTest {
 
-    RewriteCommand rewriteCmd = new RewriteCommand();
-
     @Test
-    void testCommandSuccess() {
-        CommandLine cmd = new CommandLine(rewriteCmd);
-        StringWriter sw = new StringWriter();
-        cmd.setOut(new PrintWriter(sw));
+    void testExecuteWithConfig() throws Exception {
+        RewriteCommand rewriteCmd = new RewriteCommand();
 
-        int exitCode = cmd.execute("test-project/simple", "-r", "org.openrewrite.java.format.AutoFormat");
+        String appPath = "test-project/simple";
+        Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
 
-        Assertions.assertEquals(0, exitCode, "TODO");
-        assertThat(sw.toString(), containsString("Recipe applied successfully"));
+        // Create a properly initialized Config object
+        Config cfg = new Config();
+        cfg.setAppPath(Paths.get(appPath));
+        cfg.setActiveRecipes(List.of("org.openrewrite.java.format.AutoFormat"));
+        cfg.setExportDatatables(true);
+        cfg.setExclusions(Set.of());
+        cfg.setPlainTextMasks(Set.of());
+        cfg.setAdditionalJarPaths(List.of());
+
+        rewriteCmd.execute(cfg);
+
+        String patchContent = Files.readString(rewritePatchFile);
+        assertNotNull(patchContent);
+
+        String diffText = """
+            -public class Test { }
+            +public class Test {
+            +}
+            """;
+
+        boolean found = patchContent.contains(diffText);
+        assertTrue(found, "The rewrite patch file contains the string :" + diffText);
     }
 }

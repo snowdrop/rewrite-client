@@ -1,9 +1,12 @@
 ---
 type: specs.openrewrite.org/v1beta/recipe
 name: com.yourorg.FindExample
-displayName: Find text example
+displayName: Find java annotations
 recipeList:
   - org.openrewrite.text.Find:
       find: GetMapping
       filePattern: '**/*.java'
       contextSize: 50
+  - org.openrewrite.text.Find:
+      find: SpringBootApplication
+      filePattern: '**/*.java'

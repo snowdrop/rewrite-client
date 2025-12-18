@@ -18,52 +18,10 @@ package dev.snowdrop.openrewrite.cli;
 import dev.snowdrop.openrewrite.cli.model.Config;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
-import org.apache.maven.model.Model;
-import org.jspecify.annotations.Nullable;
-import org.openrewrite.*;
-import org.openrewrite.config.CompositeRecipe;
-import org.openrewrite.config.DeclarativeRecipe;
-import org.openrewrite.config.Environment;
-import org.openrewrite.config.YamlResourceLoader;
-import org.openrewrite.internal.InMemoryLargeSourceSet;
-import org.openrewrite.java.JavaParser;
-import org.openrewrite.java.internal.JavaTypeCache;
-import org.openrewrite.java.marker.JavaProject;
-import org.openrewrite.java.marker.JavaSourceSet;
-import org.openrewrite.java.marker.JavaVersion;
-import org.openrewrite.kotlin.KotlinParser;
-import org.openrewrite.marker.BuildTool;
-import org.openrewrite.marker.Marker;
-import org.openrewrite.marker.Markers;
-import org.openrewrite.marker.OperatingSystemProvenance;
-import org.openrewrite.marker.ci.BuildEnvironment;
-import org.openrewrite.polyglot.OmniParser;
-import org.openrewrite.style.NamedStyles;
-//import org.openrewrite.table.SearchResults;
-import org.openrewrite.text.PlainTextParser;
 import picocli.CommandLine;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Stream;
-
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
-import static java.util.stream.Collectors.toList;
-import static org.openrewrite.Tree.randomId;
 
 /**
  * Quarkus-based standalone CLI for OpenRewrite supporting dry-run mode
@@ -89,14 +47,14 @@ public class RewriteCommand implements Runnable {
     Path projectRoot;
 
     @CommandLine.Option(
-        names = {"-r,--recipes"},
+        names = {"-r", "--recipes"},
         description = "Active recipe to run (e.g., org.openrewrite.java.format.AutoFormat)",
         required = false
     )
     String activeRecipe;
 
     @CommandLine.Option(
-        names= {"-o, --options"},
+        names= {"-o","--options"},
         description = "Options of the recipe to be used to set the recipe's object fields. Example: annotationPattern=@SpringBootApplication",
         split = ",",
         required = false
@@ -151,9 +109,6 @@ public class RewriteCommand implements Runnable {
     public void run() {
         try {
             // Use injected defaults if not specified via command line
-            if (configLocation == null) {
-                configLocation = config.configLocation();
-            }
             if (sizeThresholdMb == 0) {
                 sizeThresholdMb = config.sizeThresholdMb();
             }
@@ -182,7 +137,7 @@ public class RewriteCommand implements Runnable {
         cfg.setAdditionalJarPaths(additionalJarPaths);
         cfg.setActiveRecipes(Arrays.asList(activeRecipe));
         cfg.setRecipeOptions(recipeOptions);
-        cfg.setYamlRecipes(configLocation);
+        if (configLocation != null) {cfg.setYamlRecipes(configLocation);}
         cfg.setExportDatatables(exportDatatables);
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);

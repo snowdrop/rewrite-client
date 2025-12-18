@@ -24,7 +24,7 @@ mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app -r org.op
 
 Alternatively, you can use a YAML recipes file and pass it using the parameter `-c`:
 ```shell
-mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app -c rewrite.yml
+mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app -c rewrite.yml"
 ```
 
 > [!NOTE]
@@ -43,7 +43,7 @@ $qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.Find
 
 The command lone application also supports to load the recipes from an external jar file using the Maven GAV coordinates
 ```shell
-mvn quarkus:dev -Dquarkus.args="--jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT test-project/demo-spring-boot-todo-app -r search.java.dev.snowdrop.mtool.openrewrite.FindAnnotations -o pattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchId=1234"
+mvn quarkus:dev -Dquarkus.args="--jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT test-project/demo-spring-boot-todo-app -r dev.snowdrop.mtool.openrewrite.java.search.FindAnnotations -o pattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchId=1234"
 ```
 
 Enjoy :-)

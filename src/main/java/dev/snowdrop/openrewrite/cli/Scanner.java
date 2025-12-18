@@ -172,61 +172,59 @@ public class Scanner {
     }
 
     private ResultsContainer listResults() {
-        // 1. Process YAML recipes if they exist
-        if (!config.getYamlRecipes().isEmpty()) {
+
+        RecipeRun recipeRun = null;
+        Recipe recipe = null;
+        boolean yamlRecipes = false;
+        List<Result> allResults = new ArrayList<>();
+
+        // Process YAML recipes if it has been defined
+        if (config.getYamlRecipes() != null && !config.getYamlRecipes().isEmpty()) {
             env = loadRecipesFromYAML(env);
+            yamlRecipes = true;
+        } else {
+            // Check if we got a recipe FQName string instead and load it
+            if (config.getActiveRecipes() != null && !config.getActiveRecipes().isEmpty()) {
+                // TODO: To be improved to iterate in a list
+                recipe = env.activateRecipes(config.getActiveRecipes().getFirst());
+
+                // When we use `activeRecipe` parameter, we can also optionally configure the parameters of the recipe where the fields will be set
+                // using the parameter "options"
+                // Set<String> options = Collections.singleton("annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication");
+                if (config.getRecipeOptions() != null && !config.getRecipeOptions().isEmpty()) {
+                    configureRecipeOptions(recipe, config.getRecipeOptions());
+                }
+            }
         }
 
-        // TODO: To be reviewed to process a list of recipes
-        String activeRecipe = config.getActiveRecipes().getFirst();
-
-        // 2. Check if we have at least one source of recipes
-        boolean hasActiveRecipe = activeRecipe != null && !activeRecipe.isEmpty();
-        boolean hasYamlRecipes = !config.getYamlRecipes().isEmpty();
-
-        // 3. Early return only if BOTH sources are empty
-        if (!hasActiveRecipe && !hasYamlRecipes) {
+        if (env.listRecipes().isEmpty()) {
             System.out.printf("No recipes found in active selection or YAML configuration for path: %s\n", config.getAppPath());
-            return new ResultsContainer(Collections.emptyList());
-        }
-
-        System.out.println("Using active recipe(s): " + activeRecipe);
-
-        // This code works when we instantiate directly the Recipe class as the jar packaging it is loaded by the application
-        // Recipe recipe = new FindAnnotations("@org.springframework.boot.autoconfigure.SpringBootApplication",false);
-
-        // The recipe class is created using the Resource classloader using the FQName
-        Recipe recipe = env.activateRecipes(getActiveRecipes());
-
-        // The Recipe class has been instantiated from the FQName string but the fields/parameters still need to be set
-        // Set<String> options = Collections.singleton("annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication");
-        if (config.getRecipeOptions() != null && !config.getRecipeOptions().isEmpty()) {
-            configureRecipeOptions(recipe, config.getRecipeOptions());
-        }
-
-        if ("org.openrewrite.Recipe$Noop".equals(recipe.getName())) {
-            System.err.println("No recipes were activated. " +
-                "Activate a recipe by providing it as a command line argument.");
             return new ResultsContainer(emptyList());
         }
 
-        System.out.println("Validating active recipes...");
-        List<Validated<Object>> validations = new ArrayList<>();
-        recipe.validateAll(ctx, validations);
-        List<Validated.Invalid<Object>> failedValidations = validations.stream()
-            .map(Validated::failures)
-            .flatMap(Collection::stream)
-            .collect(toList());
+        // Run the recipe loaded
+        if (!yamlRecipes) {
+            System.out.println("Using active recipe(s): " + recipe.getName());
 
-        if (!failedValidations.isEmpty()) {
-            failedValidations.forEach(failedValidation ->
-                System.err.println("Recipe validation error in " + failedValidation.getProperty() +
-                    ": " + failedValidation.getMessage()));
-            System.err.println("Recipe validation errors detected as part of one or more activeRecipe(s). " +
-                "Execution will continue regardless.");
+            if ("org.openrewrite.Recipe$Noop".equals(recipe.getName())) {
+                System.err.println("No recipes were activated. " +
+                    "Activate a recipe by providing it as a command line argument.");
+                return new ResultsContainer(emptyList());
+            }
+
+            validatingRecipe(recipe);
+            recipeRun = runRecipe(recipe);
+            allResults.addAll(recipeRun.getChangeset().getAllResults());
+
+        } else {
+            System.out.println("Using recipes from YAML configuration");
+            env.listRecipes().forEach(r -> {
+                System.out.println("Running recipe: " + r.getName());
+                validatingRecipe(r);
+                RecipeRun currentRun = runRecipe(r);
+                allResults.addAll(currentRun.getChangeset().getAllResults());
+            });
         }
-
-        RecipeRun recipeRun = runRecipe(recipe);
 
         // The DataTable<SearchResult> will be available starting from: 8.69.0 !
         /*
@@ -247,18 +245,14 @@ public class Scanner {
         }
         */
 
-        return new ResultsContainer(recipeRun.getChangeset().getAllResults());
-    }
-
-    private Iterable<String> getActiveRecipes() {
-        return env.listRecipes()
-            .stream()
-            .map(Recipe::getName)
-            .toList();
+        return new ResultsContainer(allResults);
     }
 
     private Environment createEnvironment() throws Exception {
         Environment.Builder env = Environment.builder();
+
+        // Construct a ClasspathScanningLoader scans the runtime classpath of the current java process for recipes
+        env.scanRuntimeClasspath();
 
         // Load additional JARs if specified
         URLClassLoader additionalJarsClassloader = loadAdditionalJars();
@@ -298,6 +292,24 @@ public class Scanner {
         }
 
         return envBuilder.build();
+    }
+
+    private void validatingRecipe(Recipe recipe) {
+        System.out.println("Validating active recipes...");
+        List<Validated<Object>> validations = new ArrayList<>();
+        recipe.validateAll(ctx, validations);
+        List<Validated.Invalid<Object>> failedValidations = validations.stream()
+            .map(Validated::failures)
+            .flatMap(Collection::stream)
+            .collect(toList());
+
+        if (!failedValidations.isEmpty()) {
+            failedValidations.forEach(failedValidation ->
+                System.err.println("Recipe validation error in " + failedValidation.getProperty() +
+                    ": " + failedValidation.getMessage()));
+            System.err.println("Recipe validation errors detected as part of one or more activeRecipe(s). " +
+                "Execution will continue regardless.");
+        }
     }
 
     private LargeSourceSet loadSourceSet(Environment env, ExecutionContext ctx) throws Exception {
@@ -444,7 +456,7 @@ public class Scanner {
     private void logRecipesThatMadeChanges(Result result) {
         String indent = "    ";
         String prefix = "    ";
-        for (org.openrewrite.config.RecipeDescriptor recipeDescriptor : result.getRecipeDescriptorsThatMadeChanges()) {
+        for (RecipeDescriptor recipeDescriptor : result.getRecipeDescriptorsThatMadeChanges()) {
             System.err.println(prefix + recipeDescriptor.getName());
             prefix = prefix + indent;
         }

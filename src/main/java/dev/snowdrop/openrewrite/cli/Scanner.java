@@ -2,6 +2,7 @@ package dev.snowdrop.openrewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.model.Config;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
+import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenUtils;
 import org.apache.maven.model.Model;
@@ -30,8 +31,6 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -64,6 +63,7 @@ public class Scanner {
         ctx = createExecutionContext(throwables);
 
         try {
+            // Instantiate the resource and classloader including also the external one provided
             env = createEnvironment();
             sourceSet = loadSourceSet(env, ctx);
         } catch (Exception ex) {
@@ -249,19 +249,20 @@ public class Scanner {
     }
 
     private Environment createEnvironment() throws Exception {
+        ClassLoaderUtils classLoaderUtils = new ClassLoaderUtils();
         Environment.Builder env = Environment.builder();
 
         // Construct a ClasspathScanningLoader scans the runtime classpath of the current java process for recipes
         env.scanRuntimeClasspath();
 
         // Load additional JARs if specified
-        URLClassLoader additionalJarsClassloader = loadAdditionalJars();
+        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(config.getAdditionalJarPaths());
 
         if (additionalJarsClassloader != null) {
             // Load recipes using the ClasspathScanningLoader with the additional classloader
             // This is the key fix - we use the additionalJarsClassloader for recipe discovery
             env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-            merge(getClass().getClassLoader(), additionalJarsClassloader);
+            //classLoaderUtils.merge(getClass().getClassLoader(), additionalJarsClassloader);
             System.out.println("Loaded recipes from additional JARs");
         }
 
@@ -510,20 +511,6 @@ public class Scanner {
         ));
     }
 
-    public static Recipe createRecipeInstance(String fqn)
-        throws ClassNotFoundException, NoSuchMethodException,
-        InvocationTargetException, InstantiationException, IllegalAccessException {
-
-        Class<?> clazz = Class.forName(fqn);
-        if (!Recipe.class.isAssignableFrom(clazz)) {
-            throw new IllegalArgumentException(fqn + " does not extend or implement org.openrewrite.Recipe.");
-        }
-
-        Constructor<?> constructor = clazz.getConstructor(fqn.getClass());
-        constructor.setAccessible(true);
-        Object instance = constructor.newInstance();
-        return (Recipe) instance;
-    }
 
     private static void configureRecipeOptions(Recipe recipe, Set<String> options) throws RuntimeException {
         if (recipe instanceof CompositeRecipe ||
@@ -589,90 +576,6 @@ public class Scanner {
 
         throw new RuntimeException(
             String.format("Unable to convert option: %s value: %s to type: %s", name, optionValue, type));
-    }
-
-    /**
-     * Creates a URLClassLoader from the additional JAR paths or Maven GAV coordinates.
-     *
-     * @return URLClassLoader containing the additional Rewrite JARs, or null if no additional JARs are specified
-     */
-    private URLClassLoader loadAdditionalJars() {
-        if (config.getAdditionalJarPaths().isEmpty()) {
-            return null;
-        }
-
-        List<URL> jarUrls = new ArrayList<>();
-        MavenArtifactResolver resolver = new MavenArtifactResolver();
-
-        try {
-            // Resolve all jar paths/coordinates to actual file paths
-            List<Path> resolvedPaths = resolver.resolveArtifacts(config.getAdditionalJarPaths());
-
-            for (Path jarPath : resolvedPaths) {
-                try {
-                    if (!Files.exists(jarPath)) {
-                        System.err.println("Warning: JAR file does not exist: " + jarPath);
-                        continue;
-                    }
-                    if (!jarPath.toString().toLowerCase().endsWith(".jar")) {
-                        System.err.println("Warning: File is not a JAR: " + jarPath);
-                        continue;
-                    }
-                    jarUrls.add(jarPath.toUri().toURL());
-                    System.out.println("Loaded additional JAR: " + jarPath);
-                } catch (MalformedURLException e) {
-                    System.err.println("Could not load JAR: " + jarPath + " - " + e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error resolving Maven artifacts: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-
-        return jarUrls.isEmpty() ? null :
-            URLClassLoader.newInstance(jarUrls.toArray(new URL[0]), this.getClass().getClassLoader());
-    }
-
-    /**
-     * Merges URLs from the source classloader into the target classloader.
-     * This is similar to the merge functionality in the Maven plugin.
-     * Handles both URLClassLoader and Quarkus classloaders gracefully.
-     */
-    private void merge(ClassLoader targetClassLoader, URLClassLoader sourceClassLoader) {
-        // In Quarkus dev mode, the classloader is typically a QuarkusClassLoader,
-        // not a URLClassLoader. Since recipe discovery is already handled by the
-        // ClasspathScanningLoader with the additional classloader, we don't need
-        // to merge URLs into the runtime classloader. Just log the additional JARs.
-
-        if (!(targetClassLoader instanceof URLClassLoader targetUrlClassLoader)) {
-            System.out.println("Running in Quarkus mode - using ClasspathScanningLoader for additional JARs:");
-            for (URL newUrl : sourceClassLoader.getURLs()) {
-                System.out.println("  Using JAR from additional classpath: " + newUrl);
-            }
-            return;
-        }
-
-        Set<String> existingVersionlessJars = new HashSet<>();
-
-        for (URL existingUrl : targetUrlClassLoader.getURLs()) {
-            existingVersionlessJars.add(stripVersion(existingUrl));
-        }
-
-        for (URL newUrl : sourceClassLoader.getURLs()) {
-            if (!existingVersionlessJars.contains(stripVersion(newUrl))) {
-                // Note: This is a simplified version. In a real implementation,
-                // you might need to use reflection to add URLs to the URLClassLoader
-                System.out.println("Would add JAR to classpath: " + newUrl);
-            }
-        }
-    }
-
-    /**
-     * Strips version information from JAR URLs for comparison.
-     */
-    private String stripVersion(URL jarUrl) {
-        return jarUrl.toString().replaceAll("/[^/]+/[^/]+\\.jar", "");
     }
 
 

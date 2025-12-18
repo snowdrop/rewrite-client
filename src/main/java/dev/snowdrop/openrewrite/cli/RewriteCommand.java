@@ -16,8 +16,10 @@
 package dev.snowdrop.openrewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
+import org.openrewrite.RecipeRun;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -122,7 +124,16 @@ public class RewriteCommand implements Runnable {
                 exclusions.addAll(Arrays.asList(config.exclusions().get().split(",")));
             }
 
-            execute();
+            ResultsContainer results = execute();
+            Map<String, RecipeRun> runs = results.getRecipeRuns();
+
+            runs.forEach((k,v) -> {
+                if (!v.getDataTables().isEmpty()) {
+                    // TODO: To be extended with SharedResults and log a better response here!
+                    System.out.printf("Execution of the recipe %s succeeded\n",k);
+                }
+            });
+            System.out.println("Finished OpenRewrite ...");
 
         } catch (Exception e) {
             System.err.println("Error executing rewrite command: " + e.getMessage());
@@ -131,11 +142,11 @@ public class RewriteCommand implements Runnable {
         }
     }
 
-    public void execute(Config config) throws Exception {
-        runScanner(config);
+    public ResultsContainer execute(Config config) throws Exception {
+        return runScanner(config);
     }
 
-    public void execute() throws Exception {
+    public ResultsContainer execute() throws Exception {
         Config cfg = new Config();
         cfg.setAppPath(projectRoot);
         cfg.setAdditionalJarPaths(additionalJarPaths);
@@ -146,10 +157,10 @@ public class RewriteCommand implements Runnable {
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);
 
-        runScanner(cfg);
+        return runScanner(cfg);
     }
 
-    private void runScanner(Config cfg) throws Exception {
+    private ResultsContainer runScanner(Config cfg) throws Exception {
         System.out.println("Starting OpenRewrite ...");
         System.out.println("Project root: " + cfg.getAppPath().toAbsolutePath());
         System.out.println("Active recipe: " + cfg.getActiveRecipes());
@@ -159,6 +170,6 @@ public class RewriteCommand implements Runnable {
         }
 
         Scanner scanner = new Scanner(cfg);
-        scanner.run();
+        return scanner.run();
     }
 }

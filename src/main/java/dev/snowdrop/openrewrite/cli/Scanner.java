@@ -22,15 +22,12 @@ import org.openrewrite.marker.Markers;
 import org.openrewrite.marker.OperatingSystemProvenance;
 import org.openrewrite.marker.ci.BuildEnvironment;
 import org.openrewrite.polyglot.OmniParser;
-import org.openrewrite.style.NamedStyles;
 import org.openrewrite.text.PlainTextParser;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URLClassLoader;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -41,7 +38,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
 import static org.openrewrite.Tree.randomId;
 
@@ -72,9 +68,21 @@ public class Scanner {
         }
     }
 
-    public void run() throws Exception {
+    public ResultsContainer run() throws Exception {
         ResultsContainer results = listResults();
+        // TODO: Add a debug option
+        showResults(results);
+        return results;
+    }
 
+    private ExecutionContext createExecutionContext(List<Throwable> throwables) {
+        return new InMemoryExecutionContext(t -> {
+            System.err.println("Debug: " + t.getMessage());
+            throwables.add(t);
+        });
+    }
+
+    private void showResults(ResultsContainer results) {
         RuntimeException firstException = results.getFirstException();
         if (firstException != null) {
             System.err.println("The recipe produced an error. Please report this to the recipe author.");
@@ -158,25 +166,16 @@ public class Scanner {
             System.err.println("Patch file available:");
             System.err.println("    " + patchFile.normalize());
             System.err.println("Estimate time saved: " + formatDuration(estimateTimeSaved));
-            System.err.println("Run 'mvn rewrite:run' to apply the recipes.");
         } else {
             System.out.println("Applying recipe would make no changes. No patch file generated.");
         }
     }
 
-    private ExecutionContext createExecutionContext(List<Throwable> throwables) {
-        return new InMemoryExecutionContext(t -> {
-            System.err.println("Debug: " + t.getMessage());
-            throwables.add(t);
-        });
-    }
-
     private ResultsContainer listResults() {
-
         RecipeRun recipeRun = null;
         Recipe recipe = null;
         boolean yamlRecipes = false;
-        List<Result> allResults = new ArrayList<>();
+        Map<String, RecipeRun> allResults = new HashMap<>();
 
         // Process YAML recipes if it has been defined
         if (config.getYamlRecipes() != null && !config.getYamlRecipes().isEmpty()) {
@@ -199,7 +198,7 @@ public class Scanner {
 
         if (env.listRecipes().isEmpty()) {
             System.out.printf("No recipes found in active selection or YAML configuration for path: %s\n", config.getAppPath());
-            return new ResultsContainer(emptyList());
+            return new ResultsContainer(Collections.emptyMap());
         }
 
         // Run the recipe loaded
@@ -209,12 +208,12 @@ public class Scanner {
             if ("org.openrewrite.Recipe$Noop".equals(recipe.getName())) {
                 System.err.println("No recipes were activated. " +
                     "Activate a recipe by providing it as a command line argument.");
-                return new ResultsContainer(emptyList());
+                return new ResultsContainer(Collections.emptyMap());
             }
 
             validatingRecipe(recipe);
             recipeRun = runRecipe(recipe);
-            allResults.addAll(recipeRun.getChangeset().getAllResults());
+            allResults.put(recipe.getName(),recipeRun);
 
         } else {
             System.out.println("Using recipes from YAML configuration");
@@ -222,7 +221,7 @@ public class Scanner {
                 System.out.println("Running recipe: " + r.getName());
                 validatingRecipe(r);
                 RecipeRun currentRun = runRecipe(r);
-                allResults.addAll(currentRun.getChangeset().getAllResults());
+                allResults.put(r.getName(),currentRun);
             });
         }
 

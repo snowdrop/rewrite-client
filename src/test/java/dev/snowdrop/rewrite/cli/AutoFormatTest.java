@@ -1,7 +1,6 @@
 package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.RewriteCommand;
-import dev.snowdrop.openrewrite.cli.model.Config;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.RecipeRun;
@@ -10,12 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class CommandTest {
+public class AutoFormatTest extends BaseTest {
 
     @Test
     void testAutoFormatRecipe() throws Exception {
@@ -25,14 +23,9 @@ public class CommandTest {
         Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
         String recipeName = "org.openrewrite.java.format.AutoFormat";
 
-        // Create a properly initialized Config object
-        Config cfg = new Config();
+        // Configure the application to scan and recipe to be executed
         cfg.setAppPath(Paths.get(appPath));
         cfg.setActiveRecipes(List.of(recipeName));
-        cfg.setExportDatatables(true);
-        cfg.setExclusions(Set.of());
-        cfg.setPlainTextMasks(Set.of());
-        cfg.setAdditionalJarPaths(List.of());
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);

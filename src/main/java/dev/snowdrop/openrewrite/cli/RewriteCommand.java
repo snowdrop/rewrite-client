@@ -109,7 +109,7 @@ public class RewriteCommand implements Runnable {
         names = {"-d","--dry-run"},
         description = "Execute the recipes in dry run mode"
     )
-    boolean dryRun = false;
+    boolean dryRun = true;
 
     // Inject Quarkus configuration properties
     @Inject

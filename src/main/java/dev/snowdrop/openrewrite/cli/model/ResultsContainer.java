@@ -1,13 +1,16 @@
 package dev.snowdrop.openrewrite.cli.model;
 
 import org.jspecify.annotations.Nullable;
-import org.openrewrite.RecipeRun;
-import org.openrewrite.Result;
+import org.openrewrite.*;
+import org.openrewrite.marker.Markers;
+import org.openrewrite.marker.Markup;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ResultsContainer {
     private List<Result> generated = new ArrayList<>();
@@ -42,8 +45,44 @@ public class ResultsContainer {
     }
 
     public @Nullable RuntimeException getFirstException() {
-        // TODO: To be developed !!
+        for (Result result : generated) {
+            for (RuntimeException error : getRecipeErrors(result)) {
+                return error;
+            }
+        }
+        for (Result result : deleted) {
+            for (RuntimeException error : getRecipeErrors(result)) {
+                return error;
+            }
+        }
+        for (Result result : moved) {
+            for (RuntimeException error : getRecipeErrors(result)) {
+                return error;
+            }
+        }
+        for (Result result : refactoredInPlace) {
+            for (RuntimeException error : getRecipeErrors(result)) {
+                return error;
+            }
+        }
         return null;
+    }
+
+    private List<RuntimeException> getRecipeErrors(Result result) {
+        List<RuntimeException> exceptions = new ArrayList<>();
+        new TreeVisitor<Tree, Integer>() {
+            @Override
+            public Tree preVisit(Tree tree, Integer integer) {
+                Markers markers = tree.getMarkers();
+                markers.findFirst(Markup.Error.class).ifPresent(e -> {
+                    Optional<SourceFile> sourceFile = Optional.ofNullable(getCursor().firstEnclosing(SourceFile.class));
+                    String sourcePath = sourceFile.map(SourceFile::getSourcePath).map(Path::toString).orElse("<unknown>");
+                    exceptions.add(new RuntimeException("Error while visiting " + sourcePath + ": " + e.getDetail()));
+                });
+                return tree;
+            }
+        }.visit(result.getAfter(), 0);
+        return exceptions;
     }
 
     public boolean isNotEmpty() {

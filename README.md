@@ -45,6 +45,7 @@ set qrun java -jar target/quarkus-app/quarkus-run.jar
 $qdebug test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.FindAnnotations
 $qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.FindAnnotations
 $qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.FindAnnotations -o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchMetaAnnotations=false
+$qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.maven.search.FindDependency -o groupId=org.springframework.boot,artifactId=spring-boot-starter-data-jpa,version=3.5.3
 ```
 
 The command lone application also supports to load the recipes from an external jar file using the Maven GAV coordinates

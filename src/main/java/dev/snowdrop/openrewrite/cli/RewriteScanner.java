@@ -70,7 +70,7 @@ public class RewriteScanner {
     public ResultsContainer run() throws Exception {
         ResultsContainer results = listResults();
         if(config.isLogMessages()) {
-            showResults(results);
+            createPatchFile(results);
         }
         return results;
     }
@@ -82,7 +82,7 @@ public class RewriteScanner {
         });
     }
 
-    private void showResults(ResultsContainer results) {
+    private void createPatchFile(ResultsContainer results) {
         RuntimeException firstException = results.getFirstException();
         if (firstException != null) {
             System.err.println("The recipe produced an error. Please report this to the recipe author.");

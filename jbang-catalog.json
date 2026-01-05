@@ -1,0 +1,10 @@
+{
+  "catalogs": {},
+  "aliases": {
+    "openrewrite": {
+      "description": "Openrewrite client to apply recipes",
+      "script-ref": "https://jitpack.io/com/github/snowdrop/rewrite-standalone-cli/a5d4083af9/rewrite-standalone-cli-a5d4083af9-runner.jar"
+    }
+  },
+  "templates": {}
+}

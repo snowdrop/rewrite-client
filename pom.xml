@@ -163,6 +163,11 @@
                             <goal>generate-code</goal>
                             <goal>generate-code-tests</goal>
                         </goals>
+                        <configuration>
+                            <properties>
+                                <quarkus.package.type>uber-jar</quarkus.package.type>
+                            </properties>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

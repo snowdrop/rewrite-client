@@ -1,0 +1,4 @@
+jdk:
+  - openjdk21
+install:
+  - mvn install -DskipTests -Dquarkus.package.type=uber-jar

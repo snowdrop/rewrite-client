@@ -1,19 +1,20 @@
 ///usr/bin/env jbang “$0” “$@” ; exit $?
-//DEPS  io.quarkus.platform:quarkus-bom:3.29.4@pom
-//DEPS  io.quarkus:quarkus-picocli
-//DEPS  io.quarkus:quarkus-config-yaml
-//DEPS  org.openrewrite:rewrite-polyglot:2.9.1
-//DEPS  org.openrewrite:rewrite-bom:3.15.0@pom
-//DEPS  org.openrewrite:rewrite-core
-//DEPS  org.openrewrite:rewrite-java
-//DEPS  org.openrewrite:rewrite-java-21
-//DEPS  org.openrewrite:rewrite-kotlin
-//DEPS  org.openrewrite:rewrite-yaml
-//DEPS  org.openrewrite:rewrite-xml
-//DEPS  org.openrewrite:rewrite-properties
-//DEPS  org.openrewrite:rewrite-json
-//DEPS  org.openrewrite:rewrite-gradle
-//DEPS  org.openrewrite:rewrite-maven
+//DEPS io.snowdrop.openrewrite:rewrite-standalone-cli:1.0.0-SNAPSHOT
+//DEPS io.quarkus.platform:quarkus-bom:3.29.4@pom
+//DEPS io.quarkus:quarkus-picocli
+//DEPS io.quarkus:quarkus-config-yaml
+//DEPS org.openrewrite:rewrite-polyglot:2.9.1
+//DEPS org.openrewrite:rewrite-bom:8.69.1@pom
+//DEPS org.openrewrite:rewrite-core
+//DEPS org.openrewrite:rewrite-java
+//DEPS org.openrewrite:rewrite-java-21
+//DEPS org.openrewrite:rewrite-kotlin
+//DEPS org.openrewrite:rewrite-yaml
+//DEPS org.openrewrite:rewrite-xml
+//DEPS org.openrewrite:rewrite-properties
+//DEPS org.openrewrite:rewrite-json
+//DEPS org.openrewrite:rewrite-gradle
+//DEPS org.openrewrite:rewrite-maven
 
 // List of DEPS generated using the command: mvn dependency:list -DexcludeTransitive=true | grep ":.*:.*:.*" | cut -d']' -f2- | sed 's/^ /\/\/DEPS /'
 

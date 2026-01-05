@@ -60,7 +60,8 @@ jbang app install openrewrite@snowdrop/rewrite-standalone-cli
 ```
 When done, use the client
 ```shell
-code/application-modernisation/01_openrewrite/rewrite-standalone-cli
+openrewrite <PATH_OF_JAVA_THE_APPLICATION> -r <FQNAME_OF_THE_RECIPE>
+openrewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
 ```
 
 ### To compile the code and use it

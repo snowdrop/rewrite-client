@@ -57,7 +57,7 @@
         <dependency>
             <groupId>com.github.snowdrop</groupId>
             <artifactId>rewrite-standalone-cli</artifactId>
-            <version>jbang-catalog-SNAPSHOT</version>
+            <version>main-SNAPSHOT</version>
         </dependency>
 
         <!-- Quarkus dependencies -->
@@ -177,11 +177,6 @@
                             <goal>generate-code</goal>
                             <goal>generate-code-tests</goal>
                         </goals>
-                        <configuration>
-                            <properties>
-                                <quarkus.package.type>uber-jar</quarkus.package.type>
-                            </properties>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

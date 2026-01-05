@@ -1,6 +1,6 @@
 [![GitHub Actions Status](<https://img.shields.io/github/actions/workflow/status/snowdrop/rewrite-standalone-cli/build-test.yml?branch=main&logo=GitHub&style=for-the-badge>)](https://github.com/snowdrop/rewrite-standalone-cli/actions/workflows/build-test.yml)
 [![License](https://img.shields.io/github/license/snowdrop/rewrite-standalone-cli?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
-[![](https://jitpack.io/v/snowdrop/rewrite-standalone-cli.svg)](https://jitpack.io/#snowdrop/rewrite-standalone-cli)
+[![Jitpack build](https://jitpack.io/v/snowdrop/rewrite-standalone-cli.svg)](https://jitpack.io/#snowdrop/rewrite-standalone-cli)
 
 
 ## Quarkus Openrewrite client

@@ -1,3 +1,22 @@
+///usr/bin/env jbang “$0” “$@” ; exit $?
+//DEPS  io.quarkus.platform:quarkus-bom:3.29.4@pom
+//DEPS  io.quarkus:quarkus-picocli
+//DEPS  io.quarkus:quarkus-config-yaml
+//DEPS  org.openrewrite:rewrite-polyglot:2.9.1
+//DEPS  org.openrewrite:rewrite-bom:3.15.0@pom
+//DEPS  org.openrewrite:rewrite-core
+//DEPS  org.openrewrite:rewrite-java
+//DEPS  org.openrewrite:rewrite-java-21
+//DEPS  org.openrewrite:rewrite-kotlin
+//DEPS  org.openrewrite:rewrite-yaml
+//DEPS  org.openrewrite:rewrite-xml
+//DEPS  org.openrewrite:rewrite-properties
+//DEPS  org.openrewrite:rewrite-json
+//DEPS  org.openrewrite:rewrite-gradle
+//DEPS  org.openrewrite:rewrite-maven
+
+// List of DEPS generated using the command: mvn dependency:list -DexcludeTransitive=true | grep ":.*:.*:.*" | cut -d']' -f2- | sed 's/^ /\/\/DEPS /'
+
 /*
  * Copyright 2020 the original author or authors.
  * <p>
@@ -13,25 +32,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-///usr/bin/env jbang “$0” “$@” ; exit $?
-//DEPS  io.snowdrop.openrewrite:rewrite-standalone-cli:1.0.0-SNAPSHOT
-//DEPS  io.quarkus:quarkus-picocli:3.29.4
-//DEPS  io.quarkus:quarkus-config-yaml:3.29.4
-//DEPS  org.openrewrite:rewrite-core:8.69.0
-//DEPS  org.openrewrite:rewrite-java:8.69.0
-//DEPS  org.openrewrite:rewrite-java-21:8.69.0
-//DEPS  org.openrewrite:rewrite-kotlin:8.69.0
-//DEPS  org.openrewrite:rewrite-polyglot:2.9.1
-//DEPS  org.openrewrite:rewrite-yaml:8.69.0
-//DEPS  org.openrewrite:rewrite-xml:8.69.0
-//DEPS  org.openrewrite:rewrite-properties:8.69.0
-//DEPS  org.openrewrite:rewrite-json:8.69.0
-//DEPS  org.openrewrite:rewrite-gradle:8.69.0
-//DEPS  org.openrewrite:rewrite-maven:8.69.0
-
-// List of DEPS generated using the command: mvn dependency:list -DexcludeTransitive=true | grep ":.*:.*:.*" | cut -d']' -f2- | sed 's/^ /\/\/DEPS /'
-
 package dev.snowdrop.openrewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.model.Config;
@@ -130,13 +130,19 @@ public class RewriteCommand implements Runnable {
     )
     boolean dryRun = true;
 
-    // Inject Quarkus configuration properties
+    /*
+     The @Inject annotation is disabled and replaced with ConfigProvider.getConfig()
+     as we got an Arc error during the execution of the jbang export command
+     Unsatisfied dependency for type dev.snowdrop.openrewrite.cli.RewriteConfiguration and qualifiers [@Default]
+     */
     @Inject
     RewriteConfiguration config;
 
     @Override
     public void run() {
         try {
+            //config = ConfigProvider.getConfig().unwrap(SmallRyeConfig.class).getConfigMapping(RewriteConfiguration.class);
+
             // Use injected defaults if not specified via command line
             if (sizeThresholdMb == 0) {
                 sizeThresholdMb = config.sizeThresholdMb();

@@ -53,14 +53,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- jitpack
-        <dependency>
-            <groupId>com.github.snowdrop</groupId>
-            <artifactId>rewrite-standalone-cli</artifactId>
-            <version>main-SNAPSHOT</version>
-        </dependency>
-        -->
-
         <!-- Quarkus dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -80,10 +72,6 @@
             <groupId>org.openrewrite</groupId>
             <artifactId>rewrite-java</artifactId>
         </dependency>
-        <!-- We need one of the following dependency
-        Unable to create a Java parser instance. `rewrite-java-8`, `rewrite-java-11`, `rewrite-java-17`,
-         `rewrite-java-21`, or `rewrite-java-25` must be on the classpath.
-        -->
         <dependency>
             <groupId>org.openrewrite</groupId>
             <artifactId>rewrite-java-21</artifactId>

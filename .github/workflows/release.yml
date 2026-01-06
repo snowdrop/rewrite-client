@@ -32,6 +32,8 @@ jobs:
         run: |
           ./mvnw -ntp -B clean install -Dquarkus.package.type=uber-jar
           mvn jreleaser:full-release
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release using jreleaser
         uses: jreleaser/release-action@v2

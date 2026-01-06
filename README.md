@@ -4,7 +4,7 @@
 
 ## Quarkus Openrewrite client
 
-This project support to execute Openrewrite Recipe(s) without the need to use the maven goal `rewrite:dryRun` or `rewrite:run` according to the following scenario.
+This project supports to execute Openrewrite Recipe(s) without the need to use the maven goal `rewrite:dryRun` or `rewrite:run` according to the following scenario.
 
 - Use the FQName of the recipe as parameter: `-r or --recipe <FQName_recipe>`. Example: `-r org.openrewrite.java.format.AutoFormat`. The tool will try to find the class of the recipe from the classes loaded using the runtime classpath
 - The fields of the Recipe can be defined using the parameter `-o or --options "k=v,k=v,...`. Example: `-o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication`
@@ -52,19 +52,19 @@ assertEquals("src/main/java/com/todo/app/AppApplication.java",record.getSourcePa
 assertEquals("@SpringBootApplication",record.getResult());
 assertEquals("Find annotations `@org.springframework.boot.autoconfigure.SpringBootApplication,matchMetaAnnotations=false`",record.getRecipe());
 ```
-### To install the client locally
+### To use instead the client locally
 
-The client can be installed using [jbang tool](https://www.jbang.dev/) with the following command
+The client can be installed using the [jbang tool](https://www.jbang.dev/) with the following command
 ```shell
 jbang app install openrewrite@snowdrop/rewrite-standalone-cli
 ```
-When done, use the client
+When done, execute by example this command to auto format the java project:
 ```shell
 openrewrite <PATH_OF_JAVA_THE_APPLICATION> -r <FQNAME_OF_THE_RECIPE>
 openrewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
 ```
 
-### To compile the code and use it
+### To start with the code
 
 Git clone this project and compile the project. Next launch the Quarkus Picocli client using the command: `mvn quarkus:dev`
 

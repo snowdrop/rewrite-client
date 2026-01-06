@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.vars.outputs.VERSION }}
+      NEW_SHA: ${{ steps.vars.outputs.NEW_SHA }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -36,7 +37,7 @@ jobs:
           </settings>
           EOF
 
-      - name: Version
+      - name: Bump the maven version and push
         id: vars
         shell: bash
         run: |
@@ -45,7 +46,8 @@ jobs:
           git config --global user.email "info@snowdrop.dev"
           git config --global user.name "Snowdrop team"
           git commit -a -m "Releasing version $VERSION"
-          git push origin main  
+          git push origin main
+          echo "NEW_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
   build-release:
     needs: [ precheck ]
@@ -53,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: main
+          ref: ${{ needs.precheck.outputs.NEW_SHA }}
           fetch-depth: 0
 
       - name: Set up JDK 21

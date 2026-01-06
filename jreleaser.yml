@@ -16,11 +16,10 @@ release:
       formatted: ALWAYS
       preset: conventional-commits
 
-# This section tells JReleaser how to handle JBang
 packagers:
+  # https://jreleaser.org/guide/latest/reference/packagers/jbang.html
   jbang:
     active: ALWAYS
-    # This updates your alias in jbang-catalog.json
     alias: openrewrite
     repository:
       active: ALWAYS

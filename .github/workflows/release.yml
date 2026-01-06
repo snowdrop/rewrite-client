@@ -1,21 +1,39 @@
 name: "CI - Build and release"
 
 on:
-  push:
-    tags:
-      - 'v*' # Trigger on tags starting with v
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: 'Tag name for the manual release (e.g. v1.0.1)'
+      version:
+        description: 'Release version'
         required: true
-        default: 'v1.0.x'
 
 permissions:
   contents: write
 
 jobs:
+  precheck:
+    name: Precheck
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.vars.outputs.VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Version
+        id: vars
+        shell: bash
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          ./mvnw -B versions:set versions:commit -DnewVersion=$VERSION
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git commit -a -m "Releasing version $VERSION"
+          git push origin main  
+
   build-release:
+    needs: [ precheck ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -34,22 +52,12 @@ jobs:
           mvn -ntp -B clean install -Dquarkus.package.type=uber-jar
           mvn -ntp -B jreleaser:full-release
         env:
+          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      #- name: Release using softprops/action-gh-release
-      #  uses: softprops/action-gh-release@v2
-      #  with:
-      #    tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
-      #    files: |
-      #      target/*-runner.jar
-      #    generate_release_notes: true
-      #    draft: false
-      #    prerelease: false
-      #
 
       - name: Update jbang-catalog.json
         run: |
-            TAG="${{ github.event.inputs.tag_name || github.ref_name }}"
+            TAG="${{ needs.precheck.outputs.VERSION }}"
             JAR_NAME=$(basename target/*-runner.jar)
             NEW_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${JAR_NAME}"
       
@@ -59,20 +67,12 @@ jobs:
 
       - name: Commit and Push Catalog Changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # git config --global user.name "github-actions[bot]"
+          # git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
           git add jbang-catalog.json
-      
-          # Only commit if there are actually changes to avoid errors
-          if git diff --staged --quiet; then
-            echo "No changes to jbang-catalog.json"
-          else
-            git commit -m "chore: update jbang-catalog for release ${TAG}"
-      
-            # Use HEAD:main to push the current detached state to the remote main branch
-            git push origin HEAD:main
-          fi
+          git commit -m "chore: Update jBang catalog for release ${TAG}" || exit 0
+          git push
 
       - name: JReleaser output
         if: always()

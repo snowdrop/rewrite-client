@@ -22,7 +22,7 @@ This project support to execute Openrewrite Recipe(s) without the need to use th
 
 Git clone this project and compile the project. When done, the project can be now be used in your own java project if you import the following dependency
 ```xml
-    <groupId>io.snowdrop.openrewrite</groupId>
+    <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>rewrite-standalone-cli</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 ```

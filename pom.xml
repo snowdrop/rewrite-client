@@ -4,7 +4,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.snowdrop.openrewrite</groupId>
+    <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>rewrite-standalone-cli</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>OpenRewrite Standalone CLI</name>

@@ -1,0 +1,25 @@
+name: "CI - Build and test"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build the uber-jar
+        run: mvn clean install -Dquarkus.package.type=uber-jar
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        #if: github.ref_type == 'tag'
+        with:
+          files: target/rewrite-standalone-cli-1.0.0-SNAPSHOT-runner.jar

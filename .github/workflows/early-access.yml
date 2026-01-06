@@ -1,4 +1,4 @@
-name: Early Access
+name: CI - Early Access
 
 on:
   push:

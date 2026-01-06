@@ -1,10 +1,18 @@
-name: "CI - Build and test"
+name: "CI - Build and release"
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - 'v*' # Trigger on tags starting with v
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name for the manual release (e.g. v1.0.1)'
+        required: true
+        default: 'v1.0.x'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -17,9 +25,14 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Build the uber-jar
-        run: mvn clean install -Dquarkus.package.type=uber-jar
+        run: ./mvnw clean install -Dquarkus.package.type=uber-jar
       - name: Release
         uses: softprops/action-gh-release@v2
         #if: github.ref_type == 'tag'
         with:
-          files: target/rewrite-standalone-cli-1.0.0-SNAPSHOT-runner.jar
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          files: |
+            target/*-runner.jar
+          generate_release_notes: true
+          draft: false
+          prerelease: false

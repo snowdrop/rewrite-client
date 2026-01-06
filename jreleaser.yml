@@ -1,0 +1,35 @@
+project:
+  name: rewrite-standalone-cli
+  version: {{projectVersion}}
+  description: Openrewrite client to apply recipes
+  longDescription: Openrewrite client to apply recipes
+  authors: [ "snowdrop" ]
+  license: Apache-2.0
+  links:
+    homepage: https://github.com/snowdrop/rewrite-standalone-cli
+
+release:
+  github:
+    overwrite: true
+    changelog:
+      formatted: ALWAYS
+      preset: conventional-commits
+
+# This section tells JReleaser how to handle JBang
+packagers:
+  jbang:
+    active: ALWAYS
+    # This updates your alias in jbang-catalog.json
+    alias: openrewrite
+    catalog:
+      active: ALWAYS
+      # If your catalog is in the same repo, leave owner/name default
+      # Otherwise, specify the target repo:
+      # owner: snowdrop
+      # name: rewrite-standalone-cli
+
+distributions:
+  openrewrite-cli:
+    type: JAVA_BINARY
+    artifacts:
+      - path: target/{{projectName}}-{{projectVersion}}-runner.jar

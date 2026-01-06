@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
@@ -28,39 +31,44 @@ jobs:
       - name: Build the uber-jar
         run: ./mvnw -ntp -B clean install -Dquarkus.package.type=uber-jar
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
-          files: |
-            target/*-runner.jar
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+      - name: Release using jreleaser
+        uses: jreleaser/release-action@v2
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update jbang-catalog.json
-        run: |
-            TAG="${{ github.event.inputs.tag_name || github.ref_name }}"
-            JAR_NAME=$(basename target/*-runner.jar)
-            NEW_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${JAR_NAME}"
-            
-            echo "Updating catalog with new URL: ${NEW_URL}"
-            
-            jq --arg url "$NEW_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
-
-      - name: Commit and Push Catalog Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add jbang-catalog.json
-          
-          # Only commit if there are actually changes to avoid errors
-          if git diff --staged --quiet; then
-            echo "No changes to jbang-catalog.json"
-          else
-            git commit -m "chore: update jbang-catalog for release ${TAG}"
-
-            # Use HEAD:main to push the current detached state to the remote main branch
-            git push origin HEAD:main
-          fi
+      #- name: Release using softprops/action-gh-release
+      #  uses: softprops/action-gh-release@v2
+      #  with:
+      #    tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+      #    files: |
+      #      target/*-runner.jar
+      #    generate_release_notes: true
+      #    draft: false
+      #    prerelease: false
+      #
+      #- name: Update jbang-catalog.json
+      #  run: |
+      #      TAG="${{ github.event.inputs.tag_name || github.ref_name }}"
+      #      JAR_NAME=$(basename target/*-runner.jar)
+      #      NEW_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${JAR_NAME}"
+      #
+      #      echo "Updating catalog with new URL: ${NEW_URL}"
+      #
+      #      jq --arg url "$NEW_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
+      #
+      #- name: Commit and Push Catalog Changes
+      #  run: |
+      #    git config --global user.name "github-actions[bot]"
+      #    git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      #
+      #    git add jbang-catalog.json
+      #
+      #    # Only commit if there are actually changes to avoid errors
+      #    if git diff --staged --quiet; then
+      #      echo "No changes to jbang-catalog.json"
+      #    else
+      #      git commit -m "chore: update jbang-catalog for release ${TAG}"
+      #
+      #      # Use HEAD:main to push the current detached state to the remote main branch
+      #      git push origin HEAD:main
+      #    fi

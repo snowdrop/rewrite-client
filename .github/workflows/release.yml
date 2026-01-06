@@ -60,6 +60,7 @@ jobs:
           git add .
           git commit -m "release: ${VERSION} and catalog update"
           git push origin release-$VERSION
+          sleep 2
 
       - name: Create Pull Request
         run: |

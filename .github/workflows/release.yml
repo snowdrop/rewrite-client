@@ -49,6 +49,7 @@ jobs:
           ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
           git commit -a -m "Releasing version $VERSION"
           git push origin main
+          echo "VERSION=$(echo $VERSION)" >> $GITHUB_OUTPUT
 
   build-release:
     needs: [ precheck ]

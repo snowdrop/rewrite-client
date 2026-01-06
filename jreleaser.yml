@@ -16,15 +16,15 @@ release:
       formatted: ALWAYS
       preset: conventional-commits
 
-packagers:
-  # https://jreleaser.org/guide/latest/reference/packagers/jbang.html
-  jbang:
-    active: ALWAYS
-    alias: openrewrite
-    repository:
-      active: ALWAYS
-      owner: snowdrop
-      name: rewrite-standalone-cli
+#packagers:
+#  # https://jreleaser.org/guide/latest/reference/packagers/jbang.html
+#  jbang:
+#    active: ALWAYS
+#    alias: openrewrite
+#    repository:
+#      active: ALWAYS
+#      owner: snowdrop
+#      name: rewrite-standalone-cli
 
 distributions:
   openrewrite-cli:

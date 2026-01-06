@@ -29,11 +29,9 @@ release:
 
 distributions:
   openrewrite-cli:
-    type: JAVA_BINARY
+    type: SINGLE_JAR
     artifacts:
       - path: target/{{projectName}}-{{projectVersion}}-runner.jar
-        extraProperties:
-          universal: true
 
 upload:
   active: ALWAYS

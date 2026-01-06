@@ -7,9 +7,9 @@
 This project supports to execute Openrewrite Recipe(s) without the need to use the maven goal `rewrite:dryRun` or `rewrite:run` according to the following scenario.
 
 - Use the FQName of the recipe as parameter: `-r or --recipe <FQName_recipe>`. Example: `-r org.openrewrite.java.format.AutoFormat`. The tool will try to find the class of the recipe from the classes loaded using the runtime classpath
-- The fields of the Recipe can be defined using the parameter `-o or --options "k=v,k=v,...`. Example: `-o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication`
+- The fields of the Recipe can be defined using the option `-o or --options "k=v,k=v,...`. Example: `-o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication`
 - If Recipe is packaged in another JAR file, then provide its PATH or Maven GAV using `--jar <PATH_OR_GAV>`. Example: `--jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT test-project/demo-spring-boot-todo-app -r dev.snowdrop.mtool.openrewrite.java.search.FindAnnotations`
-- The recipes can also be configured using a YAML recipe file and parameter `-c or --config <REWRITE_YAML_NAME>`. Example: `-c rewrite.yml`
+- The recipes can also be configured using a YAML recipe file and option `-c or --config <REWRITE_YAML_NAME>`. Example: `-c rewrite.yml`
 
 ## Prerequisite
 
@@ -101,7 +101,7 @@ openrewrite test-project/demo-spring-boot-todo-app -r org.openrewrite.java.searc
 > [!TIP]
 > Multiple parameters can be provided as a comma-separated list
 
-Alternatively, you can use a YAML recipes file and pass it using the parameter `-c`:
+Alternatively, you can use a YAML recipes file and pass it using the option `-c`:
 ```shell
 mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app -c rewrite.yml"
 

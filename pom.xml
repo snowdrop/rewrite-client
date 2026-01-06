@@ -192,7 +192,32 @@
                 <artifactId>jreleaser-maven-plugin</artifactId>
                 <version>${jreleaser-maven-plugin.version}</version>
                 <configuration>
-                    <configFile>jreleaser.yml</configFile>
+                    <!--<configFile>jreleaser.yml</configFile>-->
+                    <jreleaser>
+                        <project>
+                            <links>
+                                <homepage>https://github.com/snowdrop/rewrite-standalone-cli</homepage>
+                            </links>
+                        </project>
+                        <release>
+                            <github>
+                                <changelog>
+                                    <formatted>ALWAYS</formatted>
+                                    <preset>conventional-commits</preset>
+                                </changelog>
+                            </github>
+                        </release>
+                        <distributions>
+                            <openrewrite-cli>
+                                <type>JAVA_BINARY</type>
+                                <artifacts>
+                                    <artifact>
+                                        <path>target/{{projectName}}-{{projectVersion}}-runner.jar</path>
+                                    </artifact>
+                                </artifacts>
+                            </openrewrite-cli>
+                        </distributions>
+                    </jreleaser>
                 </configuration>
             </plugin>
 

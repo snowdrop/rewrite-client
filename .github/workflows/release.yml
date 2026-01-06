@@ -31,7 +31,7 @@ jobs:
       - name: Build the uber-jar
         run: |
           mvn -ntp -B clean install -Dquarkus.package.type=uber-jar
-          mvn -ntp -B jreleaser:full-release -Djreleaser.config.file=jreleaser.yml
+          mvn -ntp -B jreleaser:full-release
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

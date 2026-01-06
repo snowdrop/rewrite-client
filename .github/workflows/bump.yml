@@ -1,0 +1,44 @@
+name: "Post-Release: Bump Version"
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release-')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configure git user and email
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "Github Action"    
+
+      - name: Bump to Next Snapshot
+        run: |
+          # 1. Increment the version (e.g., 1.0.0 -> 1.0.1-SNAPSHOT)
+          ./mvnw -ntp -B versions:set -DnextSnapshot=true versions:commit
+          
+          # 2. Commit and Push
+          git add pom.xml
+          git commit -m "chore: Next development version [skip ci]"
+          git push origin main

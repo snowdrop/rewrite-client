@@ -11,53 +11,14 @@ permissions:
   contents: write
 
 jobs:
-  precheck:
-    name: Precheck
+  release:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.vars.outputs.VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Configure Maven settings
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<'EOF'
-          <settings>
-            <mirrors>
-              <mirror>
-                <id>central-mirror</id>
-                <name>Central Mirror</name>
-                <url>https://repo1.maven.org/maven2</url>
-                <mirrorOf>central</mirrorOf>
-              </mirror>
-            </mirrors>
-          </settings>
-          EOF
-
-      - name: Configure git user and email
-        run: |
-          git config --global user.email "action@github.com"
-          git config --global user.name "Github Action"
-
-      - name: Set the maven version to the release version and push
-        id: vars
-        shell: bash
-        run: |
-          VERSION=${{ github.event.inputs.version }}
-          ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
-          git commit -a -m "Releasing version $VERSION"
-          git push origin main
-          echo "VERSION=$(echo $VERSION)" >> $GITHUB_OUTPUT
-
-  build-release:
-    needs: [ precheck ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
         with:
-          ref: main
           fetch-depth: 0
 
       - name: Set up JDK 21
@@ -72,46 +33,41 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "Github Action"
 
-      - name: Configure Maven settings
+      - name: Set the maven version to the release version
         run: |
-             mkdir -p ~/.m2
-             cat > ~/.m2/settings.xml <<'EOF'
-             <settings>
-               <mirrors>
-                 <mirror>
-                   <id>central-mirror</id>
-                   <name>Central Mirror</name>
-                   <url>https://repo1.maven.org/maven2</url>
-                   <mirrorOf>central</mirrorOf>
-                 </mirror>
-               </mirrors>
-             </settings>
-             EOF
+          VERSION=${{ github.event.inputs.version }}
+          git checkout -b release-$VERSION
+          ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
 
-      - name: Build the uber-jar
+      - name: Build the uber-jar and run jreleaser
         run: |
           mvn -ntp -B clean install -Dquarkus.package.type=uber-jar
           mvn -ntp -B jreleaser:full-release
         env:
-          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update jbang-catalog.json
         run: |
-            RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ needs.precheck.outputs.VERSION }}/rewrite-standalone-cli-${{ needs.precheck.outputs.VERSION }}-runner.jar"
+            VERSION=${{ github.event.inputs.version }}
+            RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/rewrite-standalone-cli-$VERSION-runner.jar"
             echo "Updating catalog with new URL: ${RELEASE_URL}"
             jq --arg url "$RELEASE_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
 
       - name: Commit and Push the changes
         run: |
-          git add jbang-catalog.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: Update jBang catalog for release ${TAG}"
+          git add .
+          git commit -m "release: ${VERSION} and catalog update"
+          git push origin release-$VERSION
 
-      - name: Bump the maven version to the next SNAPSHOT version and push
+      - name: Create Pull Request
         run: |
-          ./mvnw -ntp -B versions:set -DnextSnapshot=true versions:commit
-          git commit -a -m "Bump the pom version to the next SNAPSHOT"
-          git push origin HEAD:main
+          gh pr create \
+            --title "Release $VERSION" \
+            --body "Automated release PR" \
+            --base main \
+            --head release-$VERSION
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: JReleaser output
         if: always()

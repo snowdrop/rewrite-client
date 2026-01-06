@@ -25,7 +25,9 @@ jobs:
         shell: bash
         run: |
           VERSION=${{ github.event.inputs.version }}
-          ./mvnw -B versions:set versions:commit -DnewVersion=$VERSION
+          ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
+          git config --global user.email "info@snowdrop.dev"
+          git config --global user.name "Snowdrop team"
           git commit -a -m "Releasing version $VERSION"
           git push origin main  
 

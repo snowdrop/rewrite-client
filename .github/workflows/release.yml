@@ -100,11 +100,10 @@ jobs:
       - name: Update jbang-catalog.json
         run: |
             TAG="${{ needs.precheck.outputs.VERSION }}"
-            JAR_NAME=$(basename target/*-runner.jar)
-            NEW_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${JAR_NAME}"
+            JAR_NAME=$(basename target/rewrite-standalone-cli-$TAG-runner.jar)
+            NEW_URL="https://github.com/${{ github.repository }}/releases/download/v${TAG}/${JAR_NAME}"
       
             echo "Updating catalog with new URL: ${NEW_URL}"
-      
             jq --arg url "$NEW_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
 
       - name: Commit and Push Catalog Changes

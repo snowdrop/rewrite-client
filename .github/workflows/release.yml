@@ -82,6 +82,8 @@ jobs:
 
       - name: Commit and Push Catalog Changes
         run: |
+          git config --global user.email "info@snowdrop.dev"
+          git config --global user.name "Snowdrop team"
           git add jbang-catalog.json
           git commit -m "chore: Update jBang catalog for release ${TAG}" || exit 0
           git push

@@ -63,6 +63,12 @@ openrewrite <PATH_OF_JAVA_THE_APPLICATION> -r <FQNAME_OF_THE_RECIPE>
 openrewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
 ```
 
+> [!NOTE]
+> To install a released version, append to the reference of the version
+```shell
+jbang app install openrewrite@snowdrop/rewrite-standalone-cli/v0.0.27
+```
+
 ### To start with the code
 
 Git clone this project and compile the project. Next launch the Quarkus Picocli client using the command: `mvn quarkus:dev`
@@ -76,7 +82,6 @@ mvn quarkus:dev -Dquarkus.args="test-project/simple -r org.openrewrite.java.form
 > You can also run the application using the uber jar file and command: `java -jar test-project/simple -r org.openrewrite.java.format.AutoFormat`
 > Don't hesitate too to create an env variable:
 ```shell
-
 set qrun java -jar target/quarkus-app/quarkus-run.jar
 $qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.FindAnnotations
 $qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.FindAnnotations -o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchMetaAnnotations=false

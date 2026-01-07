@@ -34,11 +34,28 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "Github Action"
 
-      - name: Set the maven version to the release version
+      - name: Create a release branch
         run: |
           VERSION=${{ github.event.inputs.version }}
           git checkout -b release-$VERSION
+
+      - name: Set the maven version to the release version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
           ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
+
+      - name: Update jbang-catalog.json
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/rewrite-standalone-cli-$VERSION-runner.jar"
+          echo "Updating catalog with new URL: ${RELEASE_URL}"
+          jq --arg url "$RELEASE_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
+
+      - name: Commit the changes
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          git add .
+          git commit -m "release: ${VERSION} and catalog update"
 
       - name: Build the uber-jar and run jreleaser
         run: |
@@ -47,24 +64,12 @@ jobs:
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update jbang-catalog.json
-        run: |
-            VERSION=${{ github.event.inputs.version }}
-            RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/rewrite-standalone-cli-$VERSION-runner.jar"
-            echo "Updating catalog with new URL: ${RELEASE_URL}"
-            jq --arg url "$RELEASE_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
-
-      - name: Commit and Push the changes
+      - name: Push branch and Create Pull Request
         run: |
           VERSION=${{ github.event.inputs.version }}
-          git add .
-          git commit -m "release: ${VERSION} and catalog update"
+          
           git push origin release-$VERSION
-          sleep 2
-
-      - name: Create Pull Request
-        run: |
-          VERSION=${{ github.event.inputs.version }}
+          
           gh pr create \
             --title "Release $VERSION" \
             --body "Automated release PR" \

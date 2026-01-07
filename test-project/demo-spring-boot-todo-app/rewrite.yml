@@ -1,6 +1,6 @@
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: dev.snowdrop.FindJavaStuffs
+name: dev.snowdrop.RecipeExample
 displayName: Find java stuffs
 recipeList:
 

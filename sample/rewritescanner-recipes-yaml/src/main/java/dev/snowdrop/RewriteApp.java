@@ -25,7 +25,7 @@ public class RewriteApp {
             return;
         }
 
-        String RECIPE_NAME = "dev.snowdrop.FormatCode";
+        String RECIPE_NAME = "dev.snowdrop.RecipeExample";
 
         // Get the path from command line argument or use default
         String projectPath = getProjectPath(args);

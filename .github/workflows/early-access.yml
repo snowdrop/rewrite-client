@@ -58,21 +58,22 @@ jobs:
           distribution: ${{ env.JAVA_DISTRO }}
           cache: maven
 
-      - name: Configure Maven settings
-        run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<'EOF'
-          <settings>
-            <mirrors>
-              <mirror>
-                <id>central-mirror</id>
-                <name>Central Mirror</name>
-                <url>https://repo1.maven.org/maven2</url>
-                <mirrorOf>central</mirrorOf>
-              </mirror>
-            </mirrors>
-          </settings>
-          EOF
+      # Used as workaround due to DDOS on github as CloudFlare blocked access to maven public repository: error 403
+      #- name: Configure Maven settings
+      #  run: |
+      #    mkdir -p ~/.m2
+      #    cat > ~/.m2/settings.xml <<'EOF'
+      #    <settings>
+      #      <mirrors>
+      #        <mirror>
+      #          <id>central-mirror</id>
+      #          <name>Central Mirror</name>
+      #          <url>https://repo1.maven.org/maven2</url>
+      #          <mirrorOf>central</mirrorOf>
+      #        </mirror>
+      #      </mirrors>
+      #    </settings>
+      #    EOF
 
       - name: Configure git user and email
         run: |
@@ -103,4 +104,4 @@ jobs:
           name: jreleaser-release
           path: |
             target/jreleaser/trace.log
-            target/jreleaser/output.properties    
+            target/jreleaser/output.properties

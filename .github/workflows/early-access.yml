@@ -63,6 +63,11 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRO }}
           cache: maven
+          server-id: central
+          server-username: MAVEN_USERNAME # Sonatype "snowdrop-team" usertoken: username
+          server-password: MAVEN_PASSWORD # Sonatype "snowdrop-team" usertoken: password
+          gpg-private-key: ${{ secrets.GPG_SECRET_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       # Used as workaround due to DDOS on github as CloudFlare blocked access to maven public repository: error 403
       #- name: Configure Maven settings
@@ -89,19 +94,34 @@ jobs:
       - name: Build the uber-jar
         run: |
           mvn -ntp -B clean install -Dquarkus.package.type=uber-jar
-          mvn -ntp -B jreleaser:full-release
-        env:
-          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update jBang catalog for snapshot
         if: github.ref == 'refs/heads/main'
         run: |
           SNAPSHOT_URL="https://github.com/${{ github.repository }}/releases/download/early-access/rewrite-standalone-cli-${{ needs.precheck.outputs.VERSION }}-runner.jar"
           jq --arg url "$SNAPSHOT_URL" '.aliases.openrewrite."script-ref" = $url' jbang-catalog.json > tmp.json && mv tmp.json jbang-catalog.json
-          git add jbang-catalog.json
-          git commit -m "Update jBang catalog for snapshot release" || exit 0
-          git push
+
+      - name: Commit the changes
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          git add .
+          git commit -m "update the jbang catalog script-ref: ${VERSION}"
+          git push origin main
+
+      - name: Release the project and publish the uber-jar as early access release
+        run: |
+          mvn -ntp -B jreleaser:full-release
+        env:
+          JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy the maven GAV on central
+        run: |          
+          mvn -B deploy -Prelease -DskipTests
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: JReleaser output
         if: always()

@@ -1,0 +1,42 @@
+name: "CI - Tag Release"
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  tag-and-release:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'release-')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure git user and email
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "Github Action"
+
+      - name: Create and Push Tag
+        run: |
+          # Extract version from branch name (e.g., release-1.0.0 -> 1.0.0)
+          BRANCH_NAME="${{ github.head_ref }}"
+          VERSION=${BRANCH_NAME#release-}
+          
+          echo "Tagging version: $VERSION"
+          
+          # Create an annotated tag
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: Delete Release Branch
+        run: |
+          git push origin --delete ${{ github.head_ref }}

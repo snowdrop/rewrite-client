@@ -3,7 +3,7 @@
   "aliases": {
     "openrewrite": {
       "description": "Openrewrite client to apply recipes",
-      "script-ref": "https://github.com/snowdrop/rewrite-standalone-cli/releases/download/v0.0.23/rewrite-standalone-cli-0.0.23-runner.jar"
+      "script-ref": "https://github.com/snowdrop/rewrite-standalone-cli/releases/download/v0.0.24/rewrite-standalone-cli-0.0.24-runner.jar"
     }
   },
   "templates": {}

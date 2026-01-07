@@ -7,11 +7,6 @@ on:
     paths:
       - 'src/**'
       - 'pom.xml'
-    paths-ignore:
-      - '.gitignore'
-      - '**.yml'
-      - '**.md'
-      - '.github/workflows/**'
 
 permissions:
   contents: write

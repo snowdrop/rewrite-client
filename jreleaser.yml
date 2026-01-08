@@ -10,11 +10,10 @@ project:
     homepage: https://github.com/snowdrop/rewrite-standalone-cli
 
 release:
-  generic:
-    tagName: '{{tagName}}'
-    releaseName: '{{tagName}}'
   github:
     enabled: true
+    tagName: '{{tagName}}'
+    releaseName: '{{tagName}}'
     overwrite: true
     changelog:
       formatted: ALWAYS

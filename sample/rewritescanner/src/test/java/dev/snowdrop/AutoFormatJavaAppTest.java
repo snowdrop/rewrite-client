@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
+import org.openrewrite.table.SourcesFileResults;
 
 import java.nio.file.Paths;
 import java.util.List;
@@ -30,9 +31,17 @@ public class AutoFormatJavaAppTest {
             RecipeRun run = results.getRecipeRuns().get(RECIPE_NAME);
 
             Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-                .filter(entry -> entry.getKey().getName().contains("SearchResults"))
+                .filter(entry -> entry.getKey().getName().contains("SourcesFileResults"))
                 .findFirst();
-            Assertions.assertFalse(resultMap.isPresent());
+            Assertions.assertTrue(resultMap.isPresent());
+
+            List<SourcesFileResults.Row> rows = (List<SourcesFileResults.Row>) resultMap.get().getValue();
+            Assertions.assertNotNull(rows);
+            Assertions.assertEquals(1,rows.size());
+
+            SourcesFileResults.Row row = rows.getFirst();
+            Assertions.assertNotNull(row);
+            Assertions.assertEquals("src/main/java/dev/snowdrop/Test.java",row.getSourcePath());
 
         } catch (Exception e) {
             throw new RuntimeException(e);

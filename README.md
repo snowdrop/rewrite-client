@@ -11,6 +11,8 @@ This project supports to execute Openrewrite Recipe(s) without the need to use t
 - If Recipe is packaged in another JAR file, then provide its PATH or Maven GAV using `--jar <PATH_OR_GAV>`. Example: `--jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT test-project/demo-spring-boot-todo-app -r dev.snowdrop.mtool.openrewrite.java.search.FindAnnotations`
 - The recipes can also be configured using a YAML recipe file and option `-c or --config <REWRITE_YAML_NAME>`. Example: `-c rewrite.yml`
 
+It can be used as described hereafter using the Quarkus Picocli Client or the jar file released on maven central.
+
 ## Prerequisite
 
 - JDK 21 

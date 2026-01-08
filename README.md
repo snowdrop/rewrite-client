@@ -24,7 +24,7 @@ Git clone this project and compile the project. When done, the project can be no
 ```xml
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>rewrite-standalone-cli</artifactId>
-    <version>0.0.31</version>
+    <version>0.0.33</version>
 ```
 Next configure the `RewriteScanner` to issue a scan of a java application as described hereafter
 ```java
@@ -72,7 +72,7 @@ openrewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
 > [!NOTE]
 > To install a released version, append to the reference of the version
 ```shell
-jbang app install openrewrite@snowdrop/rewrite-standalone-cli/v0.0.31
+jbang app install openrewrite@snowdrop/rewrite-standalone-cli/v0.0.33
 ```
 
 ### To start with the code

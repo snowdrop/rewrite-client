@@ -39,9 +39,9 @@ public class RewriteApp {
             RecipeRun run = results.getRecipeRuns().get(RECIPE_NAME);
 
             Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-                .filter(entry -> entry.getKey().getName().contains("SearchResults"))
+                .filter(entry -> entry.getKey().getName().contains("SourcesFileResults"))
                 .findFirst();
-            resultMap.ifPresent(dataTableListEntry -> System.out.println("Results size: " + dataTableListEntry.getValue().size()));
+            resultMap.ifPresent(dataTableListEntry -> System.out.println("SourcesFileResults size: " + dataTableListEntry.getValue().size()));
 
         } catch (Exception e) {
             throw new RuntimeException(e);

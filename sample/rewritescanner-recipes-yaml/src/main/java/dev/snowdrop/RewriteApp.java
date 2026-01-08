@@ -7,7 +7,6 @@ package dev.snowdrop;
 import dev.snowdrop.openrewrite.cli.RewriteScanner;
 import dev.snowdrop.openrewrite.cli.model.Config;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
-//import org.junit.jupiter.api.Assertions;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 
@@ -18,7 +17,6 @@ import java.util.Optional;
 
 public class RewriteApp {
     public static void main(String[] args) {
-        // Check for help argument
         if (args.length > 0 && (args[0].equals("-h") || args[0].equals("--help"))) {
             printUsage();
             return;
@@ -42,7 +40,7 @@ public class RewriteApp {
             Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
                 .filter(entry -> entry.getKey().getName().contains("SearchResults"))
                 .findFirst();
-            //Assertions.assertFalse(resultMap.isPresent());
+            resultMap.ifPresent(dataTableListEntry -> System.out.println("Results size: " + dataTableListEntry.getValue().size()));
 
         } catch (Exception e) {
             throw new RuntimeException(e);

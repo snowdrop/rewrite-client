@@ -52,7 +52,7 @@ jobs:
       - name: Update jbang-catalog.json
         run: |
           VERSION=${{ github.event.inputs.version }}
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/rewrite-standalone-cli-$VERSION-runner.jar"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/rewrite-standalone-cli-$VERSION-runner.jar"
           echo "Updating catalog with new URL: ${RELEASE_URL}"
           jq --arg url "$RELEASE_URL" '.aliases.openrewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
 

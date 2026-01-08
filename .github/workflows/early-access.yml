@@ -20,7 +20,7 @@ env:
 
 jobs:
   precheck:
-    if: github.repository == 'snowdrop/rewrite-standalone-cli' && startsWith(github.event.head_commit.message, 'Releasing version') != true
+    if: github.repository == 'snowdrop/rewrite-client' && startsWith(github.event.head_commit.message, 'Releasing version') != true
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.vars.outputs.VERSION }}
@@ -98,7 +98,7 @@ jobs:
       - name: Update jBang catalog for snapshot
         if: github.ref == 'refs/heads/main'
         run: |
-          SNAPSHOT_URL="https://github.com/${{ github.repository }}/releases/download/early-access/rewrite-standalone-cli-${{ needs.precheck.outputs.VERSION }}-runner.jar"
+          SNAPSHOT_URL="https://github.com/${{ github.repository }}/releases/download/early-access/rewrite-client-${{ needs.precheck.outputs.VERSION }}-runner.jar"
           jq --arg url "$SNAPSHOT_URL" '.aliases.openrewrite."script-ref" = $url' jbang-catalog.json > tmp.json && mv tmp.json jbang-catalog.json
 
       - name: Commit the changes

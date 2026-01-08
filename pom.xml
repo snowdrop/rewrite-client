@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dev.snowdrop.openrewrite</groupId>
-    <artifactId>rewrite-standalone-cli</artifactId>
+    <artifactId>rewrite-client</artifactId>
     <version>0.0.34-SNAPSHOT</version>
     <name>OpenRewrite Standalone CLI</name>
     <description>Quarkus Openrewrite client to apply recipes</description>
     <inceptionYear>2026</inceptionYear>
-    <url>https://github.com/snowdrop/rewrite-standalone-cli</url>
+    <url>https://github.com/snowdrop/rewrite-client</url>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -64,8 +64,8 @@
 
     <scm>
         <url>https://github.com/snowdrop</url>
-        <connection>scm:git:https://github.com/snowdrop/rewrite-standalone-cli.git</connection>
-        <developerConnection>scm:git:git:@github.com:snowdrop/rewrite-standalone-cli.git</developerConnection>
+        <connection>scm:git:https://github.com/snowdrop/rewrite-client.git</connection>
+        <developerConnection>scm:git:git:@github.com:snowdrop/rewrite-client.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 

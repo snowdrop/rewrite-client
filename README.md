@@ -1,6 +1,6 @@
-[![GitHub Actions Status](<https://img.shields.io/github/actions/workflow/status/snowdrop/rewrite-standalone-cli/build-test.yml?branch=main&logo=GitHub&style=for-the-badge>)](https://github.com/snowdrop/rewrite-standalone-cli/actions/workflows/build-test.yml)
-[![License](https://img.shields.io/github/license/snowdrop/rewrite-standalone-cli?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/maven-central/v/dev.snowdrop.openrewrite/rewrite-standalone-cli?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/dev.snowdrop.openrewrite/rewrite-standalone-cli)
+[![GitHub Actions Status](<https://img.shields.io/github/actions/workflow/status/snowdrop/rewrite-client/build-test.yml?branch=main&logo=GitHub&style=for-the-badge>)](https://github.com/snowdrop/rewrite-client/actions/workflows/build-test.yml)
+[![License](https://img.shields.io/github/license/snowdrop/rewrite-client?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Version](https://img.shields.io/maven-central/v/dev.snowdrop.openrewrite/rewrite-client?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/dev.snowdrop.openrewrite/rewrite-client)
 
 ## Quarkus Openrewrite client
 
@@ -22,10 +22,10 @@ It can be used as described hereafter using the Quarkus Picocli Client or the ja
 
 ### To use the Rewrite scanner
 
-Git clone this project and compile the project. When done, the project can be now be used in your own java project if you import the following dependency
+To use the  java project if you import the following dependency
 ```xml
     <groupId>dev.snowdrop.openrewrite</groupId>
-    <artifactId>rewrite-standalone-cli</artifactId>
+    <artifactId>rewrite-client</artifactId>
     <version>0.0.33</version>
 ```
 Next configure the `RewriteScanner` to issue a scan of a java application as described hereafter
@@ -63,7 +63,7 @@ assertEquals("Find annotations `@org.springframework.boot.autoconfigure.SpringBo
 
 The client can be installed using the [jbang tool](https://www.jbang.dev/) with the following command
 ```shell
-jbang app install openrewrite@snowdrop/rewrite-standalone-cli
+jbang app install openrewrite@snowdrop/rewrite-client
 ```
 When done, execute by example this command to auto format the java project:
 ```shell
@@ -74,7 +74,7 @@ openrewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
 > [!NOTE]
 > To install a released version, append to the reference of the version
 ```shell
-jbang app install openrewrite@snowdrop/rewrite-standalone-cli/v0.0.33
+jbang app install openrewrite@snowdrop/rewrite-client/v0.0.33
 ```
 
 ### To start with the code

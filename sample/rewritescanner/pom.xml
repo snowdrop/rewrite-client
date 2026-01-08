@@ -18,7 +18,7 @@
     <dependencies>
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>rewrite-standalone-cli</artifactId>
+            <artifactId>rewrite-client</artifactId>
             <version>0.0.33</version>
         </dependency>
         <dependency>

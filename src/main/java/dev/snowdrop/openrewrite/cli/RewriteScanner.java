@@ -312,6 +312,8 @@ public class RewriteScanner {
         System.out.println("Parsing source files...");
         List<SourceFile> sourceFiles = new ArrayList<>();
 
+        System.out.println("Application absolute path: " + config.getAppPath());
+
         // Parse Java files
         List<Path> javaFiles = findFiles(config.getAppPath(), ".java");
         if (!javaFiles.isEmpty()) {

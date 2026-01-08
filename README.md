@@ -2,7 +2,7 @@
 [![License](https://img.shields.io/github/license/snowdrop/rewrite-client?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Version](https://img.shields.io/maven-central/v/dev.snowdrop.openrewrite/rewrite-client?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/dev.snowdrop.openrewrite/rewrite-client)
 
-## Quarkus Openrewrite client
+## Openrewrite Quarkus client and library
 
 This project supports to execute Openrewrite Recipe(s) without the need to use the maven goal `rewrite:dryRun` or `rewrite:run` according to the following scenario.
 

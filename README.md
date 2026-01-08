@@ -100,7 +100,9 @@ $qrun test-project/demo-spring-boot-todo-app -r org.openrewrite.maven.search.Fin
 
 As mentioned earlier, the client supports different options described hereafter.
 
-If the recipe can be configured using parameters, then declare them using the format `key=value` with the option `-o`.
+### Recipe with parameter(s)
+
+If the recipe, which is a Java class, can be configured using parameters, then declare them using the format `key=value` with the client's option `-o`.
 
 ```shell
 mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app -r org.openrewrite.java.search.FindAnnotations -o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchMetaAnnotations=false"
@@ -113,7 +115,9 @@ openrewrite test-project/demo-spring-boot-todo-app -r org.openrewrite.java.searc
 > [!TIP]
 > Multiple parameters can be provided as a comma-separated list
 
-Alternatively, you can use a YAML recipes file and pass it using the option `-c`:
+### Recipes declared in a YAML file
+
+You can also use a YAML recipes file and pass it using the client's option `-c`:
 ```shell
 mvn quarkus:dev -Dquarkus.args="test-project/demo-spring-boot-todo-app -c rewrite.yml"
 
@@ -122,7 +126,9 @@ or
 openrewrite test-project/demo-spring-boot-todo-app -c rewrite.yml
 ```
 
-You can also load the recipes from an additional jar file using the Maven GAV coordinates and option `--jar`
+### Recipes packaged in a separate jar
+
+You can also load the recipes from an additional jar file using the Maven GAV coordinates and client's option `--jar`
 ```shell
 mvn quarkus:dev -Dquarkus.args="--jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT test-project/demo-spring-boot-todo-app -r dev.snowdrop.mtool.openrewrite.java.search.FindAnnotations -o pattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchId=1234"
 

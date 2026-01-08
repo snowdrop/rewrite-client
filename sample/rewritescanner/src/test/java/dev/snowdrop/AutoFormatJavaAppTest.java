@@ -1,13 +1,10 @@
-///usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS dev.snowdrop.openrewrite:rewrite-standalone-cli:0.0.30
-//NOINTEGRATIONS
-//RUNTIME_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
-
 package dev.snowdrop;
 
 import dev.snowdrop.openrewrite.cli.RewriteScanner;
 import dev.snowdrop.openrewrite.cli.model.Config;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 
@@ -16,16 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class RewriteApp {
-    public static void main(String[] args) {
-
+public class AutoFormatJavaAppTest {
+    @Test
+    public void shouldAutoFormatTest() {
         String RECIPE_NAME = "org.openrewrite.java.format.AutoFormat";
         String APP_PATH = "demo";
-
-        if (args.length > 0) {
-            APP_PATH = args[0];
-        }
-        System.out.println("Processing application path: " + APP_PATH);
 
         Config cfg = new Config();
         cfg.setAppPath(Paths.get(APP_PATH));
@@ -40,7 +32,7 @@ public class RewriteApp {
             Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
                 .filter(entry -> entry.getKey().getName().contains("SearchResults"))
                 .findFirst();
-            resultMap.ifPresent(dataTableListEntry -> System.out.println("Results size: " + dataTableListEntry.getValue().size()));
+            Assertions.assertFalse(resultMap.isPresent());
 
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -4,7 +4,7 @@
 
 > [!NOTE]
 > **⚠️ Experimental:**
-> This formatter is experimental and under active development. +
+> This formatter is experimental and under active development.
 > Please report issues or suggestions on https://github.com/snowdrop/rewrite-client/[GitHub].
 
 ## Openrewrite Quarkus client and library

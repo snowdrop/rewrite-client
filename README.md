@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/maven-central/v/dev.snowdrop.openrewrite/rewrite-client?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/dev.snowdrop.openrewrite/rewrite-client)
 
 > [!WARNING]
-> This formatter is experimental and under active development.Please report issues or suggestions on: https://github.com/snowdrop/rewrite-client/[GitHub]
+> This formatter is experimental and under active development. Please report issues or suggestions on: https://github.com/snowdrop/rewrite-client/[GitHub]
 
 ## Openrewrite Quarkus client and library
 

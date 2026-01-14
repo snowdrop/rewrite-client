@@ -2,7 +2,7 @@
 [![License](https://img.shields.io/github/license/snowdrop/rewrite-client?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Version](https://img.shields.io/maven-central/v/dev.snowdrop.openrewrite/rewrite-client?logo=apache-maven&style=for-the-badge)](https://search.maven.org/artifact/dev.snowdrop.openrewrite/rewrite-client)
 
-> [NOTE]
+> [!NOTE]
 > **⚠️ Experimental:** +
 > This formatter is experimental and under active development. +
 > Please report issues or suggestions on https://github.com/snowdrop/rewrite-client/[GitHub].

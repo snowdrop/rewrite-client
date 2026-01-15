@@ -1,6 +1,6 @@
 package dev.snowdrop.openrewrite.cli;
 
-import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
@@ -46,16 +46,16 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.openrewrite.Tree.randomId;
 
-public class RewriteScanner {
+public class RewriteService {
 
     private ExecutionContext ctx;
     private List<Throwable> throwables;
     private Environment env;
     private LargeSourceSet sourceSet;
-    private Config config;
+    private RewriteConfig rewriteConfig;
 
-    public RewriteScanner(Config cfg) {
-        this.config = cfg;
+    public RewriteService(RewriteConfig cfg) {
+        this.rewriteConfig = cfg;
     }
 
     public void init() {
@@ -74,7 +74,7 @@ public class RewriteScanner {
 
     public ResultsContainer run() throws Exception {
         ResultsContainer results = processRecipes();
-        if(config.isDryRun()) {
+        if(rewriteConfig.isDryRun()) {
             createPatchFile(results);
         }
         return results;
@@ -107,7 +107,7 @@ public class RewriteScanner {
 
             for (Result result : results.getGenerated()) {
                 assert result.getAfter() != null;
-                if (!config.isDryRun()) {writeAfter(config.getAppPath(), result, ctx);}
+                if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
                 System.err.println("These recipes would generate a new file " +
                     result.getAfter().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
@@ -133,7 +133,7 @@ public class RewriteScanner {
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
                     result.getTimeSavings() : Duration.ZERO);
-                if (!config.isDryRun()) {writeAfter(config.getAppPath(), result, ctx);}
+                if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
             }
 
             for (Result result : results.getRefactoredInPlace()) {
@@ -143,11 +143,11 @@ public class RewriteScanner {
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
                     result.getTimeSavings() : Duration.ZERO);
-                if (!config.isDryRun()) {writeAfter(config.getAppPath(), result, ctx);}
+                if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
             }
 
             // Create patch file
-            Path outPath = config.getAppPath().resolve("target").resolve("rewrite");
+            Path outPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite");
             try {
                 Files.createDirectories(outPath);
             } catch (IOException e) {
@@ -192,26 +192,26 @@ public class RewriteScanner {
         Map<String, RecipeRun> allResults = new HashMap<>();
 
         // Process YAML recipes if it has been defined
-        if (config.getYamlRecipes() != null && !config.getYamlRecipes().isEmpty()) {
+        if (rewriteConfig.getYamlRecipes() != null && !rewriteConfig.getYamlRecipes().isEmpty()) {
             env = loadRecipesFromYAML(env);
             yamlRecipes = true;
         } else {
             // Check if we got a recipe FQName string instead and load it
-            if (config.getActiveRecipes() != null && !config.getActiveRecipes().isEmpty()) {
+            if (rewriteConfig.getActiveRecipes() != null && !rewriteConfig.getActiveRecipes().isEmpty()) {
                 // TODO: To be improved to iterate in a list
-                recipe = env.activateRecipes(config.getActiveRecipes().getFirst());
+                recipe = env.activateRecipes(rewriteConfig.getActiveRecipes().getFirst());
 
                 // When we use `activeRecipe` parameter, we can also optionally configure the parameters of the recipe where the fields will be set
                 // using the parameter "options"
                 // Set<String> options = Collections.singleton("annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication");
-                if (config.getRecipeOptions() != null && !config.getRecipeOptions().isEmpty()) {
-                    configureRecipeOptions(recipe, config.getRecipeOptions());
+                if (rewriteConfig.getRecipeOptions() != null && !rewriteConfig.getRecipeOptions().isEmpty()) {
+                    configureRecipeOptions(recipe, rewriteConfig.getRecipeOptions());
                 }
             }
         }
 
         if (env.listRecipes().isEmpty()) {
-            System.out.printf("No recipes found in active selection or YAML configuration for path: %s\n", config.getAppPath());
+            System.out.printf("No recipes found in active selection or YAML configuration for path: %s\n", rewriteConfig.getAppPath());
             return new ResultsContainer(Collections.emptyMap());
         }
 
@@ -250,7 +250,7 @@ public class RewriteScanner {
         env.scanRuntimeClasspath();
 
         // Load additional JARs if specified
-        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(config.getAdditionalJarPaths());
+        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
 
         if (additionalJarsClassloader != null) {
             // Load recipes using the ClasspathScanningLoader with the additional classloader
@@ -264,15 +264,15 @@ public class RewriteScanner {
     private Environment loadRecipesFromYAML(Environment env) {
         Environment.Builder envBuilder = env.builder();
         Path configPath;
-        if (Paths.get(config.getYamlRecipes()).isAbsolute()) {
-            configPath = Paths.get(config.getYamlRecipes());
+        if (Paths.get(rewriteConfig.getYamlRecipes()).isAbsolute()) {
+            configPath = Paths.get(rewriteConfig.getYamlRecipes());
         } else {
             String appProject = System.getenv("APP_PROJECT");
             if (appProject != null && !appProject.isEmpty()) {
                 configPath = Paths.get(appProject);
             } else {
                 // Fall back to resolving against project root
-                configPath = config.getAppPath().resolve(config.getYamlRecipes());
+                configPath = rewriteConfig.getAppPath().resolve(rewriteConfig.getYamlRecipes());
             }
         }
 
@@ -312,14 +312,14 @@ public class RewriteScanner {
         System.out.println("Parsing source files...");
         List<SourceFile> sourceFiles = new ArrayList<>();
 
-        System.out.println("Application absolute path: " + config.getAppPath());
+        System.out.println("Application absolute path: " + rewriteConfig.getAppPath());
 
         // Parse Java files
-        List<Path> javaFiles = findFiles(config.getAppPath(), ".java");
+        List<Path> javaFiles = findFiles(rewriteConfig.getAppPath(), ".java");
         if (!javaFiles.isEmpty()) {
             // If we have java files, then we assume that we have a pom and dependencies
             MavenUtils mavenUtils = new MavenUtils();
-            Model model = mavenUtils.setupProject(Paths.get(config.getAppPath().toString(), "pom.xml").toFile());
+            Model model = mavenUtils.setupProject(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml").toFile());
 
             // Collect the GAVs and their transitive dependencies
             MavenArtifactResolver mar = new MavenArtifactResolver();
@@ -332,38 +332,38 @@ public class RewriteScanner {
 
             // Load the Java source files
             JavaParser jp = javaParserBuilder.build();
-            sourceFiles.addAll(jp.parse(javaFiles, config.getAppPath(), ctx).toList());
+            sourceFiles.addAll(jp.parse(javaFiles, rewriteConfig.getAppPath(), ctx).toList());
             System.out.println("Parsed " + javaFiles.size() + " Java files");
         }
 
         // Parse Kotlin files
-        List<Path> kotlinFiles = findFiles(config.getAppPath(), ".kt");
+        List<Path> kotlinFiles = findFiles(rewriteConfig.getAppPath(), ".kt");
         if (!kotlinFiles.isEmpty()) {
             KotlinParser kotlinParser = KotlinParser.builder().build();
-            sourceFiles.addAll(kotlinParser.parse(kotlinFiles, config.getAppPath(), ctx).toList());
+            sourceFiles.addAll(kotlinParser.parse(kotlinFiles, rewriteConfig.getAppPath(), ctx).toList());
             System.out.println("Parsed " + kotlinFiles.size() + " Kotlin files");
         }
 
-        List<Path> poms = findFiles(config.getAppPath(), ".xml");
+        List<Path> poms = findFiles(rewriteConfig.getAppPath(), ".xml");
         MavenParser.Builder mavenParserBuilder = MavenParser.builder();
         List<SourceFile> mavens = mavenParserBuilder.build()
-            .parse(poms, config.getAppPath(), ctx)
+            .parse(poms, rewriteConfig.getAppPath(), ctx)
             .toList();
         sourceFiles.addAll(mavens);
 
         // Parse other files (XML, YAML, properties, etc.)
-        Set<String> masks = config.getPlainTextMasks().isEmpty() ? getDefaultPlainTextMasks() : config.getPlainTextMasks();
+        Set<String> masks = rewriteConfig.getPlainTextMasks().isEmpty() ? getDefaultPlainTextMasks() : rewriteConfig.getPlainTextMasks();
         OmniParser omniParser = OmniParser.builder(
                 OmniParser.defaultResourceParsers(),
                 PlainTextParser.builder()
-                    .plainTextMasks(config.getAppPath(), masks)
+                    .plainTextMasks(rewriteConfig.getAppPath(), masks)
                     .build()
             )
-            .sizeThresholdMb(config.getSizeThresholdMb())
+            .sizeThresholdMb(rewriteConfig.getSizeThresholdMb())
             .build();
 
-        List<Path> otherFiles = omniParser.acceptedPaths(config.getAppPath(), config.getAppPath());
-        sourceFiles.addAll(omniParser.parse(otherFiles, config.getAppPath(), ctx).toList());
+        List<Path> otherFiles = omniParser.acceptedPaths(rewriteConfig.getAppPath(), rewriteConfig.getAppPath());
+        sourceFiles.addAll(omniParser.parse(otherFiles, rewriteConfig.getAppPath(), ctx).toList());
 
         // Add provenance markers
         List<Marker> provenance = generateProvenance();
@@ -379,9 +379,9 @@ public class RewriteScanner {
         System.out.println("Running recipe(s)...");
         RecipeRun rr = recipe.run(sourceSet, ctx);
 
-        if (config.canExportDatatables()) {
+        if (rewriteConfig.canExportDatatables()) {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
-            Path datatableDirectoryPath = config.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
+            Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
             System.out.println("Printing available datatables to: " + datatableDirectoryPath);
             rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
         }
@@ -392,7 +392,7 @@ public class RewriteScanner {
     private List<Path> findFiles(Path root, String extension) throws IOException {
         List<Path> files = new ArrayList<>();
 
-        Collection<PathMatcher> exclusionMatchers = config.getExclusions().stream()
+        Collection<PathMatcher> exclusionMatchers = rewriteConfig.getExclusions().stream()
             .map(pattern -> root.getFileSystem().getPathMatcher("glob:" + pattern))
             .toList();
 
@@ -440,7 +440,7 @@ public class RewriteScanner {
             buildEnvironment,
             OperatingSystemProvenance.current(),
             new BuildTool(randomId(), BuildTool.Type.Gradle, "standalone"), // Generic build tool
-            new JavaProject(randomId(), config.getAppPath().getFileName().toString(),
+            new JavaProject(randomId(), rewriteConfig.getAppPath().getFileName().toString(),
                 new JavaProject.Publication("standalone", "standalone", "1.0.0")),
             new JavaVersion(randomId(), javaRuntimeVersion, javaVendor, javaRuntimeVersion, javaRuntimeVersion),
             JavaSourceSet.build("main", emptyList())

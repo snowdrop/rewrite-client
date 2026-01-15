@@ -1,19 +1,18 @@
 package dev.snowdrop.rewrite.cli;
 
-import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
 public class BaseTest {
 
-    Config cfg;
+    RewriteConfig cfg;
 
     @BeforeEach
     public void beforeEach() {
-        cfg = new Config();
+        cfg = new RewriteConfig();
         cfg.setExportDatatables(true);
         cfg.setExclusions(Set.of());
         cfg.setPlainTextMasks(Set.of());

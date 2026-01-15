@@ -35,7 +35,7 @@
  */
 package dev.snowdrop.openrewrite.cli;
 
-import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
@@ -192,12 +192,12 @@ public class RewriteCommand implements Runnable {
         }
     }
 
-    public ResultsContainer execute(Config config) throws Exception {
-        return runScanner(config);
+    public ResultsContainer execute(RewriteConfig rewriteConfig) throws Exception {
+        return runScanner(rewriteConfig);
     }
 
     public ResultsContainer execute() throws Exception {
-        Config cfg = new Config();
+        RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(projectRoot);
         cfg.setAdditionalJarPaths(additionalJarPaths);
         if (activeRecipe != null) {
@@ -213,7 +213,7 @@ public class RewriteCommand implements Runnable {
         return runScanner(cfg);
     }
 
-    private ResultsContainer runScanner(Config cfg) throws Exception {
+    private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
         System.out.println("Starting OpenRewrite ...");
         System.out.println("Project root: " + cfg.getAppPath().toAbsolutePath());
         System.out.println("Active recipe: " + cfg.getActiveRecipes());
@@ -222,7 +222,7 @@ public class RewriteCommand implements Runnable {
             System.out.println("Additional JAR files: " + cfg.getAdditionalJarPaths());
         }
 
-        RewriteScanner scanner = new RewriteScanner(cfg);
+        RewriteService scanner = new RewriteService(cfg);
         scanner.init();
         return scanner.run();
     }

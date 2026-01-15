@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Config {
+public class RewriteConfig {
     private Path appPath;
     private List<String> additionalJarPaths = new ArrayList<>();
     private List<String> activeRecipes = new ArrayList<>();

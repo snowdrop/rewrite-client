@@ -30,7 +30,7 @@ public class FindAnnotation extends BaseTest {
 
         // Configure the application to scan and recipe to be executed
         cfg.setAppPath(Paths.get(appPath));
-        cfg.setRecipes(List.of(recipeName));
+        cfg.setNamedRecipe(recipeName);
         cfg.setRecipeOptions(Set.of("annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchMetaAnnotations=false"));
 
         var results = rewriteCmd.execute(cfg);

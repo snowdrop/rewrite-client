@@ -1,5 +1,7 @@
 package dev.snowdrop.openrewrite.cli.model;
 
+import org.openrewrite.Recipe;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,14 +10,25 @@ import java.util.Set;
 
 public class RewriteConfig {
     private Path appPath;
+
+    // Additional jar containing recipes
     private List<String> additionalJarPaths = new ArrayList<>();
-    private List<String> recipes = new ArrayList<>();
+
+    // FQName of the recipe class to be executed
+    private String namedRecipe;
+    // Options to be set to the Recipe Class
+    private Set<String> recipeOptions = new HashSet<>();
+
+    // List of Recipe
+    private List<Recipe> recipes = new ArrayList<>();
+
+    // Path of the Yaml Recipes file
     private String yamlRecipesPath;
+
     private Boolean exportDatatables = true;
     private int sizeThresholdMb = 10;
     private Set<String> exclusions = new HashSet<>();
     private Set<String> plainTextMasks = new HashSet<>();
-    private Set<String> recipeOptions = new HashSet<>();
     private boolean dryRun = true;
 
     public Path getAppPath() {
@@ -34,11 +47,19 @@ public class RewriteConfig {
         this.additionalJarPaths = additionalJarPaths;
     }
 
-    public List<String> getRecipes() {
+    public String getNamedRecipe() {
+        return namedRecipe;
+    }
+
+    public void setNamedRecipe(String namedRecipe) {
+        this.namedRecipe = namedRecipe;
+    }
+
+    public List<Recipe> getRecipes(List<Recipe> recipes) {
         return recipes;
     }
 
-    public void setRecipes(List<String> recipes) {
+    public void setRecipes(List<Recipe> recipes) {
         this.recipes = recipes;
     }
 

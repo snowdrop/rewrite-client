@@ -25,7 +25,7 @@ public class AutoFormatTest extends BaseTest {
 
         // Configure the application to scan and recipe to be executed
         cfg.setAppPath(Paths.get(appPath));
-        cfg.setRecipes(List.of(recipeName));
+        cfg.setNamedRecipe(recipeName);
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);

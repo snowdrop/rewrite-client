@@ -201,7 +201,7 @@ public class RewriteCommand implements Runnable {
         cfg.setAppPath(projectRoot);
         cfg.setAdditionalJarPaths(additionalJarPaths);
         if (recipeName != null) {
-            cfg.setRecipes(List.of(recipeName));
+            cfg.setNamedRecipe(recipeName);
             cfg.setRecipeOptions(recipeOptions);
         }
         if (yamlRecipesPath != null) {cfg.setYamlRecipesPath(yamlRecipesPath);}
@@ -216,7 +216,7 @@ public class RewriteCommand implements Runnable {
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
         System.out.println("Starting OpenRewrite ...");
         System.out.println("Project root: " + cfg.getAppPath().toAbsolutePath());
-        System.out.println("Active recipe: " + cfg.getRecipes());
+        System.out.println("Named recipe(s): " + cfg.getNamedRecipe());
 
         if (!cfg.getAdditionalJarPaths().isEmpty()) {
             System.out.println("Additional JAR files: " + cfg.getAdditionalJarPaths());

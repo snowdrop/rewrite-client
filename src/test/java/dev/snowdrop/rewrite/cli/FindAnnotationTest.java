@@ -18,7 +18,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class FindAnnotation extends BaseTest {
+public class FindAnnotationTest extends BaseTest {
 
     @Test
     void shouldFindAnnotation() throws Exception {

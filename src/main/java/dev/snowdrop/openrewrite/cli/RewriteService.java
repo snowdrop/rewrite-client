@@ -72,7 +72,7 @@ public class RewriteService {
         }
     }
 
-    public ResultsContainer run() throws Exception {
+    public ResultsContainer run()  {
         ResultsContainer results = processRecipes();
         if(rewriteConfig.isDryRun()) {
             createPatchFile(results);

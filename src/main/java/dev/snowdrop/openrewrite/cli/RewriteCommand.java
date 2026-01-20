@@ -71,15 +71,15 @@ public class RewriteCommand implements Runnable {
     Path projectRoot;
 
     @CommandLine.Option(
-        names = {"-r", "--recipes"},
-        description = "Active recipe to run (e.g., org.openrewrite.java.format.AutoFormat)",
+        names = {"-r", "--recipe"},
+        description = "FQName of the Java Recipe class to run (e.g., org.openrewrite.java.format.AutoFormat)",
         required = false
     )
-    String activeRecipe;
+    String recipeName;
 
     @CommandLine.Option(
         names= {"-o","--options"},
-        description = "Options of the recipe to be used to set the recipe's object fields. Example: annotationPattern=@SpringBootApplication",
+        description = "Options to be used to set the recipe's object fields. Example: annotationPattern=@SpringBootApplication",
         split = ",",
         required = false
     )
@@ -94,9 +94,9 @@ public class RewriteCommand implements Runnable {
 
     @CommandLine.Option(
         names = {"--config", "-c"},
-        description = "Path to the rewrite.yml configuration file (default: ${DEFAULT-VALUE})"
+        description = "Path to the recipes rewrite.yml file (default: ${DEFAULT-VALUE})"
     )
-    String configLocation;
+    String yamlRecipesPath;
 
     @CommandLine.Option(
         names = {"--export-datatables"},
@@ -200,11 +200,11 @@ public class RewriteCommand implements Runnable {
         RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(projectRoot);
         cfg.setAdditionalJarPaths(additionalJarPaths);
-        if (activeRecipe != null) {
-            cfg.setActiveRecipes(List.of(activeRecipe));
+        if (recipeName != null) {
+            cfg.setFqNameRecipe(recipeName);
             cfg.setRecipeOptions(recipeOptions);
         }
-        if (configLocation != null) {cfg.setYamlRecipes(configLocation);}
+        if (yamlRecipesPath != null) {cfg.setYamlRecipesPath(yamlRecipesPath);}
         cfg.setExportDatatables(exportDatatables);
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);
@@ -216,7 +216,7 @@ public class RewriteCommand implements Runnable {
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
         System.out.println("Starting OpenRewrite ...");
         System.out.println("Project root: " + cfg.getAppPath().toAbsolutePath());
-        System.out.println("Active recipe: " + cfg.getActiveRecipes());
+        System.out.println("Fully Qualified named of the Recipe java class: " + cfg.getFqNameRecipe());
 
         if (!cfg.getAdditionalJarPaths().isEmpty()) {
             System.out.println("Additional JAR files: " + cfg.getAdditionalJarPaths());

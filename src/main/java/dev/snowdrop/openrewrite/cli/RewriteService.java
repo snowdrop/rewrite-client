@@ -191,15 +191,14 @@ public class RewriteService {
         boolean yamlRecipes = false;
         Map<String, RecipeRun> allResults = new HashMap<>();
 
-        // Process YAML recipes if it has been defined
-        if (rewriteConfig.getYamlRecipes() != null && !rewriteConfig.getYamlRecipes().isEmpty()) {
+        // Process the Yaml recipes file if it has been defined
+        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
             env = loadRecipesFromYAML(env);
             yamlRecipes = true;
         } else {
-            // Check if we got a recipe FQName string instead and load it
-            if (rewriteConfig.getActiveRecipes() != null && !rewriteConfig.getActiveRecipes().isEmpty()) {
-                // TODO: To be improved to iterate in a list
-                recipe = env.activateRecipes(rewriteConfig.getActiveRecipes().getFirst());
+            // Check if we got a recipe with a FQName string and load it
+            if (rewriteConfig.getFqNameRecipe() != null && !rewriteConfig.getFqNameRecipe().isEmpty()) {
+                recipe = env.activateRecipes(rewriteConfig.getFqNameRecipe());
 
                 // When we use `activeRecipe` parameter, we can also optionally configure the parameters of the recipe where the fields will be set
                 // using the parameter "options"
@@ -215,7 +214,7 @@ public class RewriteService {
             return new ResultsContainer(Collections.emptyMap());
         }
 
-        // Run the recipe loaded
+        // Run the recipe created using the FQName
         if (!yamlRecipes) {
             System.out.println("Using active recipe(s): " + recipe.getName());
 
@@ -264,15 +263,15 @@ public class RewriteService {
     private Environment loadRecipesFromYAML(Environment env) {
         Environment.Builder envBuilder = env.builder();
         Path configPath;
-        if (Paths.get(rewriteConfig.getYamlRecipes()).isAbsolute()) {
-            configPath = Paths.get(rewriteConfig.getYamlRecipes());
+        if (Paths.get(rewriteConfig.getYamlRecipesPath()).isAbsolute()) {
+            configPath = Paths.get(rewriteConfig.getYamlRecipesPath());
         } else {
             String appProject = System.getenv("APP_PROJECT");
             if (appProject != null && !appProject.isEmpty()) {
                 configPath = Paths.get(appProject);
             } else {
                 // Fall back to resolving against project root
-                configPath = rewriteConfig.getAppPath().resolve(rewriteConfig.getYamlRecipes());
+                configPath = rewriteConfig.getAppPath().resolve(rewriteConfig.getYamlRecipesPath());
             }
         }
 

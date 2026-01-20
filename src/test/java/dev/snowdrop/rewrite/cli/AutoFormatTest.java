@@ -8,7 +8,6 @@ import org.openrewrite.RecipeRun;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,7 +24,7 @@ public class AutoFormatTest extends BaseTest {
 
         // Configure the application to scan and recipe to be executed
         cfg.setAppPath(Paths.get(appPath));
-        cfg.setActiveRecipes(List.of(recipeName));
+        cfg.setFqNameRecipe(recipeName);
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);

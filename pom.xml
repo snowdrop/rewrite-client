@@ -6,7 +6,7 @@
 
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>rewrite-client</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.2.0</version>
     <name>OpenRewrite Client</name>
     <description>Openrewrite client and library to apply recipes</description>
     <inceptionYear>2026</inceptionYear>

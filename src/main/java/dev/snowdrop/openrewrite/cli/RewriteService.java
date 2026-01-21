@@ -53,6 +53,7 @@ public class RewriteService {
     private Environment env;
     private LargeSourceSet sourceSet;
     private RewriteConfig rewriteConfig;
+    private boolean sourceSetInitialized;
 
     public RewriteService(RewriteConfig cfg) {
         this.rewriteConfig = cfg;
@@ -66,10 +67,18 @@ public class RewriteService {
             // Instantiate the resource and classloader including also the external one provided
             env = createEnvironment();
             sourceSet = loadSourceSet(env, ctx);
+
+            if (sourceSet.getChangeset().size() > 0) {
+                sourceSetInitialized = true;
+            }
         } catch (Exception ex) {
             System.err.println("Error while initializing");
             ex.printStackTrace(System.err);
         }
+    }
+
+    public boolean isSourceSetInitialized() {
+        return sourceSetInitialized;
     }
 
     public ResultsContainer run()  {

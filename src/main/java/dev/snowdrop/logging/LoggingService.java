@@ -23,9 +23,6 @@ public class LoggingService {
     @ConfigProperty(name = "client.logging.verbose", defaultValue = "false")
     boolean isVerbose;
 
-    @ConfigProperty(name = "client.logging.colored", defaultValue = "true")
-    boolean useAnsiColoredMsg;
-
     private CommandLine.Model.CommandSpec spec;
     private TerminalColorCapability cap;
     private final static String SPACE = " ";
@@ -108,13 +105,10 @@ public class LoggingService {
 
     public void error(String message, Throwable e) {
         if (isCliMode) {
-            spec.commandLine().getOut().println(colorizeMessage(LEVEL.ERROR, message));
             if (e != null && isVerbose) {
-                //e.printStackTrace(spec.commandLine().getErr());
-                java.io.StringWriter sw = new java.io.StringWriter();
-                e.printStackTrace(new java.io.PrintWriter(sw));
-                String stackTrace = sw.toString();
-                spec.commandLine().getErr().println(colorizeMessage(LEVEL.ERROR, stackTrace, true));
+                spec.commandLine().getErr().println(colorizeMessage(LEVEL.ERROR, message, e));
+            } else {
+                spec.commandLine().getOut().println(colorizeMessage(LEVEL.ERROR, message));
             }
         } else {
             if (isVerbose && e != null) {
@@ -126,13 +120,16 @@ public class LoggingService {
     }
 
     public String colorizeMessage(LEVEL level, String message) {
-        return colorizeMessage(level, message, false);
+        return colorizeMessage(level, message, null);
     }
 
-    public String colorizeMessage(LEVEL level, String message, boolean isStackTrace) {
+    public String colorizeMessage(LEVEL level, String message, Throwable ex) {
         ColorPatternFormatter fmt = new ColorPatternFormatter(darken, "%d{HH:mm:ss} %-5p %s%e");
         ExtLogRecord record = new ExtLogRecord(level.toJbossLevel(), message, ExtLogRecord.FormatStyle.PRINTF, LoggingService.class.getName());
         record.setParameters(new Object[]{Class.class}); // Set a dummy value otherwise the message is not rendered using the proper color !
+        if(ex != null) {
+            record.setThrown(ex);
+        }
         return fmt.format(record);
     }
 }

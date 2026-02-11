@@ -1,0 +1,7 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: dev.snowdrop.RecipeExample
+displayName: Format Code Recipe
+description: A recipe to detect formatting issues in Java code
+recipeList:
+  - org.openrewrite.java.format.AutoFormat

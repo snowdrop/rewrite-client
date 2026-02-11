@@ -29,6 +29,9 @@
         <openrewrite-bom.version>8.70.4</openrewrite-bom.version>
         <openrewrite-rewrite-polyglot.version>2.9.1</openrewrite-rewrite-polyglot.version>
 
+        <aesh.version>3.1</aesh.version>
+        <jboss-logmanager.version>3.2.1.Final-SNAPSHOT</jboss-logmanager.version>
+
         <skipITs>true</skipITs>
 
         <maven-compiler-plugin.version>3.12.1</maven-compiler-plugin.version>
@@ -89,6 +92,18 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Tools to colorize the messages -->
+        <dependency>
+            <groupId>org.aesh</groupId>
+            <artifactId>terminal-tty</artifactId>
+            <version>${aesh.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager</artifactId>
+            <version>${jboss-logmanager.version}</version>
+        </dependency>
+
         <!-- Quarkus dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>

@@ -1,6 +1,0 @@
----
-type: specs.openrewrite.org/v1beta/recipe
-name: dev.snowdrop.RecipeExample
-displayName: Auto format the jave source code
-recipeList:
-  - org.openrewrite.java.format.AutoFormat

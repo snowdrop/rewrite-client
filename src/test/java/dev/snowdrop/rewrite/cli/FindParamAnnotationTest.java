@@ -41,6 +41,7 @@ public class FindParamAnnotationTest extends BaseTest {
         cfg.setAppPath(Paths.get(appPath));
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
+        cfg.setAdditionalJarPaths(List.of(""));
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
@@ -61,14 +62,15 @@ public class FindParamAnnotationTest extends BaseTest {
     }
 
     @Test
-    void shouldFindAnnotation() throws Exception {
+    void shouldFindJBossRestEasyPathParamAnnotation() throws Exception {
         String recipeName = "org.openrewrite.java.search.FindAnnotations";
-        String annotationToSearch="@org.jboss.resteasy.annotations.jaxrs.PathParam"; // That works using : jakarta.ws.rs.GET
+        String annotationToSearch="org.jboss.resteasy.annotations.jaxrs.PathParam";
 
         // Configure the application to scan and recipe to be executed
         cfg.setAppPath(Paths.get(appPath));
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
+        cfg.setAdditionalJarPaths(List.of("org.jboss.resteasy:resteasy-core-spi:6.2.12.Final"));
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);

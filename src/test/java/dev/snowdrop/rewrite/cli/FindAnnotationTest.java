@@ -1,6 +1,5 @@
 package dev.snowdrop.rewrite.cli;
 
-import dev.snowdrop.openrewrite.cli.RewriteCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,6 @@ public class FindAnnotationTest extends BaseTest {
 
     @Test
     void shouldFindAnnotation() throws Exception {
-        RewriteCommand rewriteCmd = new RewriteCommand();
         String recipeName = "org.openrewrite.java.search.FindAnnotations";
 
         // Configure the application to scan and recipe to be executed

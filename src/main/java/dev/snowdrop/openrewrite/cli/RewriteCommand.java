@@ -207,6 +207,9 @@ public class RewriteCommand implements Runnable {
     }
 
     public ResultsContainer execute(RewriteConfig rewriteConfig) throws Exception {
+        if (LOG == null && logFactory != null) {
+            this.LOG = logFactory.getLogger();
+        }
         return runScanner(rewriteConfig);
     }
 

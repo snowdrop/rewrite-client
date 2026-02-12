@@ -1,12 +1,19 @@
 package dev.snowdrop.rewrite.cli;
 
+import dev.snowdrop.openrewrite.cli.RewriteCommand;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
+import io.quarkus.picocli.runtime.annotations.TopCommand;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
 import java.util.Set;
 
 public class BaseTest {
+
+    @Inject
+    @TopCommand
+    RewriteCommand rewriteCmd;
 
     RewriteConfig cfg;
 

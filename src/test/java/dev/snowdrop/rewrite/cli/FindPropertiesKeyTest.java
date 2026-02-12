@@ -1,6 +1,5 @@
 package dev.snowdrop.rewrite.cli;
 
-import dev.snowdrop.openrewrite.cli.RewriteCommand;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,8 +34,6 @@ public class FindPropertiesKeyTest extends BaseTest {
 
     @Test
     void shouldFindJpaPropertiesKeyExactly() throws Exception {
-        RewriteCommand rewriteCmd = new RewriteCommand();
-
         Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
         String recipeName = "org.openrewrite.properties.search.FindProperties";
 
@@ -68,8 +65,6 @@ public class FindPropertiesKeyTest extends BaseTest {
 
     @Test
     void shouldFindJpaPropertiesKeyRelaxedBinding() throws Exception {
-        RewriteCommand rewriteCmd = new RewriteCommand();
-
         String appPath = "test-project/demo-spring-boot-todo-app";
         Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
         String recipeName = "org.openrewrite.properties.search.FindProperties";

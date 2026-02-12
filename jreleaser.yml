@@ -15,12 +15,14 @@ release:
     tagName: "{{projectVersion}}"
     releaseName: "{{tagName}}"
     overwrite: true
+    # https://jreleaser.org/guide/latest/reference/release/changelog.html
     changelog:
       formatted: ALWAYS
       links: true
       preset: conventional-commits
       contributors:
         format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+      contentTemplate: src/jreleaser/templates/changelog.tpl
 
 distributions:
   openrewrite-cli:

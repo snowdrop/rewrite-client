@@ -176,7 +176,7 @@ public class RewriteCommand implements Runnable {
 
             runs.forEach((k,v) -> {
                 if (!v.getDataTables().isEmpty()) {
-                    LOG.info(String.format("Execution of the recipe %s succeeded.%n",k));
+                    LOG.info(RewriteCommand.class, String.format("Execution of the recipe %s succeeded.%n",k));
 
                     //System.out.printf("Execution of the recipe %s succeeded\n",k);
                     // The DataTable<SearchResult> will be available starting from: 8.69.0 !
@@ -185,23 +185,23 @@ public class RewriteCommand implements Runnable {
                     if (searchResults != null) {
                         searchResults.forEach((result, list) -> {
                             if (result.getClass().getSimpleName().startsWith("SearchResults")) {
-                                LOG.info("# Found " + list.size() + " search results.");
+                                LOG.info(RewriteCommand.class, "# Found " + list.size() + " search results.");
                                 list.forEach(r -> {
                                     var row = (SearchResults.Row)r;
-                                    LOG.info("# SourcePath: " + row.getSourcePath());
-                                    LOG.info("# Result: " + row.getResult());
-                                    LOG.info("# Recipe: " + row.getRecipe());
-                                    LOG.info("==============================================");
+                                    LOG.info(RewriteCommand.class, "# SourcePath: " + row.getSourcePath());
+                                    LOG.info(RewriteCommand.class, "# Result: " + row.getResult());
+                                    LOG.info(RewriteCommand.class, "# Recipe: " + row.getRecipe());
+                                    LOG.info(RewriteCommand.class, "==============================================");
                                 });
                             }
                         });
                     }
                 }
             });
-            LOG.info("Client execution is finishing ...");
+            LOG.info(RewriteCommand.class, "Client execution is finishing ...");
 
         } catch (Exception e) {
-            LOG.error("Error executing rewrite command",e);
+            LOG.error(RewriteCommand.class, "Error executing rewrite command", e);
             System.exit(1);
         }
     }
@@ -231,12 +231,12 @@ public class RewriteCommand implements Runnable {
     }
 
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
-        LOG.info("Starting OpenRewrite ...");
-        LOG.info(String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
-        LOG.info(String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
+        LOG.info(RewriteCommand.class, "Starting OpenRewrite ...");
+        LOG.info(RewriteCommand.class, String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
+        LOG.info(RewriteCommand.class, String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
 
         if (!cfg.getAdditionalJarPaths().isEmpty()) {
-            LOG.info("Additional JAR files: " + cfg.getAdditionalJarPaths());
+            LOG.info(RewriteCommand.class, "Additional JAR files: " + cfg.getAdditionalJarPaths());
         }
 
         RewriteService scanner = new RewriteService(cfg);

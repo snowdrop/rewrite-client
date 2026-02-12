@@ -59,56 +59,83 @@ public class LoggingService {
     }
 
     public void info(String message) {
+        info(null, message);
+    }
+
+    public void info(Class<?> clazz, String message) {
         if (isCliMode) {
-            var formatedMessage = colorizeMessage(LEVEL.INFO, message);
-            spec.commandLine().getOut().println(formatedMessage);
+            spec.commandLine().getOut().println(colorizeMessage(LEVEL.INFO, clazz, message));
         } else {
             logger.info(message);
         }
     }
 
     public void warn(String message) {
+        warn(null, message);
+    }
+
+    public void warn(Class<?> clazz, String message) {
         if (isCliMode) {
-            spec.commandLine().getOut().println(colorizeMessage(LEVEL.WARN, message));
+            spec.commandLine().getOut().println(colorizeMessage(LEVEL.WARN, clazz, message));
         } else {
             logger.warn(message);
         }
     }
 
     public void debug(String message) {
+        debug(null, message);
+    }
+
+    public void debug(Class<?> clazz, String message) {
         if (isCliMode) {
-            spec.commandLine().getOut().println(colorizeMessage(LEVEL.DEBUG, message));
+            spec.commandLine().getOut().println(colorizeMessage(LEVEL.DEBUG, clazz, message));
         } else {
             logger.debug(message);
         }
     }
 
     public void trace(String message) {
+        trace(null, message);
+    }
+
+    public void trace(Class<?> clazz, String message) {
         if (isCliMode) {
-            spec.commandLine().getOut().println(colorizeMessage(LEVEL.TRACE, message));
+            spec.commandLine().getOut().println(colorizeMessage(LEVEL.TRACE, clazz, message));
         } else {
             logger.trace(message);
         }
     }
 
     public void fatal(String message) {
+        fatal(null, message);
+    }
+
+    public void fatal(Class<?> clazz, String message) {
         if (isCliMode) {
-            spec.commandLine().getOut().println(colorizeMessage(LEVEL.FATAL, message));
+            spec.commandLine().getOut().println(colorizeMessage(LEVEL.FATAL, clazz, message));
         } else {
             logger.fatal(message);
         }
     }
 
     public void error(String s) {
-        this.error(s, null);
+        this.error(null, s, null);
     }
 
     public void error(String message, Throwable e) {
+        this.error(null, message, e);
+    }
+
+    public void error(Class<?> clazz, String message) {
+        this.error(clazz, message, null);
+    }
+
+    public void error(Class<?> clazz, String message, Throwable e) {
         if (isCliMode) {
             if (e != null && isVerbose) {
-                spec.commandLine().getErr().println(colorizeMessage(LEVEL.ERROR, message, e));
+                spec.commandLine().getErr().println(colorizeMessage(LEVEL.ERROR, clazz, message, e));
             } else {
-                spec.commandLine().getOut().println(colorizeMessage(LEVEL.ERROR, message));
+                spec.commandLine().getOut().println(colorizeMessage(LEVEL.ERROR, clazz, message));
             }
         } else {
             if (isVerbose && e != null) {
@@ -119,17 +146,23 @@ public class LoggingService {
         }
     }
 
-    public String colorizeMessage(LEVEL level, String message) {
-        return colorizeMessage(level, message, null);
+    public String colorizeMessage(LEVEL level, Class<?> clazz, String message) {
+        return colorizeMessage(level, clazz, message, null);
     }
 
-    public String colorizeMessage(LEVEL level, String message, Throwable ex) {
-        ColorPatternFormatter fmt = new ColorPatternFormatter(darken, "%d{HH:mm:ss} %-5p %s%e");
-        ExtLogRecord record = new ExtLogRecord(level.toJbossLevel(), message, ExtLogRecord.FormatStyle.PRINTF, LoggingService.class.getName());
-        record.setParameters(new Object[]{Class.class}); // Set a dummy value otherwise the message is not rendered using the proper color !
-        if(ex != null) {
+    public String colorizeMessage(LEVEL level, Class<?> clazz, String message, Throwable ex) {
+        String name = loggerName(clazz);
+        ColorPatternFormatter fmt = new ColorPatternFormatter(darken, "%d{HH:mm:ss} %-5p [%c] %s%e");
+        ExtLogRecord record = new ExtLogRecord(level.toJbossLevel(), message, ExtLogRecord.FormatStyle.PRINTF, name);
+        record.setLoggerName(name);
+        record.setParameters(new Object[]{clazz.getName()});
+        if (ex != null) {
             record.setThrown(ex);
         }
         return fmt.format(record);
+    }
+
+    private String loggerName(Class<?> clazz) {
+        return clazz != null ? clazz.getName() : LoggingService.class.getName();
     }
 }

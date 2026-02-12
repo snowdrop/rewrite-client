@@ -26,7 +26,7 @@ Add the dependency to your project:
 <dependency>
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>rewrite-client</artifactId>
-    <version>0.2.0</version>
+    <version>0.2.4</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ jbang app install openrewrite@snowdrop/rewrite-client
 > [!NOTE]
 > To install a released version, append to the reference of the version
 ```shell
-jbang app install openrewrite@snowdrop/rewrite-client/0.2.0
+jbang app install openrewrite@snowdrop/rewrite-client/0.2.4
 ```
 
 Run a recipe:

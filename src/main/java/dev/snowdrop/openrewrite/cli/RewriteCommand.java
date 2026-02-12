@@ -15,6 +15,7 @@
 //DEPS org.openrewrite:rewrite-json
 //DEPS org.openrewrite:rewrite-gradle
 //DEPS org.openrewrite:rewrite-maven
+//RUNTIME_OPTIONS -Djansi.colors=256
 
 // List of DEPS generated using the command: mvn dependency:list -DexcludeTransitive=true | grep ":.*:.*:.*" | cut -d']' -f2- | sed 's/^ /\/\/DEPS /'
 
@@ -35,6 +36,8 @@
  */
 package dev.snowdrop.openrewrite.cli;
 
+import dev.snowdrop.logging.LogFactory;
+import dev.snowdrop.logging.LoggingService;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
@@ -57,12 +60,23 @@ import java.util.*;
     version = "1.0.0-SNAPSHOT",
     description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application",
     footer = "\nExample usage:\n" +
-        "  rewrite /path/to/project org.openrewrite.java.format.AutoFormat\n" +
+        "  rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat\n" +
         "  rewrite --jar custom-recipes.jar --export-datatables /path/to/project MyRecipe\n" +
         "  rewrite --jar org.openrewrite:rewrite-java:8.62.4,dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT /path/to/project MyRecipe\n" +
         "  rewrite --config /path/to/rewrite.yml /path/to/project MyRecipe"
 )
 public class RewriteCommand implements Runnable {
+
+    @Inject
+    LogFactory logFactory;
+
+    private LoggingService LOG;
+
+    @CommandLine.Spec
+    void setSpec(CommandLine.Model.CommandSpec spec) {
+        logFactory.setSpec(spec);
+        this.LOG = logFactory.getLogger();
+    };
 
     @CommandLine.Parameters(
         index = "0",
@@ -142,7 +156,6 @@ public class RewriteCommand implements Runnable {
     @Override
     public void run() {
         try {
-            //config = ConfigProvider.getConfig().unwrap(SmallRyeConfig.class).getConfigMapping(RewriteConfiguration.class);
 
             // Use injected defaults if not specified via command line
             if (sizeThresholdMb == 0) {
@@ -163,36 +176,40 @@ public class RewriteCommand implements Runnable {
 
             runs.forEach((k,v) -> {
                 if (!v.getDataTables().isEmpty()) {
-                    System.out.printf("Execution of the recipe %s succeeded\n",k);
+                    LOG.info(String.format("Execution of the recipe %s succeeded.%n",k));
+
+                    //System.out.printf("Execution of the recipe %s succeeded\n",k);
                     // The DataTable<SearchResult> will be available starting from: 8.69.0 !
 
                     Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
                     if (searchResults != null) {
                         searchResults.forEach((result, list) -> {
                             if (result.getClass().getSimpleName().startsWith("SearchResults")) {
-                                System.out.println("# Found " + list.size() + " search results.");
-                                list.stream().forEach(r -> {
+                                LOG.info("# Found " + list.size() + " search results.");
+                                list.forEach(r -> {
                                     var row = (SearchResults.Row)r;
-                                    System.out.println("# SourcePath: " + row.getSourcePath());
-                                    System.out.println("# Result: " + row.getResult());
-                                    System.out.println("# Recipe: " + row.getRecipe());
-                                    System.out.println("==============================================");
+                                    LOG.info("# SourcePath: " + row.getSourcePath());
+                                    LOG.info("# Result: " + row.getResult());
+                                    LOG.info("# Recipe: " + row.getRecipe());
+                                    LOG.info("==============================================");
                                 });
                             }
                         });
                     }
                 }
             });
-            System.out.println("Finished OpenRewrite ...");
+            LOG.info("Client execution is finishing ...");
 
         } catch (Exception e) {
-            System.err.println("Error executing rewrite command: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Error executing rewrite command",e);
             System.exit(1);
         }
     }
 
     public ResultsContainer execute(RewriteConfig rewriteConfig) throws Exception {
+        if (LOG == null && logFactory != null) {
+            this.LOG = logFactory.getLogger();
+        }
         return runScanner(rewriteConfig);
     }
 
@@ -214,15 +231,16 @@ public class RewriteCommand implements Runnable {
     }
 
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
-        System.out.println("Starting OpenRewrite ...");
-        System.out.println("Project root: " + cfg.getAppPath().toAbsolutePath());
-        System.out.println("Fully Qualified named of the Recipe java class: " + cfg.getFqNameRecipe());
+        LOG.info("Starting OpenRewrite ...");
+        LOG.info(String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
+        LOG.info(String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
 
         if (!cfg.getAdditionalJarPaths().isEmpty()) {
-            System.out.println("Additional JAR files: " + cfg.getAdditionalJarPaths());
+            LOG.info("Additional JAR files: " + cfg.getAdditionalJarPaths());
         }
 
         RewriteService scanner = new RewriteService(cfg);
+        scanner.setLogger(LOG);
         scanner.init();
         return scanner.run();
     }

@@ -2,6 +2,7 @@ package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.RewriteCommand;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.RecipeRun;
 
@@ -16,7 +17,6 @@ public class AutoFormatTest extends BaseTest {
 
     @Test
     void testAutoFormatRecipe() throws Exception {
-        RewriteCommand rewriteCmd = new RewriteCommand();
 
         String appPath = "test-project/simple";
         Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");

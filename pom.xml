@@ -104,13 +104,6 @@
             <version>${jboss-logmanager.version}</version>
         </dependency>
 
-        <!-- Temp -->
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-core</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Quarkus dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>

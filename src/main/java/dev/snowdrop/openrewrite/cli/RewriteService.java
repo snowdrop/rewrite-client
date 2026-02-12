@@ -1,6 +1,5 @@
 package dev.snowdrop.openrewrite.cli;
 
-import dev.snowdrop.logging.LogFactory;
 import dev.snowdrop.logging.LoggingService;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
@@ -31,7 +30,6 @@ import org.openrewrite.quark.Quark;
 import org.openrewrite.remote.Remote;
 import org.openrewrite.text.PlainTextParser;
 
-import jakarta.inject.Inject;
 import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.File;
@@ -110,7 +108,7 @@ public class RewriteService {
 
     public void scanLoadResources() {
         try {
-            sourceSet = loadSourceSet(env, ctx);
+            sourceSet = loadSourceSet(ctx);
         } catch (Exception ex) {
             LOG.error(RewriteService.class, "Error while initializing", ex);
         }
@@ -356,7 +354,7 @@ public class RewriteService {
         }
     }
 
-    private LargeSourceSet loadSourceSet(Environment env, ExecutionContext ctx) throws Exception {
+    private LargeSourceSet loadSourceSet(ExecutionContext ctx) throws Exception {
         // TODO: Do we need such Styles for the Java parser. To be investigated !
         // List<NamedStyles> styles = env.activateStyles(emptySet());
 

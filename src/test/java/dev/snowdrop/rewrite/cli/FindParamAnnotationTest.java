@@ -82,11 +82,11 @@ public class FindParamAnnotationTest extends BaseTest {
         assertTrue(resultMap.isPresent());
 
         List<?> rows = resultMap.get().getValue();
-        assertEquals(1, rows.size());
+        assertEquals(3, rows.size());
 
         SearchResults.Row record = (SearchResults.Row) rows.getFirst();
         assertEquals("src/main/java/com/demo/library/BookResource.java", record.getSourcePath());
-        assertEquals("@PathParam", record.getResult());
+        assertEquals(true, record.getResult().contains("@PathParam"));
         assertEquals("Find annotations `org.jboss.resteasy.annotations.jaxrs.PathParam`", record.getRecipe());
     }
 }

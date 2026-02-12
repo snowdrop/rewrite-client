@@ -5,8 +5,8 @@
 
 package dev.snowdrop;
 
-import dev.snowdrop.openrewrite.cli.RewriteScanner;
-import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.RewriteService;
+import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
@@ -28,11 +28,11 @@ public class RewriteApp {
         // Get the path from command line argument or use default
         String projectPath = getProjectPath(args);
 
-        Config cfg = new Config();
+        RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(Paths.get(projectPath));
-        cfg.setYamlRecipes("rewrite.yml");
+        cfg.setYamlRecipesPath("rewrite.yml");
 
-        RewriteScanner scanner = new RewriteScanner(cfg);
+        RewriteService scanner = new RewriteService(cfg);
         scanner.init();
         try {
             ResultsContainer results = scanner.run();

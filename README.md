@@ -261,7 +261,8 @@ Then attach your debugger to port 5005.
 
 ## Examples
 
-Check the [`sample/rewritescanner`](sample/rewritescanner) directory for a complete Maven example demonstrating library usage.
+Check the [`sample`](sample) directory for different examples demonstrating the library usage. 
+The folder includes a basic Java `demo` application 
 
 ### Find Spring Boot Annotations
 

@@ -17,6 +17,7 @@ The application uses a `rewrite.yml` file to define the OpenRewrite recipes. Thi
 Create a `rewrite.yml` file in your target project with content like:
 
 ```yaml
+---
 type: specs.openrewrite.org/v1beta/recipe
 name: dev.snowdrop.FormatCode
 displayName: Format Code Recipe

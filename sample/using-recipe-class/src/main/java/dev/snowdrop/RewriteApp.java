@@ -5,8 +5,8 @@
 
 package dev.snowdrop;
 
-import dev.snowdrop.openrewrite.cli.RewriteScanner;
-import dev.snowdrop.openrewrite.cli.model.Config;
+import dev.snowdrop.openrewrite.cli.RewriteService;
+import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class RewriteApp {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         String RECIPE_NAME = "org.openrewrite.java.format.AutoFormat";
         String APP_PATH = "demo";
@@ -27,11 +27,11 @@ public class RewriteApp {
         }
         System.out.println("Processing application path: " + APP_PATH);
 
-        Config cfg = new Config();
+        RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(Paths.get(APP_PATH));
-        cfg.setActiveRecipes(List.of(RECIPE_NAME));
+        cfg.setFqNameRecipe(RECIPE_NAME);
 
-        RewriteScanner scanner = new RewriteScanner(cfg);
+        RewriteService scanner = new RewriteService(cfg);
         scanner.init();
         try {
             ResultsContainer results = scanner.run();

@@ -28,7 +28,9 @@ import org.eclipse.aether.resolution.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static dev.snowdrop.openrewrite.cli.toolbox.MavenUtils.convertModelDependencyToAetherDependency;
@@ -138,7 +140,11 @@ public class MavenArtifactResolver {
     public List<Path> resolveArtifactsWithDependencies(Model model) {
         CollectRequest collectRequest = new CollectRequest();
         collectRequest.setDependencies(convertModelDependencyToAetherDependency(model.getDependencies()));
-        collectRequest.setManagedDependencies(convertModelDependencyToAetherDependency(model.getDependencyManagement().getDependencies()));
+
+        List<Dependency> managedDependencies = Optional.ofNullable(model.getDependencyManagement())
+                .map(dm -> convertModelDependencyToAetherDependency(dm.getDependencies()))
+                .orElse(Collections.emptyList());
+        collectRequest.setManagedDependencies(managedDependencies);
         collectRequest.setRepositories(repositories);
 
         List<Path> resolvedPaths = new ArrayList<>();
@@ -153,35 +159,5 @@ public class MavenArtifactResolver {
             throw new RuntimeException("Could not resolve dependencies: " + ex.getMessage(), ex);
         }
         return resolvedPaths;
-    }
-
-
-    // ========== Repository system getters for sharing with other resolvers ==========
-
-    /**
-     * Get the repository system for use by other resolvers.
-     *
-     * @return the properly configured RepositorySystem
-     */
-    public RepositorySystem getRepositorySystem() {
-        return repositorySystem;
-    }
-
-    /**
-     * Get the repository session for use by other resolvers.
-     *
-     * @return the repository session
-     */
-    public DefaultRepositorySystemSession getSession() {
-        return session;
-    }
-
-    /**
-     * Get the remote repositories for use by other resolvers.
-     *
-     * @return the list of remote repositories
-     */
-    public List<RemoteRepository> getRemoteRepositories() {
-        return repositories;
     }
 }

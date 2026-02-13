@@ -63,7 +63,7 @@ public class RepositoryModelResolver implements ModelResolver {
 
 	@Override
 	public ModelSource resolveModel(Dependency dependency) throws UnresolvableModelException {
-		return null;
+		return resolveModel(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
 	}
 
 	// These methods are required by the interface but we don't need them

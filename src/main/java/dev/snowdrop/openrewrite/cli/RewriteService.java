@@ -373,6 +373,7 @@ public class RewriteService {
             // Collect the GAVs and their transitive dependencies
             MavenArtifactResolver mar = new MavenArtifactResolver();
             List<Path> classpaths = mar.resolveArtifactsWithDependencies(mavenUtils.convertModelDependenciesToAetherDependencies(model.getDependencies()));
+            LOG.debug(RewriteService.class, "Resolved classpath entries of the application scanned: " + classpaths);
 
             // Create the JavaParser and set the classpaths
             JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);
@@ -426,6 +427,9 @@ public class RewriteService {
         } else {
             throw new IllegalStateException("No source files parsed from the project scanned !");
         }
+
+        LOG.debug(RewriteService.class,"List of resources loaded");
+        sourceFiles.forEach(f -> {LOG.debug(RewriteService.class,f.getSourcePath().toString());});
 
         return new InMemoryLargeSourceSet(sourceFiles);
     }

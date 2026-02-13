@@ -70,7 +70,6 @@ public class FindParamAnnotationTest extends BaseTest {
         cfg.setAppPath(Paths.get(appPath));
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
-        cfg.setAdditionalJarPaths(List.of("org.jboss.resteasy:resteasy-core-spi:6.2.12.Final"));
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);

@@ -15,6 +15,7 @@
  */
 package dev.snowdrop.openrewrite.cli.toolbox;
 
+import org.apache.maven.model.Model;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
@@ -29,6 +30,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static dev.snowdrop.openrewrite.cli.toolbox.MavenUtils.convertModelDependencyToAetherDependency;
 
 /**
  * Utility class for resolving Maven artifacts from GAV (Group:Artifact:Version) coordinates.
@@ -110,7 +113,7 @@ public class MavenArtifactResolver {
         String[] parts = gavCoordinate.split(":");
         if (parts.length != 3) {
             throw new IllegalArgumentException("Invalid GAV coordinate: " + gavCoordinate +
-                ". Expected format: group:artifact:version");
+                    ". Expected format: group:artifact:version");
         }
 
         String groupId = parts[0];
@@ -128,32 +131,36 @@ public class MavenArtifactResolver {
     /**
      * Resolves artifacts with their transitive dependencies.
      *
-     * @param dependencies the list of the dependencies
+     * @param model The Maven model
      * @return list of resolved file paths including transitive dependencies
      * @throws DependencyResolutionException if dependency resolution fails
      */
-    public List<Path> resolveArtifactsWithDependencies(List<Dependency> dependencies) throws DependencyResolutionException {
+    public List<Path> resolveArtifactsWithDependencies(Model model) {
         CollectRequest collectRequest = new CollectRequest();
-        collectRequest.setDependencies(dependencies);
+        collectRequest.setDependencies(convertModelDependencyToAetherDependency(model.getDependencies()));
+        collectRequest.setManagedDependencies(convertModelDependencyToAetherDependency(model.getDependencyManagement().getDependencies()));
         collectRequest.setRepositories(repositories);
 
-        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, null);
-        DependencyResult dependencyResult = repositorySystem.resolveDependencies(session, dependencyRequest);
-
         List<Path> resolvedPaths = new ArrayList<>();
-        for (ArtifactResult artifactResult : dependencyResult.getArtifactResults()) {
-            resolvedPaths.add(artifactResult.getArtifact().getFile().toPath());
-        }
+        try {
+            DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, null);
+            DependencyResult dependencyResult = repositorySystem.resolveDependencies(session, dependencyRequest);
 
+            for (ArtifactResult artifactResult : dependencyResult.getArtifactResults()) {
+                resolvedPaths.add(artifactResult.getArtifact().getFile().toPath());
+            }
+        } catch (DependencyResolutionException ex) {
+            throw new RuntimeException("Could not resolve dependencies: " + ex.getMessage(), ex);
+        }
         return resolvedPaths;
     }
-
 
 
     // ========== Repository system getters for sharing with other resolvers ==========
 
     /**
      * Get the repository system for use by other resolvers.
+     *
      * @return the properly configured RepositorySystem
      */
     public RepositorySystem getRepositorySystem() {
@@ -162,6 +169,7 @@ public class MavenArtifactResolver {
 
     /**
      * Get the repository session for use by other resolvers.
+     *
      * @return the repository session
      */
     public DefaultRepositorySystemSession getSession() {
@@ -170,6 +178,7 @@ public class MavenArtifactResolver {
 
     /**
      * Get the remote repositories for use by other resolvers.
+     *
      * @return the list of remote repositories
      */
     public List<RemoteRepository> getRemoteRepositories() {

@@ -372,8 +372,11 @@ public class RewriteService {
 
             // Collect the GAVs and their transitive dependencies
             MavenArtifactResolver mar = new MavenArtifactResolver();
-            List<Path> classpaths = mar.resolveArtifactsWithDependencies(mavenUtils.convertModelDependenciesToAetherDependencies(model.getDependencies()));
-            LOG.debug(RewriteService.class, "Resolved classpath entries of the application scanned: " + classpaths);
+            List<Path> classpaths = mar.resolveArtifactsWithDependencies(model);
+
+            LOG.debug(RewriteService.class, "Classpath jar entries size: " + classpaths.size());
+            LOG.debug(RewriteService.class, "Classpath entries of the application scanned");
+            classpaths.forEach(cp -> {LOG.debug(RewriteService.class,cp.toString());});
 
             // Create the JavaParser and set the classpaths
             JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);

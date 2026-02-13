@@ -66,7 +66,7 @@ public class MavenUtils {
      @param modelDependencies The list of org.apache.maven.model.Dependency.
      @return A list of org.eclipse.aether.graph.Dependency objects.
      */
-    public List<org.eclipse.aether.graph.Dependency> convertModelDependenciesToAetherDependencies(List<Dependency> modelDependencies) {
+    public static List<org.eclipse.aether.graph.Dependency> convertModelDependencyToAetherDependency(List<Dependency> modelDependencies) {
         return modelDependencies.stream()
             .map(dep -> {
                 // 1. Create the Aether Artifact from the model dependency

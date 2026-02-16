@@ -57,7 +57,7 @@ public class MavenArtifactResolver implements Closeable {
     private final List<RemoteRepository> repositories;
 
     public MavenArtifactResolver() {
-        this.context = Runtimes.INSTANCE.getRuntime().create(ContextOverrides.create().build());
+        this.context = Runtimes.INSTANCE.getRuntime().create(ContextOverrides.create().withUserSettings(true).build());
         this.mavenModelReader = new MavenModelReader(context);
         this.repositorySystem = context.repositorySystem();
         this.session = context.repositorySystemSession();

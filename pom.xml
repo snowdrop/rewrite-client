@@ -17,6 +17,8 @@
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.release>21</maven.compiler.release>
 
+        <!-- These two should be kept in lockstep (MIMA 2.4.38 = Maven 3.9.11 + Resolver 1.9.24) -->
+        <mima.version>2.4.38</mima.version>
         <maven.version>3.9.11</maven.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -40,7 +42,6 @@
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-jreleaser-plugin.version>1.22.0</maven-jreleaser-plugin.version>
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-        <maven-resolver-supplier.version>1.9.24</maven-resolver-supplier.version>
         <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
         <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
@@ -85,6 +86,13 @@
                 <groupId>org.openrewrite</groupId>
                 <artifactId>rewrite-bom</artifactId>
                 <version>${openrewrite-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>eu.maveniverse.maven.maven-boms</groupId>
+                <artifactId>skinny</artifactId>
+                <version>${maven.version}-01</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -161,25 +169,36 @@
             <artifactId>rewrite-maven</artifactId>
         </dependency>
 
-        <!-- Maven Resolver dependencies for GAV artifact resolution -->
-        <!-- Search maven dependency -->
+        <!-- Maven -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
-            <version>${maven.version}</version>
         </dependency>
-        <!-- -->
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-embedder</artifactId>
-            <version>${maven.version}</version>
+            <artifactId>maven-core</artifactId>
         </dependency>
 
-        <!-- Maven Resolver dependencies - explicit versions needed -->
+        <!-- MIMA -->
         <dependency>
-            <groupId>org.apache.maven.resolver</groupId>
-            <artifactId>maven-resolver-supplier</artifactId>
-            <version>${maven-resolver-supplier.version}</version>
+            <groupId>eu.maveniverse.maven.mima</groupId>
+            <artifactId>context</artifactId>
+            <version>${mima.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.maveniverse.maven.mima.extensions</groupId>
+            <artifactId>mmr</artifactId>
+            <version>${mima.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.maveniverse.maven.mima.runtime</groupId>
+            <artifactId>standalone-static</artifactId>
+            <version>${mima.version}</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Test dependencies -->

@@ -5,9 +5,7 @@ import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
-import dev.snowdrop.openrewrite.cli.toolbox.MavenUtils;
 import dev.snowdrop.openrewrite.cli.toolbox.SanitizedMarkerPrinter;
-import org.apache.maven.model.Model;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.binary.Binary;
@@ -367,12 +365,11 @@ public class RewriteService {
         List<Path> javaFiles = findFiles(rewriteConfig.getAppPath(), ".java");
         if (!javaFiles.isEmpty()) {
             // If we have java files, then we assume that we have a pom and dependencies
-            MavenUtils mavenUtils = new MavenUtils();
-            Model model = mavenUtils.setupProject(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml").toFile());
-
             // Collect the GAVs and their transitive dependencies
-            MavenArtifactResolver mar = new MavenArtifactResolver();
-            List<Path> classpaths = mar.resolveArtifactsWithDependencies(model);
+            List<Path> classpaths;
+            try (MavenArtifactResolver mar = new MavenArtifactResolver()) {
+                classpaths = mar.resolveArtifactsWithDependencies(mar.loadModel(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml")));
+            }
 
             LOG.debug(RewriteService.class, "Classpath jar entries size: " + classpaths.size());
             LOG.debug(RewriteService.class, "Classpath entries of the application scanned");

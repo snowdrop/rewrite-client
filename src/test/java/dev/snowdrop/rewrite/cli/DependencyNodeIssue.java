@@ -1,14 +1,11 @@
 package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
-import dev.snowdrop.openrewrite.cli.toolbox.MavenUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.collection.DependencyCollectionException;
@@ -24,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static dev.snowdrop.openrewrite.cli.toolbox.MavenUtils.convertModelDependencyToAetherDependency;
+import static dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver.convertModelDependencyToAetherDependency;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DependencyNodeIssue {
@@ -41,11 +38,9 @@ public class DependencyNodeIssue {
     }
 
     List<Path> resolveProjectDependencies(String appPath) {
-        MavenUtils mavenUtils = new MavenUtils();
-        Model model = mavenUtils.setupProject(Paths.get(appPath, "pom.xml").toFile());
-
-        MavenArtifactResolver mar = new MavenArtifactResolver();
-        return mar.resolveArtifactsWithDependencies(model);
+        try (MavenArtifactResolver mar = new MavenArtifactResolver()) {
+            return mar.resolveArtifactsWithDependencies(mar.loadModel(Paths.get(appPath, "pom.xml")));
+        }
     }
 
     @Test
@@ -53,8 +48,10 @@ public class DependencyNodeIssue {
         RepositorySystem system = new RepositorySystemSupplier().get();
         RepositorySystemSession session = newRepositorySystemSession(system);
 
-        MavenUtils mavenUtils = new MavenUtils();
-        Model model = mavenUtils.setupProject(Paths.get(appPath, "pom.xml").toFile());
+        Model model;
+        try (MavenArtifactResolver mar = new MavenArtifactResolver()) {
+            model = mar.loadModel(Paths.get(appPath, "pom.xml"));
+        }
 
         // Print the GAVS of the pom.xml
         model.getDependencies().forEach(System.out::println);

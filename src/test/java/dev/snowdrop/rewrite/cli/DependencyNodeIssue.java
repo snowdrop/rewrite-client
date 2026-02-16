@@ -12,7 +12,6 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.collection.DependencyCollectionException;
-import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
@@ -56,6 +55,9 @@ public class DependencyNodeIssue {
 
         MavenUtils mavenUtils = new MavenUtils();
         Model model = mavenUtils.setupProject(Paths.get(appPath, "pom.xml").toFile());
+
+        // Print the GAVS of the pom.xml
+        model.getDependencies().forEach(System.out::println);
 
         CollectRequest collectRequest = new CollectRequest();
         collectRequest.setRepositories(newRepositories(system, session));

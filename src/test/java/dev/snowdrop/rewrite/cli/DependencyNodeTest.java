@@ -3,17 +3,6 @@ package dev.snowdrop.rewrite.cli;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenUtils;
 import org.apache.maven.model.Model;
-import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.collection.CollectRequest;
-import org.eclipse.aether.collection.CollectResult;
-import org.eclipse.aether.collection.DependencyCollectionException;
-import org.eclipse.aether.repository.LocalRepository;
-import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.supplier.RepositorySystemSupplier;
-import org.eclipse.aether.util.graph.visitor.DependencyGraphDumper;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;

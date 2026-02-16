@@ -134,12 +134,12 @@ public class MavenUtils {
      */
     public static DefaultRepositorySystemSession createRepositorySession(RepositorySystem repositorySystem) {
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-
+        session.setSystemProperties(System.getProperties());
         // Set up local repository
         String userHome = System.getProperty("user.home");
         LocalRepository localRepo = new LocalRepository(userHome + "/.m2/repository");
         session.setLocalRepositoryManager(repositorySystem.newLocalRepositoryManager(session, localRepo));
-
+        session.setReadOnly();
         return session;
     }
 

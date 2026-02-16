@@ -21,7 +21,6 @@ import eu.maveniverse.maven.mima.context.Runtimes;
 import eu.maveniverse.maven.mima.extensions.mmr.MavenModelReader;
 import eu.maveniverse.maven.mima.extensions.mmr.ModelRequest;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.building.ModelBuildingRequest;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;

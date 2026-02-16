@@ -184,15 +184,6 @@ public class MavenArtifactResolver implements Closeable {
         return resolvedPaths;
     }
 
-
-    public static Set<Dependency> convertDependenciesToArtifacts(List<org.apache.maven.model.Dependency> dependencies) {
-        return dependencies.stream()
-                .map(dep -> {
-                    return new Dependency(new DefaultArtifact(dep.getGroupId(),dep.getArtifactId(),dep.getClassifier(), dep.getType(), dep.getVersion()),dep.getScope());
-                })
-                .collect(Collectors.toSet());
-    }
-
     /*
      This is the recommended object for Aether resolution as it retains the scope and optionality.
 

@@ -18,8 +18,8 @@ public class DependencyNodeTest {
     @Test
     void shouldGetAllTransitiveForQuarkusRestEasy() {
         List<Path> classpaths = resolveProjectDependencies(appPath);
-        System.out.println("Classpath jar entries size: " + classpaths.size());
-        classpaths.forEach(cp -> System.out.println(cp.toString()));
+        //System.out.println("Classpath jar entries size: " + classpaths.size());
+        //classpaths.forEach(cp -> System.out.println(cp.toString()));
         assertEquals(270, classpaths.size(), "Expected 270 jars in the classpath");
     }
 

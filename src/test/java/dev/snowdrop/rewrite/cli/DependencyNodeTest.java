@@ -1,7 +1,6 @@
 package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
-import dev.snowdrop.openrewrite.cli.toolbox.MavenUtils;
 import org.apache.maven.model.Model;
 import org.junit.jupiter.api.Test;
 
@@ -25,10 +24,9 @@ public class DependencyNodeTest {
     }
 
     List<Path> resolveProjectDependencies(String appPath) {
-        MavenUtils mavenUtils = new MavenUtils();
-        Model model = mavenUtils.setupProject(Paths.get(appPath, "pom.xml").toFile());
-
-        MavenArtifactResolver mar = new MavenArtifactResolver();
-        return mar.resolveArtifactsWithDependencies(model);
+        try (MavenArtifactResolver mar = new MavenArtifactResolver()) {
+            Model model = mar.loadModel(Paths.get(appPath, "pom.xml"));
+            return mar.resolveArtifactsWithDependencies(model);
+        }
     }
 }

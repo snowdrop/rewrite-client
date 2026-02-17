@@ -23,7 +23,7 @@ import java.util.Optional;
 /**
  * Configuration properties for the Rewrite CLI application.
  * These properties can be set via environment variables or application.properties.
- *
+ * <p>
  * Environment variable examples:
  * - REWRITE_CONFIG_LOCATION=/path/to/rewrite.yml
  * - REWRITE_SIZE_THRESHOLD_MB=20
@@ -35,13 +35,17 @@ public interface RewriteConfiguration {
     /**
      * Location of the rewrite.yml configuration file.
      * Can be overridden with REWRITE_CONFIG_LOCATION environment variable.
+     *
+     * @return the configuration file location
      */
     @WithDefault("rewrite.yml")
     String configLocation();
 
     /**
-     * Boolean to execute the recipe in dry run mode
+     * Boolean to execute the recipe in dry run mode.
      * Can be overridden with REWRITE_DRY_RUN environment variable.
+     *
+     * @return true if dry run mode is enabled
      */
     @WithDefault("true")
     boolean dryRun();
@@ -49,6 +53,8 @@ public interface RewriteConfiguration {
     /**
      * Size threshold in MB for large files.
      * Can be overridden with REWRITE_SIZE_THRESHOLD_MB environment variable.
+     *
+     * @return the size threshold in megabytes
      */
     @WithDefault("10")
     int sizeThresholdMb();
@@ -56,6 +62,8 @@ public interface RewriteConfiguration {
     /**
      * Whether to export datatables to CSV files.
      * Can be overridden with REWRITE_EXPORT_DATATABLES environment variable.
+     *
+     * @return true if datatables should be exported
      */
     @WithDefault("true")
     boolean exportDatatables();
@@ -63,6 +71,8 @@ public interface RewriteConfiguration {
     /**
      * Whether to fail on invalid active recipes.
      * Can be overridden with REWRITE_FAIL_ON_INVALID_ACTIVE_RECIPES environment variable.
+     *
+     * @return true if the build should fail on invalid recipes
      */
     @WithDefault("false")
     boolean failOnInvalidActiveRecipes();
@@ -70,12 +80,16 @@ public interface RewriteConfiguration {
     /**
      * Comma-separated list of plain text file masks.
      * Can be overridden with REWRITE_PLAIN_TEXT_MASKS environment variable.
+     *
+     * @return the plain text masks, or empty if not configured
      */
     Optional<String> plainTextMasks();
 
     /**
      * Comma-separated list of file patterns to exclude.
      * Can be overridden with REWRITE_EXCLUSIONS environment variable.
+     *
+     * @return the exclusion patterns, or empty if not configured
      */
     Optional<String> exclusions();
 }

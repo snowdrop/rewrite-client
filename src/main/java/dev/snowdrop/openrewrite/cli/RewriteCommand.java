@@ -67,11 +67,20 @@ import java.util.*;
 )
 public class RewriteCommand implements Runnable {
 
+    /** Creates a new RewriteCommand instance. */
+    public RewriteCommand() {
+    }
+
     @Inject
     LogFactory logFactory;
 
     private LoggingService LOG;
 
+    /**
+     * Initializes the logging service from the Picocli command spec.
+     *
+     * @param spec the Picocli command spec
+     */
     @CommandLine.Spec
     void setSpec(CommandLine.Model.CommandSpec spec) {
         logFactory.setSpec(spec);
@@ -153,6 +162,9 @@ public class RewriteCommand implements Runnable {
     @Inject
     RewriteConfiguration config;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void run() {
         try {
@@ -206,6 +218,13 @@ public class RewriteCommand implements Runnable {
         }
     }
 
+    /**
+     * Executes the rewrite process using the provided configuration.
+     *
+     * @param rewriteConfig the rewrite configuration
+     * @return the results container with recipe run results
+     * @throws Exception if execution fails
+     */
     public ResultsContainer execute(RewriteConfig rewriteConfig) throws Exception {
         if (LOG == null && logFactory != null) {
             this.LOG = logFactory.getLogger();
@@ -213,6 +232,12 @@ public class RewriteCommand implements Runnable {
         return runScanner(rewriteConfig);
     }
 
+    /**
+     * Executes the rewrite process using the command-line options.
+     *
+     * @return the results container with recipe run results
+     * @throws Exception if execution fails
+     */
     public ResultsContainer execute() throws Exception {
         RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(projectRoot);

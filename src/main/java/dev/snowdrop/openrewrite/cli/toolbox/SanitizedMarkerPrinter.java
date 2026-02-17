@@ -12,6 +12,14 @@ import java.util.function.UnaryOperator;
  * so these aren't accidentally committed to source control.
  */
 public class SanitizedMarkerPrinter implements PrintOutputCapture.MarkerPrinter {
+
+    /** Creates a new SanitizedMarkerPrinter instance. */
+    public SanitizedMarkerPrinter() {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String beforeSyntax(Marker marker, Cursor cursor, UnaryOperator<String> commentWrapper) {
         if (marker instanceof SearchResult) {
@@ -20,6 +28,9 @@ public class SanitizedMarkerPrinter implements PrintOutputCapture.MarkerPrinter 
         return "";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String afterSyntax(Marker marker, Cursor cursor, UnaryOperator<String> commentWrapper) {
         if (marker instanceof SearchResult) {

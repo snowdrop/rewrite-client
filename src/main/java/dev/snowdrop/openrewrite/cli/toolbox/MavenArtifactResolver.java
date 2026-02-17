@@ -56,6 +56,9 @@ public class MavenArtifactResolver implements Closeable {
     private final RepositorySystemSession session;
     private final List<RemoteRepository> repositories;
 
+    /**
+     * Creates a Maven resolver using MINA and set the user's Maven settings.
+     */
     public MavenArtifactResolver() {
         this.context = Runtimes.INSTANCE.getRuntime().create(ContextOverrides.create().withUserSettings(true).build());
         this.mavenModelReader = new MavenModelReader(context);
@@ -69,6 +72,12 @@ public class MavenArtifactResolver implements Closeable {
         context.close();
     }
 
+    /**
+     * Loads the effective Maven model from a POM file.
+     *
+     * @param pomPath the path to the POM file
+     * @return the effective Maven model
+     */
     public Model loadModel(Path pomPath) {
         try {
             return mavenModelReader.readModel(ModelRequest.builder().setPomFile(pomPath).build()).getEffectiveModel();
@@ -158,7 +167,6 @@ public class MavenArtifactResolver implements Closeable {
      *
      * @param model The Maven model
      * @return list of resolved file paths including transitive dependencies
-     * @throws DependencyResolutionException if dependency resolution fails
      */
     public List<Path> resolveArtifactsWithDependencies(Model model) {
         CollectRequest collectRequest = new CollectRequest();
@@ -184,11 +192,12 @@ public class MavenArtifactResolver implements Closeable {
         return resolvedPaths;
     }
 
-    /*
-     This is the recommended object for Aether resolution as it retains the scope and optionality.
-
-     @param modelDependencies The list of org.apache.maven.model.Dependency.
-     @return A list of org.eclipse.aether.graph.Dependency objects.
+    /**
+     * Converts Maven model dependencies to Aether dependency objects.
+     * This is the recommended object for Aether resolution as it retains the scope and optionality.
+     *
+     * @param modelDependencies the list of Maven model dependencies
+     * @return a list of Aether dependency objects
      */
     public static List<org.eclipse.aether.graph.Dependency> convertModelDependencyToAetherDependency(List<org.apache.maven.model.Dependency> modelDependencies) {
         return modelDependencies.stream()

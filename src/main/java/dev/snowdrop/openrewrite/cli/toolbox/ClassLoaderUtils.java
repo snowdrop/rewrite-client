@@ -10,11 +10,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Utility methods for loading additional JARs and merging classloaders.
+ */
 public class ClassLoaderUtils {
+
+    /**
+     * Creates a new ClassLoaderUtils instance.
+     */
+    public ClassLoaderUtils() {
+    }
 
     /**
      * Creates a URLClassLoader from the additional JAR paths or Maven GAV coordinates.
      *
+     * @param additionalJarPaths list of JAR file paths or Maven GAV coordinates to load
      * @return URLClassLoader containing the additional Rewrite JARs, or null if no additional JARs are specified
      */
     public URLClassLoader loadAdditionalJars(List<String> additionalJarPaths) {
@@ -59,6 +69,9 @@ public class ClassLoaderUtils {
      * Merges URLs from the source classloader into the target classloader.
      * This is similar to the merge functionality in the Maven plugin.
      * Handles both URLClassLoader and Quarkus classloaders gracefully.
+     *
+     * @param targetClassLoader the classloader to merge URLs into
+     * @param sourceClassLoader the classloader providing URLs to merge
      */
     public void merge(ClassLoader targetClassLoader, URLClassLoader sourceClassLoader) {
         // In Quarkus dev mode, the classloader is typically a QuarkusClassLoader,
@@ -91,6 +104,9 @@ public class ClassLoaderUtils {
 
     /**
      * Strips version information from JAR URLs for comparison.
+     *
+     * @param jarUrl the JAR URL to strip version info from
+     * @return the URL string with version information removed
      */
     private String stripVersion(URL jarUrl) {
         return jarUrl.toString().replaceAll("/[^/]+/[^/]+\\.jar", "");

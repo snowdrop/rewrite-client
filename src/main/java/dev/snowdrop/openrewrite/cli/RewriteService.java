@@ -59,6 +59,10 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static org.openrewrite.Tree.randomId;
 
+/**
+ * Service that orchestrates OpenRewrite recipe execution including environment setup,
+ * resources parsing, recipe running, and result processing.
+ */
 public class RewriteService {
 
     private LoggingService LOG;
@@ -69,10 +73,20 @@ public class RewriteService {
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
 
+    /**
+     * Creates a new RewriteService with the given configuration.
+     *
+     * @param cfg the rewrite configuration
+     */
     public RewriteService(RewriteConfig cfg) {
         this.rewriteConfig = cfg;
     }
 
+    /**
+     * Sets the logging service.
+     *
+     * @param loggingService the logging service to use
+     */
     public void setLogger(LoggingService loggingService) {
         LOG = loggingService;
     }
@@ -84,7 +98,7 @@ public class RewriteService {
      * - ExecutionContext able to collect from the execution of the different Recipe the messages containing the Map of the DataTable, etc
      * - LargeSourceSet using different parsers able to read: Java, Maven, Properties, XML, JSON, etc files
      *
-     * @throws Exception
+     * @throws Exception if initialization fails
      */
     public void init() throws Exception {
         createEnvironmentWithLoaders();
@@ -92,6 +106,9 @@ public class RewriteService {
         scanLoadResources();
     }
 
+    /**
+     * Creates the OpenRewrite environment with recipe loaders.
+     */
     public void createEnvironmentWithLoaders() {
         try {
             env = createEnvironment();
@@ -100,10 +117,16 @@ public class RewriteService {
         }
     }
 
+    /**
+     * Creates the execution context for collecting recipe execution messages.
+     */
     public void createExecutionContext() {
         ctx = createExecutionContext(throwables);
     }
 
+    /**
+     * Scans and loads source files from the project.
+     */
     public void scanLoadResources() {
         try {
             sourceSet = loadSourceSet(ctx);
@@ -112,10 +135,20 @@ public class RewriteService {
         }
     }
 
+    /**
+     * Returns whether the source set has been initialized.
+     *
+     * @return true if source files were successfully parsed
+     */
     public boolean isSourceSetInitialized() {
         return sourceSetInitialized;
     }
 
+    /**
+     * Runs the configured recipes and optionally generates a patch file.
+     *
+     * @return the results container with all recipe run results
+     */
     public ResultsContainer run()  {
         ResultsContainer results = processRecipes();
         if(rewriteConfig.isDryRun()) {
@@ -124,6 +157,11 @@ public class RewriteService {
         return results;
     }
 
+    /**
+     * Updates the rewrite configuration.
+     *
+     * @param cfg the new configuration
+     */
     public void updateConfig(RewriteConfig cfg) {
         this.rewriteConfig = cfg;
     }

@@ -1,11 +1,12 @@
 package dev.snowdrop.openrewrite.cli;
 
-import dev.snowdrop.logging.LoggingService;
+//import dev.snowdrop.logging.LoggingService;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
 import dev.snowdrop.openrewrite.cli.toolbox.MavenArtifactResolver;
 import dev.snowdrop.openrewrite.cli.toolbox.SanitizedMarkerPrinter;
+import org.jboss.logging.Logger;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.binary.Binary;
@@ -65,7 +66,9 @@ import static org.openrewrite.Tree.randomId;
  */
 public class RewriteService {
 
-    private LoggingService LOG;
+    Logger LOG = Logger.getLogger(RewriteService.class);
+
+    //private LoggingService LOG;
     private ExecutionContext ctx;
     private List<Throwable> throwables = new ArrayList<>();
     private Environment env;
@@ -87,9 +90,11 @@ public class RewriteService {
      *
      * @param loggingService the logging service to use
      */
+    /*
     public void setLogger(LoggingService loggingService) {
         LOG = loggingService;
     }
+    */
 
     /**
      * Configure Openrewrite by creating the:
@@ -113,7 +118,7 @@ public class RewriteService {
         try {
             env = createEnvironment();
         } catch (Exception ex) {
-            LOG.error(RewriteService.class, "Error while creating environment: " + ex.getMessage(), ex);
+            LOG.error("Error while creating environment: " + ex.getMessage(), ex);
         }
     }
 
@@ -131,7 +136,7 @@ public class RewriteService {
         try {
             sourceSet = loadSourceSet(ctx);
         } catch (Exception ex) {
-            LOG.error(RewriteService.class, "Error while initializing", ex);
+            LOG.error("Error while initializing", ex);
         }
     }
 
@@ -168,7 +173,7 @@ public class RewriteService {
 
     private ExecutionContext createExecutionContext(List<Throwable> throwables) {
         return new InMemoryExecutionContext(t -> {
-            LOG.debug(RewriteService.class, "Debug: " + t.getMessage());
+            LOG.debug( "Throwable message: " + t.getMessage());
             throwables.add(t);
         });
     }
@@ -176,14 +181,14 @@ public class RewriteService {
     private void createPatchFile(ResultsContainer results) {
         RuntimeException firstException = results.getFirstException();
         if (firstException != null) {
-            LOG.error(RewriteService.class, "The recipe produced an error. Please report this to the recipe author.");
+            LOG.error("The recipe produced an error. Please report this to the recipe author.",firstException);
             throw firstException;
         }
 
         if (!throwables.isEmpty()) {
-            LOG.warn(RewriteService.class, "The recipe produced " + throwables.size() + " warning(s). Please report this to the recipe author.");
+            LOG.warn("The recipe produced " + throwables.size() + " warning(s). Please report this to the recipe author.");
             for (Throwable throwable : throwables) {
-                LOG.warn(RewriteService.class, "Warning: " + throwable.getMessage());
+                LOG.warn("Warning: " + throwable.getMessage());
             }
         }
 
@@ -194,7 +199,7 @@ public class RewriteService {
             for (Result result : results.getGenerated()) {
                 assert result.getAfter() != null;
                 if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
-                LOG.info(RewriteService.class, "These recipes would generate a new file " +
+                LOG.info("These recipes would generate a new file " +
                     result.getAfter().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
@@ -203,7 +208,7 @@ public class RewriteService {
 
             for (Result result : results.getDeleted()) {
                 assert result.getBefore() != null;
-                LOG.info(RewriteService.class, "These recipes would delete a file " +
+                LOG.info("These recipes would delete a file " +
                     result.getBefore().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
@@ -213,7 +218,7 @@ public class RewriteService {
             for (Result result : results.getMoved()) {
                 assert result.getBefore() != null;
                 assert result.getAfter() != null;
-                LOG.info(RewriteService.class, "These recipes would move a file from " +
+                LOG.info("These recipes would move a file from " +
                     result.getBefore().getSourcePath() + " to " +
                     result.getAfter().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
@@ -224,7 +229,7 @@ public class RewriteService {
 
             for (Result result : results.getRefactoredInPlace()) {
                 assert result.getBefore() != null;
-                LOG.info(RewriteService.class, "These recipes would make changes to " +
+                LOG.info("These recipes would make changes to " +
                     result.getBefore().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
@@ -258,17 +263,17 @@ public class RewriteService {
                 throw new RuntimeException("Unable to generate rewrite result.", e);
             }
 
-            LOG.info(RewriteService.class, "Patch file available:");
-            LOG.info(RewriteService.class, "    " + patchFile.normalize());
-            LOG.info(RewriteService.class, "Estimate time saved: " + formatDuration(estimateTimeSaved));
+            LOG.info("Patch file available:");
+            LOG.info("    " + patchFile.normalize());
+            LOG.info("Estimate time saved: " + formatDuration(estimateTimeSaved));
         } else {
-            LOG.info(RewriteService.class, "Applying recipe would make no changes. No patch file generated.");
+            LOG.info("Applying recipe would make no changes. No patch file generated.");
         }
     }
 
     private ResultsContainer processRecipes() {
         if (env == null) {
-            LOG.error(RewriteService.class, "Environment is not initialized. Cannot process recipes.");
+            LOG.fatal("Environment is not initialized. Cannot process recipes.");
             return new ResultsContainer(Collections.emptyMap());
         }
 
@@ -296,16 +301,16 @@ public class RewriteService {
         }
 
         if (env.listRecipes().isEmpty()) {
-            LOG.warn(RewriteService.class, String.format("No recipes found in active selection or YAML configuration for path: %s", rewriteConfig.getAppPath()));
+            LOG.warn(String.format("No recipes found in active selection or YAML configuration for path: %s", rewriteConfig.getAppPath()));
             return new ResultsContainer(Collections.emptyMap());
         }
 
         // Run the recipe created using the FQName
         if (!yamlRecipes) {
-            LOG.info(RewriteService.class, "Using active recipe(s): " + recipe.getName());
+            LOG.info("Using active recipe(s): " + recipe.getName());
 
             if ("org.openrewrite.Recipe$Noop".equals(recipe.getName())) {
-                LOG.error(RewriteService.class, "No recipes were activated. " +
+                LOG.warn("No recipes were activated. " +
                     "Activate a recipe by providing it as a command line argument.");
                 return new ResultsContainer(Collections.emptyMap());
             }
@@ -315,9 +320,9 @@ public class RewriteService {
             allResults.put(recipe.getName(),recipeRun);
 
         } else {
-            LOG.info(RewriteService.class, "Using recipes from YAML configuration");
+            LOG.info("Using recipes from YAML configuration");
             env.listRecipes().forEach(r -> {
-                LOG.info(RewriteService.class, "Running recipe: " + r.getName());
+                LOG.info("Running recipe: " + r.getName());
                 validatingRecipe(r);
                 RecipeRun currentRun = runRecipe(r);
                 allResults.put(r.getName(),currentRun);
@@ -340,7 +345,7 @@ public class RewriteService {
         if (additionalJarsClassloader != null) {
             // Load recipes using the ClasspathScanningLoader with the additional classloader
             env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-            LOG.info(RewriteService.class, "Loaded recipes from additional JARs");
+            LOG.info("Loaded recipes from additional JARs");
         }
 
         return env.build();
@@ -373,7 +378,7 @@ public class RewriteService {
     }
 
     private void validatingRecipe(Recipe recipe) {
-        LOG.info(RewriteService.class, "Validating active recipes...");
+        LOG.info("Validating active recipes...");
         List<Validated<Object>> validations = new ArrayList<>();
         recipe.validateAll(ctx, validations);
         List<Validated.Invalid<Object>> failedValidations = validations.stream()
@@ -383,9 +388,9 @@ public class RewriteService {
 
         if (!failedValidations.isEmpty()) {
             failedValidations.forEach(failedValidation ->
-                LOG.error(RewriteService.class, "Recipe validation error in " + failedValidation.getProperty() +
+                LOG.warn("Recipe validation error in " + failedValidation.getProperty() +
                     ": " + failedValidation.getMessage()));
-            LOG.warn(RewriteService.class, "Recipe validation errors detected as part of one or more activeRecipe(s). " +
+            LOG.warn("Recipe validation errors detected as part of one or more activeRecipe(s). " +
                 "Execution will continue regardless.");
         }
     }
@@ -394,10 +399,10 @@ public class RewriteService {
         // TODO: Do we need such Styles for the Java parser. To be investigated !
         // List<NamedStyles> styles = env.activateStyles(emptySet());
 
-        LOG.info(RewriteService.class, "Parsing source files...");
+        LOG.info("Parsing source files...");
         List<SourceFile> sourceFiles = new ArrayList<>();
 
-        LOG.info(RewriteService.class, "Application absolute path: " + rewriteConfig.getAppPath());
+        LOG.info("Application absolute path: " + rewriteConfig.getAppPath());
 
         // Parse Java files
         List<Path> javaFiles = findFiles(rewriteConfig.getAppPath(), ".java");
@@ -409,9 +414,9 @@ public class RewriteService {
                 classpaths = mar.resolveArtifactsWithDependencies(mar.loadModel(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml")));
             }
 
-            LOG.debug(RewriteService.class, "Classpath jar entries size: " + classpaths.size());
-            LOG.debug(RewriteService.class, "Classpath entries of the application scanned");
-            classpaths.forEach(cp -> {LOG.debug(RewriteService.class,cp.toString());});
+            LOG.debug("Classpath jar entries size: " + classpaths.size());
+            LOG.debug("Classpath entries of the application scanned");
+            classpaths.forEach(cp -> {LOG.debug(cp.toString());});
 
             // Create the JavaParser and set the classpaths
             JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);
@@ -421,7 +426,7 @@ public class RewriteService {
             // Load the Java source files
             JavaParser jp = javaParserBuilder.build();
             sourceFiles.addAll(jp.parse(javaFiles, rewriteConfig.getAppPath(), ctx).toList());
-            LOG.info(RewriteService.class, "Parsed " + javaFiles.size() + " Java files");
+            LOG.info("Parsed " + javaFiles.size() + " Java files");
         }
 
         // Parse Kotlin files
@@ -429,7 +434,7 @@ public class RewriteService {
         if (!kotlinFiles.isEmpty()) {
             KotlinParser kotlinParser = KotlinParser.builder().build();
             sourceFiles.addAll(kotlinParser.parse(kotlinFiles, rewriteConfig.getAppPath(), ctx).toList());
-            LOG.info(RewriteService.class, "Parsed " + kotlinFiles.size() + " Kotlin files");
+            LOG.info("Parsed " + kotlinFiles.size() + " Kotlin files");
         }
 
         List<Path> poms = findFiles(rewriteConfig.getAppPath(), ".xml");
@@ -459,27 +464,27 @@ public class RewriteService {
             .map(sf -> addProvenance(sf, provenance))
             .collect(toList());
 
-        LOG.info(RewriteService.class, "Total source files parsed: " + sourceFiles.size());
+        LOG.info("Total source files parsed: " + sourceFiles.size());
         if (!sourceFiles.isEmpty()) {
             sourceSetInitialized = true;
         } else {
             throw new IllegalStateException("No source files parsed from the project scanned !");
         }
 
-        LOG.debug(RewriteService.class,"List of resources loaded");
-        sourceFiles.forEach(f -> {LOG.debug(RewriteService.class,f.getSourcePath().toString());});
+        LOG.debug("List of resources loaded");
+        sourceFiles.forEach(f -> {LOG.debug(f.getSourcePath().toString());});
 
         return new InMemoryLargeSourceSet(sourceFiles);
     }
 
     private RecipeRun runRecipe(Recipe recipe) {
-        LOG.info(RewriteService.class, "Running recipe(s)...");
+        LOG.info("Running recipe(s)...");
         RecipeRun rr = recipe.run(sourceSet, ctx);
 
         if (rewriteConfig.canExportDatatables()) {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
             Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
-            LOG.info(RewriteService.class, "Printing available datatables to: " + datatableDirectoryPath);
+            LOG.info("Printing available datatables to: " + datatableDirectoryPath);
             rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
         }
 
@@ -556,7 +561,7 @@ public class RewriteService {
         String indent = "    ";
         String prefix = "    ";
         for (RecipeDescriptor recipeDescriptor : result.getRecipeDescriptorsThatMadeChanges()) {
-            LOG.info(RewriteService.class, prefix + recipeDescriptor.getName());
+            LOG.info(prefix + recipeDescriptor.getName());
             prefix = prefix + indent;
         }
     }

@@ -1,6 +1,8 @@
 ///usr/bin/env jbang “$0” “$@” ; exit $?
-//DEPS dev.snowdrop.openrewrite:rewrite-client:1.0.0-SNAPSHOT
+//DEPS dev.snowdrop.openrewrite:rewrite-client:0.2.7-SNAPSHOT
+//SOURCES RewriteConfiguration.java
 //DEPS io.quarkus.platform:quarkus-bom:3.29.4@pom
+//DEPS org.jboss.logmanager:jboss-logmanager:3.2.1.Final
 //DEPS io.quarkus:quarkus-picocli
 //DEPS io.quarkus:quarkus-config-yaml
 //DEPS org.openrewrite:rewrite-polyglot:2.9.1
@@ -15,7 +17,6 @@
 //DEPS org.openrewrite:rewrite-json
 //DEPS org.openrewrite:rewrite-gradle
 //DEPS org.openrewrite:rewrite-maven
-//RUNTIME_OPTIONS -Djansi.colors=256
 
 // List of DEPS generated using the command: mvn dependency:list -DexcludeTransitive=true | grep ":.*:.*:.*" | cut -d']' -f2- | sed 's/^ /\/\/DEPS /'
 
@@ -36,12 +37,13 @@
  */
 package dev.snowdrop.openrewrite.cli;
 
-import dev.snowdrop.logging.LogFactory;
-import dev.snowdrop.logging.LoggingService;
+//import dev.snowdrop.logging.LogFactory;
+//import dev.snowdrop.logging.LoggingService;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
+import org.jboss.logging.Logger;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 import org.openrewrite.table.SearchResults;
@@ -67,25 +69,29 @@ import java.util.*;
 )
 public class RewriteCommand implements Runnable {
 
+    Logger LOG = Logger.getLogger(RewriteCommand.class);
+
     /** Creates a new RewriteCommand instance. */
     public RewriteCommand() {
     }
 
-    @Inject
-    LogFactory logFactory;
+    //@Inject
+    //LogFactory logFactory;
 
-    private LoggingService LOG;
+    //private LoggingService LOG;
 
     /**
      * Initializes the logging service from the Picocli command spec.
      *
      * @param spec the Picocli command spec
      */
+    /**
     @CommandLine.Spec
     void setSpec(CommandLine.Model.CommandSpec spec) {
         logFactory.setSpec(spec);
         this.LOG = logFactory.getLogger();
     };
+     **/
 
     @CommandLine.Parameters(
         index = "0",
@@ -188,7 +194,7 @@ public class RewriteCommand implements Runnable {
 
             runs.forEach((k,v) -> {
                 if (!v.getDataTables().isEmpty()) {
-                    LOG.info(RewriteCommand.class, String.format("Execution of the recipe %s succeeded.%n",k));
+                    LOG.info(String.format("Execution of the recipe %s succeeded.%n",k));
 
                     //System.out.printf("Execution of the recipe %s succeeded\n",k);
                     // The DataTable<SearchResult> will be available starting from: 8.69.0 !
@@ -197,23 +203,23 @@ public class RewriteCommand implements Runnable {
                     if (searchResults != null) {
                         searchResults.forEach((result, list) -> {
                             if (result.getClass().getSimpleName().startsWith("SearchResults")) {
-                                LOG.info(RewriteCommand.class, "# Found " + list.size() + " search results.");
+                                LOG.info("# Found " + list.size() + " search results.");
                                 list.forEach(r -> {
                                     var row = (SearchResults.Row)r;
-                                    LOG.info(RewriteCommand.class, "# SourcePath: " + row.getSourcePath());
-                                    LOG.info(RewriteCommand.class, "# Result: " + row.getResult());
-                                    LOG.info(RewriteCommand.class, "# Recipe: " + row.getRecipe());
-                                    LOG.info(RewriteCommand.class, "==============================================");
+                                    LOG.info("# SourcePath: " + row.getSourcePath());
+                                    LOG.info("# Result: " + row.getResult());
+                                    LOG.info("# Recipe: " + row.getRecipe());
+                                    LOG.info("==============================================");
                                 });
                             }
                         });
                     }
                 }
             });
-            LOG.info(RewriteCommand.class, "Client execution is finishing ...");
+            LOG.info("Client execution is finishing ...");
 
         } catch (Exception e) {
-            LOG.error(RewriteCommand.class, "Error executing rewrite command", e);
+            LOG.error("Error executing rewrite command", e);
             System.exit(1);
         }
     }
@@ -226,9 +232,11 @@ public class RewriteCommand implements Runnable {
      * @throws Exception if execution fails
      */
     public ResultsContainer execute(RewriteConfig rewriteConfig) throws Exception {
+        /**
         if (LOG == null && logFactory != null) {
             this.LOG = logFactory.getLogger();
         }
+         **/
         return runScanner(rewriteConfig);
     }
 
@@ -256,16 +264,16 @@ public class RewriteCommand implements Runnable {
     }
 
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
-        LOG.info(RewriteCommand.class, "Starting OpenRewrite ...");
-        LOG.info(RewriteCommand.class, String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
-        LOG.info(RewriteCommand.class, String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
+        LOG.info("Starting OpenRewrite ...");
+        LOG.info(String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
+        LOG.info(String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
 
         if (!cfg.getAdditionalJarPaths().isEmpty()) {
-            LOG.info(RewriteCommand.class, "Additional JAR files: " + cfg.getAdditionalJarPaths());
+            LOG.info("Additional JAR files: " + cfg.getAdditionalJarPaths());
         }
 
         RewriteService scanner = new RewriteService(cfg);
-        scanner.setLogger(LOG);
+        //scanner.setLogger(LOG);
         scanner.init();
         return scanner.run();
     }

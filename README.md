@@ -69,6 +69,13 @@ Run a recipe:
 openrewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 ```
 
+Run a recipe without the `dryrun` mode:
+
+```bash
+openrewrite /path/to/project -r org.openrewrite.java.format.AutoFormat -d false
+```
+
+
 ## Usage
 Important Considerations:
 

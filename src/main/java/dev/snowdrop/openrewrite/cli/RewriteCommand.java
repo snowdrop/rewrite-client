@@ -39,6 +39,7 @@ package dev.snowdrop.openrewrite.cli;
 
 //import dev.snowdrop.logging.LogFactory;
 //import dev.snowdrop.logging.LoggingService;
+import dev.snowdrop.logging.LoggingService;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
@@ -68,8 +69,9 @@ import java.util.*;
         "  rewrite --config /path/to/rewrite.yml /path/to/project MyRecipe"
 )
 public class RewriteCommand implements Runnable {
-
-    Logger LOG = Logger.getLogger(RewriteCommand.class);
+    @Inject
+    LoggingService LOG;
+    //Logger LOG = Logger.getLogger(RewriteCommand.class);
 
     /** Creates a new RewriteCommand instance. */
     public RewriteCommand() {
@@ -265,6 +267,7 @@ public class RewriteCommand implements Runnable {
 
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
         LOG.info("Starting OpenRewrite ...");
+        LOG.warn("Starting OpenRewrite in WARN mode ...");
         LOG.info(String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
         LOG.info(String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
 

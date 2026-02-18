@@ -8,7 +8,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 import static org.jboss.logmanager.Level.*;
 
@@ -70,7 +69,7 @@ public class LoggingService {
         }
 
         activeHandler = new PicocliColorHandler(spec, darken);
-        activeHandler.setLevel(Level.INFO);
+        rootLogger.setLevel(ALL);
         rootLogger.addHandler(activeHandler);
     }
 

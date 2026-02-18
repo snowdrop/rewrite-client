@@ -22,7 +22,7 @@ public class PicocliColorHandler extends ExtHandler {
      */
     public PicocliColorHandler(CommandLine.Model.CommandSpec spec, int darken) {
         this.spec = spec;
-        this.formatter = new ColorPatternFormatter(darken, "%d{HH:mm:ss} %-5p %s%e%n");
+        this.formatter = new ColorPatternFormatter(darken, "%d{HH:mm:ss} %-5p [%c{2.}] (%t) %s%e%n");
     }
 
     @Override

@@ -4,7 +4,6 @@ import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 import org.openrewrite.table.SourcesFileResults;
 
@@ -45,16 +44,10 @@ public class ReplaceAnnotationAttributeTest extends BaseTest {
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        assertFalse(run.getDataTables().isEmpty());
-        Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-                .filter(entry -> entry.getKey().getName().contains("SourcesFileResults"))
-                .findFirst();
-        assertTrue(resultMap.isPresent());
-
-        List<?> rows = resultMap.get().getValue();
+        List<SourcesFileResults.Row> rows = findDataTableRows(run, "SourcesFileResults", SourcesFileResults.Row.class);
         assertEquals(1, rows.size());
 
-        SourcesFileResults.Row record = (SourcesFileResults.Row) rows.getFirst();
+        SourcesFileResults.Row record = rows.getFirst();
         assertEquals("src/main/java/com/todo/app/entity/Task.java", record.getSourcePath());
         assertEquals("org.openrewrite.java.AddOrUpdateAnnotationAttribute", record.getRecipe());
     }

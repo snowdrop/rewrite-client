@@ -4,7 +4,6 @@ import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 import org.openrewrite.table.SearchResults;
 
@@ -47,16 +46,10 @@ public class FindParamAnnotationTest extends BaseTest {
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        assertFalse(run.getDataTables().isEmpty());
-        Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-                .filter(entry -> entry.getKey().getName().contains("SearchResults"))
-                .findFirst();
-        assertTrue(resultMap.isPresent());
-
-        List<?> rows = resultMap.get().getValue();
+        List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
         assertEquals(4, rows.size());
 
-        SearchResults.Row record = (SearchResults.Row) rows.getFirst();
+        SearchResults.Row record = rows.getFirst();
         assertEquals("src/main/java/com/demo/library/BookResource.java", record.getSourcePath());
         assertEquals("@GET", record.getResult());
         assertEquals("Find annotations `jakarta.ws.rs.GET`", record.getRecipe());
@@ -75,16 +68,10 @@ public class FindParamAnnotationTest extends BaseTest {
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        assertFalse(run.getDataTables().isEmpty());
-        Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-            .filter(entry -> entry.getKey().getName().contains("SearchResults"))
-            .findFirst();
-        assertTrue(resultMap.isPresent());
-
-        List<?> rows = resultMap.get().getValue();
+        List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
         assertEquals(3, rows.size());
 
-        SearchResults.Row record = (SearchResults.Row) rows.getFirst();
+        SearchResults.Row record = rows.getFirst();
         assertEquals("src/main/java/com/demo/library/BookResource.java", record.getSourcePath());
         assertEquals(true, record.getResult().contains("@PathParam"));
         assertEquals("Find annotations `org.jboss.resteasy.annotations.jaxrs.PathParam`", record.getRecipe());

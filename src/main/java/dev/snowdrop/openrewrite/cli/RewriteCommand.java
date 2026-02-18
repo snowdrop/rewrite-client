@@ -150,6 +150,7 @@ public class RewriteCommand implements Runnable {
 
     @CommandLine.Option(
         names = {"-d","--dry-run"},
+        arity = "1",
         description = "Execute the recipes in dry run mode"
     )
     boolean dryRun = true;

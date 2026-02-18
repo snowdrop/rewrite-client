@@ -11,6 +11,15 @@ public class DataTableUtils {
     private DataTableUtils() {
     }
 
+    /**
+     * Find a DataTable object from the list of the DataTables created from recipes executed
+     *
+     * @param run the RecipeRun executed
+     * @param dataTableName the name of the DataTable to search about (example: SearchResults)
+     * @param rowType The OpenRewrite Row record class
+     * @return The list of the Rows
+     * @param <T> The type of the Row record
+     */
     @SuppressWarnings("unchecked")
     public static <T> List<T> findDataTableRows(RecipeRun run, String dataTableName, Class<T> rowType) {
         if (run.getDataTables().isEmpty()) {

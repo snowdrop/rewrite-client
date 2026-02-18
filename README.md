@@ -181,21 +181,11 @@ ResultsContainer results = scanner.run();
 // Get results for a specific recipe
 RecipeRun run = results.getRecipeRuns().get("org.openrewrite.java.search.FindAnnotations");
 
-// Access data tables (e.g., search results)
-Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables()
-    .entrySet()
-    .stream()
-    .filter(entry -> entry.getKey().getName().contains("SearchResults"))
-    .findFirst();
-
-if (resultMap.isPresent()) {
-    List<?> rows = resultMap.get().getValue();
-    for (Object row : rows) {
-        SearchResults.Row record = (SearchResults.Row) row;
-        System.out.println("Found in: " + record.getSourcePath());
-        System.out.println("Match: " + record.getResult());
-    }
-}
+// Fetch the DataTable matching the recipe executed for SearchResults
+List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
+SearchResults.Row record = rows.getFirst();
+System.out.println("Found in: " + record.getSourcePath());
+System.out.println("Match: " + record.getResult());
 
 // Access changesets (code modifications)
 // run.getChangeset()...

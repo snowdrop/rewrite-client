@@ -4,7 +4,6 @@ import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 import org.openrewrite.table.SearchResults;
 
@@ -45,16 +44,10 @@ public class FindAnnotationTest extends BaseTest {
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        assertFalse(run.getDataTables().isEmpty());
-        Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-            .filter(entry -> entry.getKey().getName().contains("SearchResults"))
-            .findFirst();
-        assertTrue(resultMap.isPresent());
-
-        List<?> rows = resultMap.get().getValue();
+        List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
         assertEquals(1, rows.size());
 
-        SearchResults.Row record = (SearchResults.Row) rows.getFirst();
+        SearchResults.Row record = rows.getFirst();
         assertEquals("src/main/java/com/todo/app/AppApplication.java", record.getSourcePath());
         assertEquals("@SpringBootApplication", record.getResult());
         assertEquals("Find annotations `org.springframework.boot.autoconfigure.SpringBootApplication`", record.getRecipe());

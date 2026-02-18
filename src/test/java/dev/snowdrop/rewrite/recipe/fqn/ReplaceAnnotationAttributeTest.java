@@ -1,11 +1,11 @@
-package dev.snowdrop.rewrite.cli;
+package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
-import org.openrewrite.table.SearchResults;
 import org.openrewrite.table.SourcesFileResults;
 
 import java.io.File;

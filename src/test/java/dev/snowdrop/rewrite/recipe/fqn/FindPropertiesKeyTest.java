@@ -1,5 +1,6 @@
-package dev.snowdrop.rewrite.cli;
+package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +19,9 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-public class FindParamAnnotationTest extends BaseTest {
+public class FindPropertiesKeyTest extends BaseTest {
 
-    String appPath = "test-project/quarkus-resteasy-classic-app";
+    String appPath = "test-project/demo-spring-boot-todo-app";
 
     @BeforeEach
     public void setup() throws IOException {
@@ -33,46 +34,20 @@ public class FindParamAnnotationTest extends BaseTest {
     }
 
     @Test
-    void shouldFindJakartaGetAnnotation() throws Exception {
-        String recipeName = "org.openrewrite.java.search.FindAnnotations";
-        String annotationToSearch="jakarta.ws.rs.GET";
+    void shouldFindJpaPropertiesKeyExactly() throws Exception {
+        Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
+        String recipeName = "org.openrewrite.properties.search.FindProperties";
 
         // Configure the application to scan and recipe to be executed
         cfg.setAppPath(Paths.get(appPath));
         cfg.setFqNameRecipe(recipeName);
-        cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
-        cfg.setAdditionalJarPaths(List.of(""));
+        cfg.setRecipeOptions(Set.of("propertyKey=spring.jpa.hibernate.ddl-auto","relaxedBinding=false"));
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        assertFalse(run.getDataTables().isEmpty());
-        Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
-                .filter(entry -> entry.getKey().getName().contains("SearchResults"))
-                .findFirst();
-        assertTrue(resultMap.isPresent());
-
-        List<?> rows = resultMap.get().getValue();
-        assertEquals(4, rows.size());
-
-        SearchResults.Row record = (SearchResults.Row) rows.getFirst();
-        assertEquals("src/main/java/com/demo/library/BookResource.java", record.getSourcePath());
-        assertEquals("@GET", record.getResult());
-        assertEquals("Find annotations `jakarta.ws.rs.GET`", record.getRecipe());
-    }
-
-    @Test
-    void shouldFindJBossRestEasyPathParamAnnotation() throws Exception {
-        String recipeName = "org.openrewrite.java.search.FindAnnotations";
-        String annotationToSearch="org.jboss.resteasy.annotations.jaxrs.PathParam";
-
-        // Configure the application to scan and recipe to be executed
-        cfg.setAppPath(Paths.get(appPath));
-        cfg.setFqNameRecipe(recipeName);
-        cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
-
-        var results = rewriteCmd.execute(cfg);
-        RecipeRun run = results.getRecipeRuns().get(recipeName);
+        String patchContent = Files.readString(rewritePatchFile);
+        assertNotNull(patchContent);
 
         assertFalse(run.getDataTables().isEmpty());
         Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
@@ -81,11 +56,43 @@ public class FindParamAnnotationTest extends BaseTest {
         assertTrue(resultMap.isPresent());
 
         List<?> rows = resultMap.get().getValue();
-        assertEquals(3, rows.size());
+        assertEquals(1, rows.size());
 
-        SearchResults.Row record = (SearchResults.Row) rows.getFirst();
-        assertEquals("src/main/java/com/demo/library/BookResource.java", record.getSourcePath());
-        assertEquals(true, record.getResult().contains("@PathParam"));
-        assertEquals("Find annotations `org.jboss.resteasy.annotations.jaxrs.PathParam`", record.getRecipe());
+        SearchResults.Row record = (SearchResults.Row)rows.getFirst();
+        assertEquals("src/main/resources/application.properties",record.getSourcePath());
+        assertEquals("spring.jpa.hibernate.ddl-auto=update",record.getResult());
+        assertEquals("Find property `spring.jpa.hibernate.ddl-auto`",record.getRecipe());
+    }
+
+    @Test
+    void shouldFindJpaPropertiesKeyRelaxedBinding() throws Exception {
+        String appPath = "test-project/demo-spring-boot-todo-app";
+        Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
+        String recipeName = "org.openrewrite.properties.search.FindProperties";
+
+        // Configure the application to scan and recipe to be executed
+        cfg.setAppPath(Paths.get(appPath));
+        cfg.setFqNameRecipe(recipeName);
+        cfg.setRecipeOptions(Set.of("propertyKey=spring.jpa.hibernate.ddlAuto","relaxedBinding=true"));
+
+        var results = rewriteCmd.execute(cfg);
+        RecipeRun run = results.getRecipeRuns().get(recipeName);
+
+        String patchContent = Files.readString(rewritePatchFile);
+        assertNotNull(patchContent);
+
+        assertFalse(run.getDataTables().isEmpty());
+        Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()
+            .filter(entry -> entry.getKey().getName().contains("SearchResults"))
+            .findFirst();
+        assertTrue(resultMap.isPresent());
+
+        List<?> rows = resultMap.get().getValue();
+        assertEquals(1, rows.size());
+
+        SearchResults.Row record = (SearchResults.Row)rows.getFirst();
+        assertEquals("src/main/resources/application.properties",record.getSourcePath());
+        assertEquals("spring.jpa.hibernate.ddl-auto=update",record.getResult());
+        assertEquals("Find property `spring.jpa.hibernate.ddlAuto`",record.getRecipe());
     }
 }

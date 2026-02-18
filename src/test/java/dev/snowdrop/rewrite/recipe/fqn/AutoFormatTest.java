@@ -1,5 +1,6 @@
-package dev.snowdrop.rewrite.cli;
+package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.RecipeRun;

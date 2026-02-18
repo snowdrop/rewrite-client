@@ -13,9 +13,9 @@ public class BaseTest {
 
     @Inject
     @TopCommand
-    RewriteCommand rewriteCmd;
+    public RewriteCommand rewriteCmd;
 
-    RewriteConfig cfg;
+    public RewriteConfig cfg;
 
     @BeforeEach
     public void beforeEach() {

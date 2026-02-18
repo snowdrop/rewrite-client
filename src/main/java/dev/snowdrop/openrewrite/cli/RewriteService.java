@@ -152,6 +152,7 @@ public class RewriteService {
     public ResultsContainer run()  {
         ResultsContainer results = processRecipes();
         if(rewriteConfig.isDryRun()) {
+            LOG.warn(RewriteService.class,"Recipe executed in dry run mode !");
             createPatchFile(results);
         }
         return results;

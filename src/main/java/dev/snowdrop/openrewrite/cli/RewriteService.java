@@ -136,25 +136,17 @@ public class RewriteService {
     }
 
     /**
-     * Returns whether the source set has been initialized.
-     *
-     * @return true if source files were successfully parsed
-     */
-    public boolean isSourceSetInitialized() {
-        return sourceSetInitialized;
-    }
-
-    /**
      * Runs the configured recipes and optionally generates a patch file.
      *
      * @return the results container with all recipe run results
      */
     public ResultsContainer run()  {
-        ResultsContainer results = processRecipes();
-        if(rewriteConfig.isDryRun()) {
+        if (rewriteConfig.isDryRun()) {
             LOG.warn(RewriteService.class,"Recipe executed in dry run mode !");
-            createPatchFile(results);
         }
+        ResultsContainer results = processRecipes();
+        // Create the patch file and apply the changes
+        createPatchFile(results);
         return results;
     }
 
@@ -296,6 +288,7 @@ public class RewriteService {
             }
         }
 
+        var listRecipes = env.listRecipes();
         if (env.listRecipes().isEmpty()) {
             LOG.warn(RewriteService.class, String.format("No recipes found in active selection or YAML configuration for path: %s", rewriteConfig.getAppPath()));
             return new ResultsContainer(Collections.emptyMap());
@@ -321,7 +314,7 @@ public class RewriteService {
                 LOG.info(RewriteService.class, "Running recipe: " + r.getName());
                 validatingRecipe(r);
                 RecipeRun currentRun = runRecipe(r);
-                allResults.put(r.getName(),currentRun);
+                allResults.put(r.getName(), currentRun);
             });
         }
 
@@ -348,7 +341,8 @@ public class RewriteService {
     }
 
     private Environment loadRecipesFromYAML(Environment env) {
-        Environment.Builder envBuilder = env.builder();
+        Environment.Builder envBuilder = Environment.builder();
+
         Path configPath;
         if (Paths.get(rewriteConfig.getYamlRecipesPath()).isAbsolute()) {
             configPath = Paths.get(rewriteConfig.getYamlRecipesPath());
@@ -357,14 +351,15 @@ public class RewriteService {
             if (appProject != null && !appProject.isEmpty()) {
                 configPath = Paths.get(appProject);
             } else {
-                // Fall back to resolving against project root
+                // Fall back to resolving against current working directory + YAML path
                 configPath = rewriteConfig.getAppPath().resolve(rewriteConfig.getYamlRecipesPath());
             }
         }
 
         if (Files.exists(configPath)) {
             try (InputStream is = Files.newInputStream(configPath)) {
-                envBuilder.load(new YamlResourceLoader(is, configPath.toUri(), new Properties()));
+                var yamlRecipesPath = configPath.normalize().toUri();
+                envBuilder.load(new YamlResourceLoader(is, yamlRecipesPath, new Properties()));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

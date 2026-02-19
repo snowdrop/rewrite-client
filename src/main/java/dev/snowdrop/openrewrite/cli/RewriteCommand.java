@@ -241,7 +241,7 @@ public class RewriteCommand implements Runnable {
      */
     public ResultsContainer execute() throws Exception {
         RewriteConfig cfg = new RewriteConfig();
-        cfg.setAppPath(projectRoot);
+        cfg.setAppPath(projectRoot.normalize().toAbsolutePath());
         cfg.setAdditionalJarPaths(additionalJarPaths);
         if (recipeName != null) {
             cfg.setFqNameRecipe(recipeName);
@@ -258,7 +258,7 @@ public class RewriteCommand implements Runnable {
 
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
         LOG.info(RewriteCommand.class, "Starting OpenRewrite ...");
-        LOG.info(RewriteCommand.class, String.format("Project root: %s",cfg.getAppPath().toAbsolutePath()));
+        LOG.info(RewriteCommand.class, String.format("Project root: %s",cfg));
         LOG.info(RewriteCommand.class, String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
 
         if (!cfg.getAdditionalJarPaths().isEmpty()) {

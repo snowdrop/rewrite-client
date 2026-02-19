@@ -1,6 +1,7 @@
 ---
 type: specs.openrewrite.org/v1beta/recipe
-name: dev.snowdrop.RecipeExample
-displayName: Auto format the jave source code
+name: "dev.snowdrop.RecipeExample"
+displayName: "Auto format the jave source code"
+description: "Format the Java classes using Eclipse XML Formating file."
 recipeList:
   - org.openrewrite.java.format.AutoFormat

@@ -26,7 +26,7 @@
 
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.29.4</quarkus.platform.version>
+        <quarkus.platform.version>3.31.4</quarkus.platform.version>
 
         <openrewrite-bom.version>8.70.4</openrewrite-bom.version>
         <openrewrite-rewrite-polyglot.version>2.9.1</openrewrite-rewrite-polyglot.version>

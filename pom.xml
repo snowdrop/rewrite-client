@@ -19,7 +19,7 @@
 
         <!-- These two should be kept in lockstep (MIMA 2.4.38 = Maven 3.9.11 + Resolver 1.9.24) -->
         <mima.version>2.4.38</mima.version>
-        <maven.version>3.9.11</maven.version>
+        <maven.version>3.9.12-01</maven.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -92,7 +92,7 @@
             <dependency>
                 <groupId>eu.maveniverse.maven.maven-boms</groupId>
                 <artifactId>skinny</artifactId>
-                <version>${maven.version}-01</version>
+                <version>${maven.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

@@ -1,0 +1,12 @@
+# mvn org.openrewrite.maven:rewrite-maven-plugin:dryRun -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-java-dependencies:1.51.0 -Drewrite.activeRecipes=dev.snowdrop.RecipeExample -Drewrite.configLocation=rewrite-upgrade-dependencies-version.yml
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: dev.snowdrop.RecipeExample
+displayName: "Upgrade Spring Boot version to 3.5.10"
+description: "Execute a recipe able to upgrade the Spring Boot version from 3.5.8 to 3.5.10"
+recipeList:
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: org.springframework.boot
+      artifactId: "*"
+      newVersion: 3.5.10
+      overrideManagedVersion: "true"

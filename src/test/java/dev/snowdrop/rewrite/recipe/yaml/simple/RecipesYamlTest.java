@@ -40,6 +40,13 @@ public class RecipesYamlTest extends BaseTest {
             """;
 
         boolean found = patchContent.contains(diffText);
-        assertTrue(found, "The rewrite patch file contains the string :" + diffText);
+        assertTrue(found, "The rewrite patch file contains a new line between braces :" + diffText);
+
+        diffText = """
+            -  @SuppressWarnings("unused")
+            +    @SuppressWarnings("unused")
+            """;
+        found = patchContent.contains(diffText);
+        assertTrue(found, "The rewrite patch file contains the indentation change :" + diffText);
     }
 }

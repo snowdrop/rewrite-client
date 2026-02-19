@@ -5,3 +5,4 @@ displayName: "Auto format the jave source code"
 description: "Format the Java classes using Eclipse XML Formating file."
 recipeList:
   - org.openrewrite.java.format.AutoFormat
+  - org.openrewrite.java.format.NormalizeTabsOrSpaces

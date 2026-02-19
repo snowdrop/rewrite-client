@@ -136,6 +136,15 @@ public class RewriteService {
     }
 
     /**
+     * Returns whether the source set has been initialized.
+     *
+     * @return true if source files were successfully parsed
+     */
+    public boolean isSourceSetInitialized() {
+        return sourceSetInitialized;
+    }
+
+    /**
      * Runs the configured recipes and optionally generates a patch file.
      *
      * @return the results container with all recipe run results

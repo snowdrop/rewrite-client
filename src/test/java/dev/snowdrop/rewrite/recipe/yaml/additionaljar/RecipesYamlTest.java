@@ -2,17 +2,13 @@ package dev.snowdrop.rewrite.recipe.yaml.additionaljar;
 
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.RecipeRun;
-import org.openrewrite.Result;
-import org.wildfly.common.Assert;
 
 import java.nio.file.Paths;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 public class RecipesYamlTest extends BaseTest {
@@ -31,7 +27,10 @@ public class RecipesYamlTest extends BaseTest {
 
         var results = rewriteCmd.execute(cfg);
         RecipeRun run = results.getRecipeRuns().get(recipeName);
+        var result = run.getChangeset().getAllResults().getFirst();
+        String diff = result.diff();
+        String versionChanged = "<version>3.5.10</version>";
+        assertTrue(diff.contains(versionChanged));
 
-        Assert.assertFalse(run.getChangeset().getAllResults().size() == 1);
     }
 }

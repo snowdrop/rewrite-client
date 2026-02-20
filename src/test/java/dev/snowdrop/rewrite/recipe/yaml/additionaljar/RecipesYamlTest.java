@@ -17,8 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @QuarkusTest
 public class RecipesYamlTest extends BaseTest {
 
-    // TODO: To be fixed as test is failing
-    @Disabled
     @Test
     void useAdditionalRecipesJarToUpgradeDependencies() throws Exception {
 

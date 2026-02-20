@@ -347,7 +347,7 @@ public class RewriteService {
 
         // Load YAML recipes if configured, while the builder is still open
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : Thread.currentThread().getContextClassLoader();
+            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
             loadRecipesFromYAML(env,yamlClassLoader);
         }
 

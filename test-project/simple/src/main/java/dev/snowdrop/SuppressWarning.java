@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SuppressWarning {
-    @SuppressWarnings("unused")
+  @SuppressWarnings("unused")
     void suppressUnusedWarning() {
         int usedVal = 5;
         int unusedVal = 10;  // no warning here

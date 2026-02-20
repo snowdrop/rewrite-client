@@ -28,6 +28,8 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.29.4</quarkus.platform.version>
 
+        <classgraph.version>4.8.184</classgraph.version>
+
         <openrewrite-bom.version>8.70.4</openrewrite-bom.version>
         <openrewrite-rewrite-polyglot.version>2.9.1</openrewrite-rewrite-polyglot.version>
 
@@ -111,6 +113,14 @@
             <artifactId>jboss-logmanager</artifactId>
             <version>${jboss-logmanager.version}</version>
         </dependency>
+
+        <!-- Scan classes for additional jars
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>${classgraph.version}</version>
+        </dependency>
+        -->
 
         <!-- Quarkus dependencies -->
         <dependency>

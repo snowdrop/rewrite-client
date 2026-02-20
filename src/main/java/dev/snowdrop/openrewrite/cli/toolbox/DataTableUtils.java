@@ -1,11 +1,12 @@
 package dev.snowdrop.openrewrite.cli.toolbox;
 
-import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 
 import java.util.List;
-import java.util.Map;
 
+/**
+ * Utility class to handle the Data of a Table
+ */
 public class DataTableUtils {
 
     private DataTableUtils() {

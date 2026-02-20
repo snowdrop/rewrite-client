@@ -72,6 +72,7 @@ public class RewriteService {
     private LargeSourceSet sourceSet;
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
+    private final List<String> yamlDefinedRecipeNames = new ArrayList<>();
 
     /**
      * Creates a new RewriteService with the given configuration.
@@ -281,7 +282,6 @@ public class RewriteService {
 
         // Process the Yaml recipes file if it has been defined
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            env = loadRecipesFromYAML(env);
             yamlRecipes = true;
         } else {
             // Check if we got a recipe with a FQName string and load it
@@ -319,12 +319,11 @@ public class RewriteService {
 
         } else {
             LOG.info(RewriteService.class, "Using recipes from YAML configuration");
-            env.listRecipes().forEach(r -> {
-                LOG.info(RewriteService.class, "Running recipe: " + r.getName());
-                validatingRecipe(r);
-                RecipeRun currentRun = runRecipe(r);
-                allResults.put(r.getName(), currentRun);
-            });
+            Recipe yamlRecipe = env.activateRecipes(yamlDefinedRecipeNames.toArray(new String[0]));
+            LOG.info(RewriteService.class, "Running recipe: " + yamlRecipe.getName());
+            validatingRecipe(yamlRecipe);
+            RecipeRun currentRun = runRecipe(yamlRecipe);
+            allResults.put(yamlRecipe.getName(), currentRun);
         }
 
         return new ResultsContainer(allResults);
@@ -346,12 +345,16 @@ public class RewriteService {
             LOG.info(RewriteService.class, "Loaded recipes from additional JARs");
         }
 
+        // Load YAML recipes if configured, while the builder is still open
+        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
+            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
+            loadRecipesFromYAML(env,yamlClassLoader);
+        }
+
         return env.build();
     }
 
-    private Environment loadRecipesFromYAML(Environment env) {
-        Environment.Builder envBuilder = Environment.builder();
-
+    private void loadRecipesFromYAML(Environment.Builder envBuilder, ClassLoader additionalJarsClassloader) throws Exception {
         Path configPath;
         if (Paths.get(rewriteConfig.getYamlRecipesPath()).isAbsolute()) {
             configPath = Paths.get(rewriteConfig.getYamlRecipesPath());
@@ -368,13 +371,13 @@ public class RewriteService {
         if (Files.exists(configPath)) {
             try (InputStream is = Files.newInputStream(configPath)) {
                 var yamlRecipesPath = configPath.normalize().toUri();
-                envBuilder.load(new YamlResourceLoader(is, yamlRecipesPath, new Properties()));
+                YamlResourceLoader loader = new YamlResourceLoader(is, yamlRecipesPath, new Properties(), additionalJarsClassloader);
+                loader.listRecipes().forEach(rd -> yamlDefinedRecipeNames.add(rd.getName()));
+                envBuilder.load(loader);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-
-        return envBuilder.build();
     }
 
     private void validatingRecipe(Recipe recipe) {

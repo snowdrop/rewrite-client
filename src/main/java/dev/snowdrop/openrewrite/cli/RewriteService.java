@@ -282,6 +282,7 @@ public class RewriteService {
 
         // Process the Yaml recipes file if it has been defined
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
+            env = loadRecipesFromYAML(env);
             yamlRecipes = true;
         } else {
             // Check if we got a recipe with a FQName string and load it

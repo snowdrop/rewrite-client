@@ -21,7 +21,7 @@ public class UpgradeDepVersionYamlTest extends BaseTest {
     void testSpringToQuarkusMigration() throws Exception {
 
         String appPath = "test-project/demo-spring-boot-todo-app";
-        String recipeName = "org.openrewrite.java.dependencies.UpgradeDependencyVersion";
+        String recipeName = "dev.snowdrop.openrewrite.java.SpringToQuarkus";
 
         List<String> gavs = new ArrayList<>();
         gavs.add("org.openrewrite.recipe:rewrite-java-dependencies:1.51.0");
@@ -44,7 +44,7 @@ public class UpgradeDepVersionYamlTest extends BaseTest {
              + <version>3.5.8</version>
          */
         assertNotNull(changes.get(0).getAfter());
-        assertEquals("pom.xml", changes.get(1).getAfter().getSourcePath().toString());
+        assertEquals("pom.xml", changes.get(0).getAfter().getSourcePath().toString());
 
     }
 }

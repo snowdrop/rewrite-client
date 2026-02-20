@@ -1,0 +1,36 @@
+type: "specs.openrewrite.org/v1beta/recipe"
+name: "dev.snowdrop.openrewrite.java.SpringToQuarkus"
+displayName: "Replace the SpringBoot parent dependency with Quarkus BOM within the\
+  \ pom.xml file"
+description: "Replace the SpringBoot parent dependency with Quarkus BOM within the\
+  \ pom.xml file."
+recipeList:
+#- org.openrewrite.maven.AddManagedDependency:
+#    groupId: "io.quarkus.platform"
+#    artifactId: "quarkus-bom"
+#    version: "3.31.3"
+#    type: "pom"
+#    scope: "import"
+#    addToRootPom: false
+#- org.openrewrite.maven.AddDependency:
+#    groupId: "io.quarkus"
+#    artifactId: "quarkus-core"
+#    version: "3.31.3"
+#- org.openrewrite.maven.AddDependency:
+#    groupId: "io.quarkus"
+#    artifactId: "quarkus-arc"
+#    version: "3.31.3"
+#- org.openrewrite.maven.AddDependency:
+#    groupId: "io.quarkus"
+#    artifactId: "quarkus-smallrye-openapi"
+#    version: "3.31.3"
+#- org.openrewrite.maven.RemovePlugin:
+#    groupId: "org.springframework.boot"
+#    artifactId: "spring-boot-maven-plugin"
+- org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+    groupId: "org.springframework.boot"
+    artifactId: "*"
+    newVersion: "3.5.8"
+    overrideManagedVersion: "true"
+#- dev.snowdrop.mtool.openrewrite.recipe.spring.AddQuarkusMavenPlugin: null
+#- org.openrewrite.quarkus.spring.RemoveSpringBootParent: null

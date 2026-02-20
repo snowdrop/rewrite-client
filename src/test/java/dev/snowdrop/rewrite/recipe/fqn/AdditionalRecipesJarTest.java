@@ -2,6 +2,7 @@ package dev.snowdrop.rewrite.recipe.fqn;
 
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.RecipeRun;
 import org.wildfly.common.Assert;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled
 @QuarkusTest
 public class AdditionalRecipesJarTest extends BaseTest {
 

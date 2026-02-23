@@ -8,7 +8,7 @@ A Java library and CLI tool for executing OpenRewrite recipes programmatically, 
 
 ## Overview
 
-OpenRewrite is a powerful framework for automated code refactoring.
+Rewrite is a powerful framework for automated code refactoring.
 Traditionally, it's used via Maven goals (`mvn rewrite:run` or `mvn rewrite:dryRun`), but this project provides an alternative approach that allows you to:
 
 - **Execute recipes programmatically** from your Java code
@@ -66,13 +66,13 @@ jbang app install openrewrite@snowdrop/rewrite-client/0.2.4
 Run a recipe:
 
 ```bash
-openrewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
+rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 ```
 
 Run a recipe without the `dryrun` mode:
 
 ```bash
-openrewrite /path/to/project -r org.openrewrite.java.format.AutoFormat -d false
+rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat -d false
 ```
 
 
@@ -99,7 +99,7 @@ When using the rewrite-client, keep these key points in mind:
 Execute a recipe by its fully qualified class name:
 
 ```bash
-openrewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
+rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 ```
 
 **In code:**
@@ -119,7 +119,7 @@ ResultsContainer results = scanner.run();
 Many recipes accept configuration parameters. Pass them using the `-o` option:
 
 ```bash
-openrewrite /path/to/project \
+rewrite /path/to/project \
   -r org.openrewrite.java.search.FindAnnotations \
   -o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication,matchMetaAnnotations=false
 ```
@@ -153,7 +153,7 @@ recipeList:
 Execute with:
 
 ```bash
-openrewrite /path/to/project -c rewrite.yml
+rewrite /path/to/project -c rewrite.yml
 ```
 
 **In code:**
@@ -167,7 +167,7 @@ cfg.setConfigPath(Paths.get("rewrite.yml"));
 Load recipes from external JAR files using Maven GAV coordinates:
 
 ```bash
-openrewrite --jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT \
+rewrite --jar dev.snowdrop:openrewrite-recipes:0.2.10-SNAPSHOT \
   /path/to/project \
   -r dev.snowdrop.custom.MyRecipe
 ```
@@ -175,7 +175,7 @@ openrewrite --jar dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT \
 Or use a local JAR path:
 
 ```bash
-openrewrite --jar /path/to/recipes.jar /path/to/project -r com.example.MyRecipe
+rewrite --jar /path/to/recipes.jar /path/to/project -r com.example.MyRecipe
 ```
 
 ## Processing Results
@@ -280,7 +280,7 @@ openrewrite test-project/demo-spring-boot-todo-app \
 ### Auto-format Code
 
 ```bash
-openrewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
+rewrite test-project/simple -r org.openrewrite.java.format.AutoFormat
 ```
 
 ## Use Cases

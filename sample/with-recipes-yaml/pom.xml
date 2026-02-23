@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dev.snowdrop</groupId>
     <artifactId>rewrite-scanner-recipes-yaml</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.2.10-SNAPSHOT</version>
     <name>rewrite-scanner-recipes-yaml</name>
     <description>Rewrite Scanner using a YAML recipes file</description>
 

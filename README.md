@@ -55,12 +55,12 @@ RecipeRun run = results.getRecipeRuns().get("org.openrewrite.java.format.AutoFor
 Install using [jbang](https://www.jbang.dev/):
 
 ```bash
-jbang app install openrewrite@snowdrop/rewrite-client
+jbang app install rewrite@snowdrop/rewrite-client
 ```
 > [!NOTE]
 > To install a released version, append to the reference of the version
 ```shell
-jbang app install openrewrite@snowdrop/rewrite-client/0.2.4
+jbang app install rewrite@snowdrop/rewrite-client/0.2.4
 ```
 
 Run a recipe:

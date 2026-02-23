@@ -1,5 +1,5 @@
 ///usr/bin/env jbang “$0” “$@” ; exit $?
-//DEPS dev.snowdrop.openrewrite:rewrite-client:1.0.0-SNAPSHOT
+//DEPS dev.snowdrop.openrewrite:rewrite-client:0.2.10-SNAPSHOT
 //DEPS io.quarkus.platform:quarkus-bom:3.29.4@pom
 //DEPS io.quarkus:quarkus-picocli
 //DEPS io.quarkus:quarkus-config-yaml
@@ -57,13 +57,8 @@ import java.util.*;
 @CommandLine.Command(
     name = "rewrite",
     mixinStandardHelpOptions = true,
-    version = "1.0.0-SNAPSHOT",
-    description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application",
-    footer = "\nExample usage:\n" +
-        "  rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat\n" +
-        "  rewrite --jar custom-recipes.jar --export-datatables /path/to/project MyRecipe\n" +
-        "  rewrite --jar org.openrewrite:rewrite-java:8.62.4,dev.snowdrop:openrewrite-recipes:1.0.0-SNAPSHOT /path/to/project MyRecipe\n" +
-        "  rewrite --config /path/to/rewrite.yml /path/to/project MyRecipe"
+    version = "0.2.10-SNAPSHOT",
+    description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {
 
@@ -257,7 +252,7 @@ public class RewriteCommand implements Runnable {
     }
 
     private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
-        LOG.info(RewriteCommand.class, "Starting OpenRewrite ...");
+        LOG.info(RewriteCommand.class, "Starting Rewrite ...");
         LOG.info(RewriteCommand.class, String.format("Project root: %s",cfg));
         LOG.info(RewriteCommand.class, String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
 

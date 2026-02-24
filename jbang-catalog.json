@@ -6,7 +6,7 @@
       "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/early-access/rewrite-client-0.2.10-SNAPSHOT-runner.jar"
     },
     "openrewrite": {
-      "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/0.2.10/rewrite-client-0.2.10-runner.jar"
+      "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/early-access/rewrite-client-0.2.11-SNAPSHOT-runner.jar"
     }
   },
   "templates": {}

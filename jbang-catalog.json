@@ -4,9 +4,6 @@
     "rewrite": {
       "description": "Quarkus OpenRewrite client to execute recipes",
       "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/early-access/rewrite-client-0.2.11-SNAPSHOT-runner.jar"
-    },
-    "openrewrite": {
-      "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/early-access/rewrite-client-0.2.11-SNAPSHOT-runner.jar"
     }
   },
   "templates": {}

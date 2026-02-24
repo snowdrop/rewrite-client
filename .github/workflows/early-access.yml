@@ -99,7 +99,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           SNAPSHOT_URL="https://github.com/${{ github.repository }}/releases/download/early-access/rewrite-client-${{ needs.precheck.outputs.VERSION }}-runner.jar"
-          jq --arg url "$SNAPSHOT_URL" '.aliases.openrewrite."script-ref" = $url' jbang-catalog.json > tmp.json && mv tmp.json jbang-catalog.json
+          jq --arg url "$SNAPSHOT_URL" '.aliases.rewrite."script-ref" = $url' jbang-catalog.json > tmp.json && mv tmp.json jbang-catalog.json
 
       - name: Commit the changes
         run: |

@@ -28,6 +28,8 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.29.4</quarkus.platform.version>
 
+        <quarkus.package.type>uber-jar</quarkus.package.type>
+
         <classgraph.version>4.8.184</classgraph.version>
 
         <openrewrite-bom.version>8.70.4</openrewrite-bom.version>

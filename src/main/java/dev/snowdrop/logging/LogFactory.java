@@ -27,6 +27,16 @@ public class LogFactory {
     }
 
     /**
+     *
+     * Sets the verbose mode to log more traces, exceptions
+     *
+     * @param verbose the Verbose boolean
+     */
+    public void setVerboseMode(boolean verbose) {
+        loggingService.setVerbose(verbose);
+    }
+
+    /**
      * Returns the injected logging service.
      *
      * @return the logging service instance

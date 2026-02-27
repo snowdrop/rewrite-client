@@ -24,9 +24,7 @@ public class LoggingService {
     @ConfigProperty(name = "client.mode", defaultValue = "false")
     boolean isCliMode;
 
-    @ConfigProperty(name = "client.logging.verbose", defaultValue = "false")
-    boolean isVerbose;
-
+    private boolean isVerbose;
     private CommandLine.Model.CommandSpec spec;
     private TerminalColorCapability cap;
     private final static String SPACE = " ";
@@ -63,6 +61,16 @@ public class LoggingService {
             System.exit(1);
         }
     }
+
+    /**
+     * Sets the verbose value to log more traces
+     *
+     * @param verbose The boolean verbose
+     */
+    public void setVerbose(boolean verbose) {
+        isVerbose = verbose;
+    }
+
 
     /**
      * Sets the Picocli command spec used for terminal output.

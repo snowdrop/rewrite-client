@@ -34,6 +34,7 @@ public class RewriteConfig {
     private Set<String> exclusions = new HashSet<>();
     private Set<String> plainTextMasks = new HashSet<>();
     private boolean dryRun = true;
+    private boolean verbose = false;
 
     /**
      * Returns the application project path.
@@ -222,5 +223,23 @@ public class RewriteConfig {
      */
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
+    }
+
+    /**
+     * Returns the mode defined: verbose or not
+     *
+     * @return verbose true to enable the verbose mode
+     */
+    public boolean isVerbose() {
+        return verbose;
+    }
+
+    /**
+     * Sets the verbose mode value
+     *
+     * @param verbose
+     */
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 }

@@ -482,7 +482,13 @@ public class RewriteService {
 
     private RecipeRun runRecipe(Recipe recipe) {
         LOG.info(RewriteService.class, "Running recipe(s)...");
-        RecipeRun rr = recipe.run(sourceSet, ctx);
+
+        RecipeRun rr = null;
+        try {
+            rr = recipe.run(sourceSet, ctx);
+        } catch (Exception e) {
+            LOG.error(RewriteService.class,"Execution of recipe(s) failed !",e);
+        }
 
         if (rewriteConfig.canExportDatatables()) {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));

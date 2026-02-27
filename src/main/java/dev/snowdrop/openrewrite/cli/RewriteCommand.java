@@ -57,7 +57,7 @@ import java.util.*;
 @CommandLine.Command(
     name = "rewrite",
     mixinStandardHelpOptions = true,
-    version = "0.2.10-SNAPSHOT",
+    version = "0.2.12-SNAPSHOT",
     description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {
@@ -150,6 +150,11 @@ public class RewriteCommand implements Runnable {
     )
     boolean dryRun = true;
 
+    @CommandLine.Option(
+        names = {"-v", "--verbose"},
+        description = "Enable verbose output")
+    private boolean verbose;
+
     /*
      The @Inject annotation is disabled and replaced with ConfigProvider.getConfig()
      as we got an Arc error during the execution of the jbang export command
@@ -164,6 +169,8 @@ public class RewriteCommand implements Runnable {
     @Override
     public void run() {
         try {
+            // TODO: To be reviewed as the LogFactory object is created when setSpec is called
+            this.LOG.setVerbose(verbose);
 
             // Use injected defaults if not specified via command line
             if (sizeThresholdMb == 0) {
@@ -247,6 +254,8 @@ public class RewriteCommand implements Runnable {
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);
         cfg.setDryRun(dryRun);
+
+        cfg.setVerbose(verbose);
 
         return runScanner(cfg);
     }

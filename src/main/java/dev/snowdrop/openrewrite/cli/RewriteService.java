@@ -314,18 +314,15 @@ public class RewriteService {
                 return new ResultsContainer(Collections.emptyMap());
             }
 
-            validatingRecipe(recipe);
-            recipeRun = runRecipe(recipe);
-            allResults.put(recipe.getName(),recipeRun);
-
         } else {
             LOG.info(RewriteService.class, "Using recipes from YAML configuration");
-            Recipe yamlRecipe = env.activateRecipes(yamlDefinedRecipeNames.toArray(new String[0]));
-            LOG.info(RewriteService.class, "Running recipe: " + yamlRecipe.getName());
-            validatingRecipe(yamlRecipe);
-            RecipeRun currentRun = runRecipe(yamlRecipe);
-            allResults.put(yamlRecipe.getName(), currentRun);
+            recipe = env.activateRecipes(yamlDefinedRecipeNames.toArray(new String[0]));
         }
+
+        LOG.info(RewriteService.class, "Running recipe: " + recipe.getName());
+        validatingRecipe(recipe);
+        recipeRun = runRecipe(recipe);
+        allResults.put(recipe.getName(),recipeRun);
 
         return new ResultsContainer(allResults);
     }
@@ -520,11 +517,11 @@ public class RewriteService {
         } catch (Exception e) {
             LOG.error(RewriteService.class,"Execution of recipe(s) failed !",e);
         }
-
         if (rewriteConfig.canExportDatatables()) {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
             Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
             LOG.info(RewriteService.class, "Printing available datatables to: " + datatableDirectoryPath);
+            assert rr != null;
             rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
         }
 

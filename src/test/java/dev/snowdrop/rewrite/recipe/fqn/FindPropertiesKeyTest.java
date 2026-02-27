@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @QuarkusTest
 public class FindPropertiesKeyTest extends BaseTest {
 
-    String appPath = "test-project/demo-spring-boot-todo-app";
+    String appPath = "test-project/spring-boot-todo-app";
 
     @BeforeEach
     public void setup() throws IOException {
@@ -59,7 +59,7 @@ public class FindPropertiesKeyTest extends BaseTest {
 
     @Test
     void shouldFindJpaPropertiesKeyRelaxedBinding() throws Exception {
-        String appPath = "test-project/demo-spring-boot-todo-app";
+        String appPath = "test-project/spring-boot-todo-app";
         Path rewritePatchFile = Paths.get(appPath, "target/rewrite/rewrite.patch");
         String recipeName = "org.openrewrite.properties.search.FindProperties";
 

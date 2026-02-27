@@ -20,7 +20,7 @@ public class UpgradeDepVersionYamlTest extends BaseTest {
     @Test
     void testSpringToQuarkusMigration() throws Exception {
 
-        String appPath = "test-project/demo-spring-boot-todo-app";
+        String appPath = "test-project/spring-boot-todo-app";
         String recipeName = "dev.snowdrop.openrewrite.java.SpringToQuarkus";
 
         List<String> gavs = new ArrayList<>();

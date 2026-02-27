@@ -16,7 +16,7 @@ public class RecipesYamlTest extends BaseTest {
     @Test
     void useAdditionalRecipesJarToUpgradeDependencies() throws Exception {
 
-        String appPath = "test-project/demo-spring-boot-todo-app";
+        String appPath = "test-project/spring-boot-todo-app";
         String recipeName = "dev.snowdrop.RecipeExample";
 
         // Configure the application to scan and recipe to be executed

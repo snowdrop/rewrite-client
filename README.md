@@ -264,7 +264,7 @@ The folder includes a basic Java `demo` application
 ### Find Spring Boot Annotations
 
 ```bash
-openrewrite test-project/demo-spring-boot-todo-app \
+rewrite test-project/spring-boot-todo-app \
   -r org.openrewrite.java.search.FindAnnotations \
   -o annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication
 ```
@@ -272,7 +272,7 @@ openrewrite test-project/demo-spring-boot-todo-app \
 ### Find Maven Dependencies
 
 ```bash
-openrewrite test-project/demo-spring-boot-todo-app \
+rewrite test-project/spring-boot-todo-app \
   -r org.openrewrite.maven.search.FindDependency \
   -o groupId=org.springframework.boot,artifactId=spring-boot-starter-data-jpa,version=3.5.3
 ```

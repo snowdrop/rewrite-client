@@ -1,0 +1,34 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.quarkus.spring.SpringBootToQuarkus
+displayName: Migrate Spring Boot to Quarkus
+description: Replace Spring Boot with Quarkus.
+tags:
+  - spring
+  - quarkus
+  - migration
+  - bom
+preconditions:
+  - org.openrewrite.java.dependencies.search.ModuleHasDependency:
+      groupIdPattern: org.springframework.boot
+      artifactIdPattern: spring-*
+      version: 3.x
+recipeList:
+  - org.openrewrite.maven.AddManagedDependency:
+      groupId: io.quarkus.platform
+      artifactId: quarkus-bom
+      version: 3.x
+      type: pom
+      scope: import
+      addToRootPom: false
+  - org.openrewrite.quarkus.spring.StereotypeAnnotationsToCDI
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.openrewrite.quarkus.spring.StereotypeAnnotationsToCDI
+displayName: Migrate Spring annotations to CDI
+description: Replace Spring stereotype and injection annotations with CDI equivalents.
+recipeList:
+  - org.openrewrite.java.ReplaceAnnotation:
+      annotationPatternToReplace: '@org.springframework.beans.factory.annotation.Autowired'
+      annotationTemplateToInsert: '@jakarta.inject.Inject'
+      classpathResourceName: 'jakarta.inject-api'

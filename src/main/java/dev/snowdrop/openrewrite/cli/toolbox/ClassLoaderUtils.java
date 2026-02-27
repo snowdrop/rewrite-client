@@ -98,6 +98,6 @@ public class ClassLoaderUtils {
         }
 
         return jarUrls.isEmpty() ? null :
-                URLClassLoader.newInstance(jarUrls.toArray(new URL[0]), this.getClass().getClassLoader());
+                URLClassLoader.newInstance(jarUrls.toArray(URL[]::new), this.getClass().getClassLoader());
     }
 }

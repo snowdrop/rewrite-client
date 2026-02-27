@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -333,11 +334,41 @@ public class RewriteService {
         ClassLoaderUtils classLoaderUtils = new ClassLoaderUtils();
         Environment.Builder env = Environment.builder();
 
+        // Load additional JARs if specified
+        ClassLoader quarkusClassLoader = getClass().getClassLoader();
+        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
+
+        // Create a composite classloader that tries external JAR first, then Quarkus TCCL
+        /*
+        ClassLoader mergedLoader = new ClassLoader(quarkusClassLoader) {
+            @Override
+            protected Class<?> findClass(String name) throws ClassNotFoundException {
+                try {
+                    // Try loading from external JAR first
+                    return additionalJarsClassloader.loadClass(name);
+                } catch (ClassNotFoundException e) {
+                    // Fall back to Quarkus TCCL (parent)
+                    return super.findClass(name);
+                }
+            }
+
+            @Override
+            public URL getResource(String name) {
+                // Try external JAR first
+                URL resource = additionalJarsClassloader.getResource(name);
+                if (resource != null) {
+                    return resource;
+                }
+                // Fall back to Quarkus TCCL (parent)
+                return super.getResource(name);
+            }
+        };
+        */
+
+        Thread.currentThread().setContextClassLoader(additionalJarsClassloader);
+
         // Construct a ClasspathScanningLoader scans the runtime classpath of the current java process for recipes
         env.scanRuntimeClasspath();
-
-        // Load additional JARs if specified
-        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
 
         if (additionalJarsClassloader != null) {
             // Load recipes using the ClasspathScanningLoader with the additional classloader

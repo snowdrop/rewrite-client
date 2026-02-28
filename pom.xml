@@ -18,7 +18,7 @@
         <maven.compiler.release>21</maven.compiler.release>
 
         <!-- These two should be kept in lockstep (MIMA 2.4.38 = Maven 3.9.11 + Resolver 1.9.24) -->
-        <mima.version>2.4.38</mima.version>
+        <mima.version>2.4.39</mima.version>
         <maven.version>3.9.11</maven.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

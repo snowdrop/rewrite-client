@@ -1,4 +1,4 @@
-///usr/bin/env jbang “$0” “$@” ; exit $?
+/// usr/bin/env jbang “$0” “$@” ; exit $?
 //DEPS dev.snowdrop.openrewrite:rewrite-client:0.2.10-SNAPSHOT
 //DEPS io.quarkus.platform:quarkus-bom:3.29.4@pom
 //DEPS io.quarkus:quarkus-picocli
@@ -40,13 +40,12 @@ import dev.snowdrop.logging.LogFactory;
 import dev.snowdrop.logging.LoggingService;
 import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
 import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
+import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
-import org.openrewrite.DataTable;
-import org.openrewrite.RecipeRun;
-import org.openrewrite.table.SearchResults;
 import picocli.CommandLine;
 
+import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -55,10 +54,10 @@ import java.util.*;
  */
 @TopCommand
 @CommandLine.Command(
-    name = "rewrite",
-    mixinStandardHelpOptions = true,
-    version = "0.2.12-SNAPSHOT",
-    description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
+        name = "rewrite",
+        mixinStandardHelpOptions = true,
+        version = "0.2.12-SNAPSHOT",
+        description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {
 
@@ -80,79 +79,79 @@ public class RewriteCommand implements Runnable {
     void setSpec(CommandLine.Model.CommandSpec spec) {
         logFactory.setSpec(spec);
         this.LOG = logFactory.getLogger();
-    };
+    }
 
     @CommandLine.Parameters(
-        index = "0",
-        description = "The root directory of the project to analyze"
+            index = "0",
+            description = "The root directory of the project to analyze"
     )
     Path projectRoot;
 
     @CommandLine.Option(
-        names = {"-r", "--recipe"},
-        description = "FQName of the Java Recipe class to run (e.g., org.openrewrite.java.format.AutoFormat)",
-        required = false
+            names = {"-r", "--recipe"},
+            description = "FQName of the Java Recipe class to run (e.g., org.openrewrite.java.format.AutoFormat)",
+            required = false
     )
     String recipeName;
 
     @CommandLine.Option(
-        names= {"-o","--options"},
-        description = "Options to be used to set the recipe's object fields. Example: annotationPattern=@SpringBootApplication",
-        split = ",",
-        required = false
+            names = {"-o", "--options"},
+            description = "Options to be used to set the recipe's object fields. Example: annotationPattern=@SpringBootApplication",
+            split = ",",
+            required = false
     )
     LinkedHashSet<String> recipeOptions;
 
     @CommandLine.Option(
-        names = {"--jar"},
-        description = "Additional JAR files containing recipes (file paths or Maven GAV coordinates, can be specified multiple times or comma-separated)",
-        split = ","
+            names = {"--jar"},
+            description = "Additional JAR files containing recipes (file paths or Maven GAV coordinates, can be specified multiple times or comma-separated)",
+            split = ","
     )
     List<String> additionalJarPaths = new ArrayList<>();
 
     @CommandLine.Option(
-        names = {"--config", "-c"},
-        description = "Path to the recipes rewrite.yml file (default: ${DEFAULT-VALUE})"
+            names = {"--config", "-c"},
+            description = "Path to the recipes rewrite.yml file (default: ${DEFAULT-VALUE})"
     )
     String yamlRecipesPath;
 
     @CommandLine.Option(
-        names = {"--export-datatables"},
-        description = "Export datatables to CSV files",
-        defaultValue = "true"
+            names = {"--export-datatables"},
+            description = "Export datatables to CSV files",
+            defaultValue = "true"
     )
     boolean exportDatatables;
 
     @CommandLine.Option(
-        names = {"--exclusions"},
-        description = "File patterns to exclude (can be specified multiple times)",
-        split = ","
+            names = {"--exclusions"},
+            description = "File patterns to exclude (can be specified multiple times)",
+            split = ","
     )
     Set<String> exclusions = new HashSet<>();
 
     @CommandLine.Option(
-        names = {"--plain-text-masks"},
-        description = "Plain text file masks (can be specified multiple times)",
-        split = ","
+            names = {"--plain-text-masks"},
+            description = "Plain text file masks (can be specified multiple times)",
+            split = ","
     )
     Set<String> plainTextMasks = new HashSet<>();
 
     @CommandLine.Option(
-        names = {"--size-threshold-mb"},
-        description = "Size threshold in MB for large files (default: ${DEFAULT-VALUE})"
+            names = {"--size-threshold-mb"},
+            description = "Size threshold in MB for large files (default: ${DEFAULT-VALUE})"
     )
     int sizeThresholdMb = 10;
 
     @CommandLine.Option(
-        names = {"-d","--dry-run"},
-        arity = "1",
-        description = "Execute the recipes in dry run mode"
+            names = {"-d", "--dry-run"},
+            arity = "1",
+            description = "Execute the recipes in dry run mode"
     )
     boolean dryRun = true;
 
     @CommandLine.Option(
-        names = {"-v", "--verbose"},
-        description = "Enable verbose output")
+            names = {"-v", "--verbose"},
+            description = "Enable verbose output")
     private boolean verbose;
 
     /*
@@ -170,6 +169,7 @@ public class RewriteCommand implements Runnable {
     public void run() {
         try {
             // TODO: To be reviewed as the LogFactory object is created when setSpec is called
+            this.LOG = logFactory.getLogger();
             this.LOG.setVerbose(verbose);
 
             // Use injected defaults if not specified via command line
@@ -186,34 +186,19 @@ public class RewriteCommand implements Runnable {
                 exclusions.addAll(Arrays.asList(config.exclusions().get().split(",")));
             }
 
-            ResultsContainer results = execute();
-            Map<String, RecipeRun> runs = results.getRecipeRuns();
+            List<String> rewriteJars = List.of(
+                    "org.openrewrite:rewrite-core:8.70.4",
+                    "org.openrewrite:rewrite-java:8.70.4");
 
-            runs.forEach((k,v) -> {
-                if (!v.getDataTables().isEmpty()) {
-                    LOG.info(RewriteCommand.class, String.format("Execution of the recipe %s succeeded.%n",k));
+            ClassLoaderUtils clu = new ClassLoaderUtils();
+            URLClassLoader rewriteClassLoader = clu.loadAdditionalJars(rewriteJars, getClass().getClassLoader());
+            Thread.currentThread().setContextClassLoader(rewriteClassLoader);
 
-                    //System.out.printf("Execution of the recipe %s succeeded\n",k);
-                    // The DataTable<SearchResult> will be available starting from: 8.69.0 !
-
-                    Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
-                    if (searchResults != null) {
-                        searchResults.forEach((result, list) -> {
-                            if (result.getClass().getSimpleName().startsWith("SearchResults")) {
-                                LOG.info(RewriteCommand.class, "# Found " + list.size() + " search results.");
-                                list.forEach(r -> {
-                                    var row = (SearchResults.Row)r;
-                                    LOG.info(RewriteCommand.class, "# SourcePath: " + row.getSourcePath());
-                                    LOG.info(RewriteCommand.class, "# Result: " + row.getResult());
-                                    LOG.info(RewriteCommand.class, "# Recipe: " + row.getRecipe());
-                                    LOG.info(RewriteCommand.class, "==============================================");
-                                });
-                            }
-                        });
-                    }
-                }
-            });
-            LOG.info(RewriteCommand.class, "Client execution is finishing ...");
+            // Create the RewriteConfig using the command parameters, options
+            RewriteService rewriteService = new RewriteService(setupRewriteCfg());
+            rewriteService.setLogger(this.LOG);
+            ResultsContainer results = rewriteService.runScanner();
+            rewriteService.showResults(results);
 
         } catch (Exception e) {
             LOG.error(RewriteCommand.class, "Error executing rewrite command", e);
@@ -222,26 +207,12 @@ public class RewriteCommand implements Runnable {
     }
 
     /**
-     * Executes the rewrite process using the provided configuration.
-     *
-     * @param rewriteConfig the rewrite configuration
-     * @return the results container with recipe run results
-     * @throws Exception if execution fails
-     */
-    public ResultsContainer execute(RewriteConfig rewriteConfig) throws Exception {
-        if (LOG == null && logFactory != null) {
-            this.LOG = logFactory.getLogger();
-        }
-        return runScanner(rewriteConfig);
-    }
-
-    /**
      * Executes the rewrite process using the command-line options.
      *
      * @return the results container with recipe run results
      * @throws Exception if execution fails
      */
-    public ResultsContainer execute() throws Exception {
+    public RewriteConfig setupRewriteCfg() {
         RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(projectRoot.normalize().toAbsolutePath());
         cfg.setAdditionalJarPaths(additionalJarPaths);
@@ -249,29 +220,15 @@ public class RewriteCommand implements Runnable {
             cfg.setFqNameRecipe(recipeName);
             cfg.setRecipeOptions(recipeOptions);
         }
-        if (yamlRecipesPath != null) {cfg.setYamlRecipesPath(yamlRecipesPath);}
+        if (yamlRecipesPath != null) {
+            cfg.setYamlRecipesPath(yamlRecipesPath);
+        }
         cfg.setExportDatatables(exportDatatables);
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);
         cfg.setDryRun(dryRun);
 
         cfg.setVerbose(verbose);
-
-        return runScanner(cfg);
-    }
-
-    private ResultsContainer runScanner(RewriteConfig cfg) throws Exception {
-        LOG.info(RewriteCommand.class, "Starting Rewrite ...");
-        LOG.info(RewriteCommand.class, String.format("Project root: %s",cfg));
-        LOG.info(RewriteCommand.class, String.format("Fully Qualified named of the Recipe java class: %s",cfg.getFqNameRecipe()));
-
-        if (!cfg.getAdditionalJarPaths().isEmpty()) {
-            LOG.info(RewriteCommand.class, "Additional JAR files: " + cfg.getAdditionalJarPaths());
-        }
-
-        RewriteService scanner = new RewriteService(cfg);
-        scanner.setLogger(LOG);
-        scanner.init();
-        return scanner.run();
+        return cfg;
     }
 }

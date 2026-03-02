@@ -26,6 +26,7 @@ import org.openrewrite.maven.MavenParser;
 import org.openrewrite.polyglot.OmniParser;
 import org.openrewrite.quark.Quark;
 import org.openrewrite.remote.Remote;
+import org.openrewrite.table.SearchResults;
 import org.openrewrite.text.PlainTextParser;
 
 import java.io.BufferedWriter;
@@ -42,16 +43,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
@@ -91,9 +84,24 @@ public class RewriteService {
         LOG = loggingService;
     }
 
+    public ResultsContainer runScanner() throws Exception {
+
+        LOG.info(RewriteService.class, "Starting Rewrite ...");
+        LOG.info(RewriteService.class, String.format("Project root: %s", rewriteConfig));
+        LOG.info(RewriteService.class, String.format("Fully Qualified named of the Recipe java class: %s", rewriteConfig.getFqNameRecipe()));
+
+        if (rewriteConfig.getAdditionalJarPaths() != null && !rewriteConfig.getAdditionalJarPaths().isEmpty()) {
+            additionalJarsClassloader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), getClass().getClassLoader());
+            LOG.info(RewriteService.class, "Additional JAR files: " + rewriteConfig.getAdditionalJarPaths());
+        }
+
+        init();
+        return run();
+    }
+
     /**
      * Configure Openrewrite by creating the:
-     *
+     * <p>
      * - Environment holding the resource loaders able to find Recipe classes from jar, classes loaded or Yaml
      * - ExecutionContext able to collect from the execution of the different Recipe the messages containing the Map of the DataTable, etc
      * - LargeSourceSet using different parsers able to read: Java, Maven, Properties, XML, JSON, etc files
@@ -101,9 +109,6 @@ public class RewriteService {
      * @throws Exception if initialization fails
      */
     public void init() throws Exception {
-        if (rewriteConfig.getAdditionalJarPaths() != null && !rewriteConfig.getAdditionalJarPaths().isEmpty()) {
-            additionalJarsClassloader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
-        }
         createExecutionContext();
         scanLoadResources();
     }
@@ -135,6 +140,34 @@ public class RewriteService {
         return sourceSetInitialized;
     }
 
+    public void showResults(ResultsContainer results) {
+        results.getRecipeRuns().forEach((k, v) -> {
+            if (!v.getDataTables().isEmpty()) {
+                LOG.info(RewriteCommand.class, String.format("Execution of the recipe %s succeeded.%n", k));
+
+                //System.out.printf("Execution of the recipe %s succeeded\n",k);
+                // The DataTable<SearchResult> will be available starting from: 8.69.0 !
+
+                Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
+                if (searchResults != null) {
+                    searchResults.forEach((result, list) -> {
+                        if (result.getClass().getSimpleName().startsWith("SearchResults")) {
+                            LOG.info(RewriteCommand.class, "# Found " + list.size() + " search results.");
+                            list.forEach(r -> {
+                                var row = (SearchResults.Row) r;
+                                LOG.info(RewriteCommand.class, "# SourcePath: " + row.getSourcePath());
+                                LOG.info(RewriteCommand.class, "# Result: " + row.getResult());
+                                LOG.info(RewriteCommand.class, "# Recipe: " + row.getRecipe());
+                                LOG.info(RewriteCommand.class, "==============================================");
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        LOG.info(RewriteCommand.class, "Client execution is finishing ...");
+    }
+
     /**
      * Runs the configured recipes and optionally generates a patch file.
      *
@@ -156,15 +189,26 @@ public class RewriteService {
      */
     private ResultsContainer runWithMergedClassloader() {
         try {
-            ClassLoader classLoader = additionalJarsClassloader != null
-                ? additionalJarsClassloader
-                : getClass().getClassLoader();
-            Class<?> launcherClass = classLoader.loadClass("dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher");
+            String launcherClassName = "dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher";
+
+            Class<?> launcherClass;
+            launcherClass = Stream.of(additionalJarsClassloader, getClass().getClassLoader())
+                    .map(cl -> {
+                        try {
+                            return cl.loadClass(launcherClassName);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElseThrow(() -> new ClassNotFoundException(launcherClassName));
+
             Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
 
             Method initMethod = launcherClass.getMethod("init",
-                ExecutionContext.class, URLClassLoader.class, LargeSourceSet.class,
-                RewriteConfig.class, List.class);
+                    ExecutionContext.class, URLClassLoader.class, LargeSourceSet.class,
+                    RewriteConfig.class, List.class);
             initMethod.invoke(launcherInstance, ctx, additionalJarsClassloader, sourceSet, rewriteConfig, yamlDefinedRecipeNames);
 
             Method applyMethod = launcherClass.getMethod("apply");
@@ -211,43 +255,49 @@ public class RewriteService {
 
             for (Result result : results.getGenerated()) {
                 assert result.getAfter() != null;
-                if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
+                if (!rewriteConfig.isDryRun()) {
+                    writeAfter(rewriteConfig.getAppPath(), result, ctx);
+                }
                 LOG.info(RewriteService.class, "These recipes would generate a new file " +
-                    result.getAfter().getSourcePath() + ":");
+                        result.getAfter().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
-                    result.getTimeSavings() : Duration.ZERO);
+                        result.getTimeSavings() : Duration.ZERO);
             }
 
             for (Result result : results.getDeleted()) {
                 assert result.getBefore() != null;
                 LOG.info(RewriteService.class, "These recipes would delete a file " +
-                    result.getBefore().getSourcePath() + ":");
+                        result.getBefore().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
-                    result.getTimeSavings() : Duration.ZERO);
+                        result.getTimeSavings() : Duration.ZERO);
             }
 
             for (Result result : results.getMoved()) {
                 assert result.getBefore() != null;
                 assert result.getAfter() != null;
                 LOG.info(RewriteService.class, "These recipes would move a file from " +
-                    result.getBefore().getSourcePath() + " to " +
-                    result.getAfter().getSourcePath() + ":");
+                        result.getBefore().getSourcePath() + " to " +
+                        result.getAfter().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
-                    result.getTimeSavings() : Duration.ZERO);
-                if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
+                        result.getTimeSavings() : Duration.ZERO);
+                if (!rewriteConfig.isDryRun()) {
+                    writeAfter(rewriteConfig.getAppPath(), result, ctx);
+                }
             }
 
             for (Result result : results.getRefactoredInPlace()) {
                 assert result.getBefore() != null;
                 LOG.info(RewriteService.class, "These recipes would make changes to " +
-                    result.getBefore().getSourcePath() + ":");
+                        result.getBefore().getSourcePath() + ":");
                 logRecipesThatMadeChanges(result);
                 estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
-                    result.getTimeSavings() : Duration.ZERO);
-                if (!rewriteConfig.isDryRun()) {writeAfter(rewriteConfig.getAppPath(), result, ctx);}
+                        result.getTimeSavings() : Duration.ZERO);
+                if (!rewriteConfig.isDryRun()) {
+                    writeAfter(rewriteConfig.getAppPath(), result, ctx);
+                }
             }
 
             // Create patch file
@@ -261,17 +311,17 @@ public class RewriteService {
             Path patchFile = outPath.resolve("rewrite.patch");
             try (BufferedWriter writer = Files.newBufferedWriter(patchFile)) {
                 Stream.concat(
-                        Stream.concat(results.getGenerated().stream(), results.getDeleted().stream()),
-                        Stream.concat(results.getMoved().stream(), results.getRefactoredInPlace().stream())
-                    )
-                    .map(Result::diff)
-                    .forEach(diff -> {
-                        try {
-                            writer.write(diff + "\n");
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+                                Stream.concat(results.getGenerated().stream(), results.getDeleted().stream()),
+                                Stream.concat(results.getMoved().stream(), results.getRefactoredInPlace().stream())
+                        )
+                        .map(Result::diff)
+                        .forEach(diff -> {
+                            try {
+                                writer.write(diff + "\n");
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
             } catch (Exception e) {
                 throw new RuntimeException("Unable to generate rewrite result.", e);
             }
@@ -306,7 +356,9 @@ public class RewriteService {
 
             LOG.debug(RewriteService.class, "Classpath jar entries size: " + classpaths.size());
             LOG.debug(RewriteService.class, "Classpath entries of the application scanned");
-            classpaths.forEach(cp -> {LOG.debug(RewriteService.class,cp.toString());});
+            classpaths.forEach(cp -> {
+                LOG.debug(RewriteService.class, cp.toString());
+            });
 
             // Create the JavaParser and set the classpaths
             JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);
@@ -330,20 +382,20 @@ public class RewriteService {
         List<Path> poms = findFiles(rewriteConfig.getAppPath(), ".xml");
         MavenParser.Builder mavenParserBuilder = MavenParser.builder();
         List<SourceFile> mavens = mavenParserBuilder.build()
-            .parse(poms, rewriteConfig.getAppPath(), ctx)
-            .toList();
+                .parse(poms, rewriteConfig.getAppPath(), ctx)
+                .toList();
         sourceFiles.addAll(mavens);
 
         // Parse other files (XML, YAML, properties, etc.)
         Set<String> masks = rewriteConfig.getPlainTextMasks().isEmpty() ? getDefaultPlainTextMasks() : rewriteConfig.getPlainTextMasks();
         OmniParser omniParser = OmniParser.builder(
-                OmniParser.defaultResourceParsers(),
-                PlainTextParser.builder()
-                    .plainTextMasks(rewriteConfig.getAppPath(), masks)
-                    .build()
-            )
-            .sizeThresholdMb(rewriteConfig.getSizeThresholdMb())
-            .build();
+                        OmniParser.defaultResourceParsers(),
+                        PlainTextParser.builder()
+                                .plainTextMasks(rewriteConfig.getAppPath(), masks)
+                                .build()
+                )
+                .sizeThresholdMb(rewriteConfig.getSizeThresholdMb())
+                .build();
 
         List<Path> otherFiles = omniParser.acceptedPaths(rewriteConfig.getAppPath(), rewriteConfig.getAppPath());
         sourceFiles.addAll(omniParser.parse(otherFiles, rewriteConfig.getAppPath(), ctx).toList());
@@ -351,8 +403,8 @@ public class RewriteService {
         // Add provenance markers
         List<Marker> provenance = generateProvenance();
         sourceFiles = sourceFiles.stream()
-            .map(sf -> addProvenance(sf, provenance))
-            .collect(toList());
+                .map(sf -> addProvenance(sf, provenance))
+                .collect(toList());
 
         LOG.info(RewriteService.class, "Total source files parsed: " + sourceFiles.size());
         if (!sourceFiles.isEmpty()) {
@@ -361,8 +413,10 @@ public class RewriteService {
             throw new IllegalStateException("No source files parsed from the project scanned !");
         }
 
-        LOG.debug(RewriteService.class,"List of resources loaded");
-        sourceFiles.forEach(f -> {LOG.debug(RewriteService.class,f.getSourcePath().toString());});
+        LOG.debug(RewriteService.class, "List of resources loaded");
+        sourceFiles.forEach(f -> {
+            LOG.debug(RewriteService.class, f.getSourcePath().toString());
+        });
 
         return new InMemoryLargeSourceSet(sourceFiles);
     }
@@ -372,8 +426,8 @@ public class RewriteService {
         List<Path> files = new ArrayList<>();
 
         Collection<PathMatcher> exclusionMatchers = rewriteConfig.getExclusions().stream()
-            .map(pattern -> root.getFileSystem().getPathMatcher("glob:" + pattern))
-            .toList();
+                .map(pattern -> root.getFileSystem().getPathMatcher("glob:" + pattern))
+                .toList();
 
         Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
             @Override
@@ -416,13 +470,13 @@ public class RewriteService {
         String javaVendor = System.getProperty("java.vm.vendor");
 
         return Arrays.asList(
-            buildEnvironment,
-            OperatingSystemProvenance.current(),
-            new BuildTool(randomId(), BuildTool.Type.Gradle, "standalone"), // Generic build tool
-            new JavaProject(randomId(), rewriteConfig.getAppPath().getFileName().toString(),
-                new JavaProject.Publication("standalone", "standalone", "1.0.0")),
-            new JavaVersion(randomId(), javaRuntimeVersion, javaVendor, javaRuntimeVersion, javaRuntimeVersion),
-            JavaSourceSet.build("main", emptyList())
+                buildEnvironment,
+                OperatingSystemProvenance.current(),
+                new BuildTool(randomId(), BuildTool.Type.Gradle, "standalone"), // Generic build tool
+                new JavaProject(randomId(), rewriteConfig.getAppPath().getFileName().toString(),
+                        new JavaProject.Publication("standalone", "standalone", "1.0.0")),
+                new JavaVersion(randomId(), javaRuntimeVersion, javaVendor, javaRuntimeVersion, javaRuntimeVersion),
+                JavaSourceSet.build("main", emptyList())
         );
     }
 
@@ -445,62 +499,62 @@ public class RewriteService {
 
     private String formatDuration(Duration duration) {
         return duration.toString()
-            .substring(2)
-            .replaceAll("(\\d[HMS])(?!$)", "$1 ")
-            .toLowerCase()
-            .trim();
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase()
+                .trim();
     }
 
     private Set<String> getDefaultPlainTextMasks() {
         return new HashSet<>(Arrays.asList(
-            "**/*.adoc",
-            "**/*.bash",
-            "**/*.bat",
-            "**/CODEOWNERS",
-            "**/*.css",
-            "**/*.config",
-            "**/[dD]ockerfile*",
-            "**/*.[dD]ockerfile",
-            "**/*.env",
-            "**/.gitattributes",
-            "**/.gitignore",
-            "**/*.htm*",
-            "**/gradlew",
-            "**/.java-version",
-            "**/*.jelly",
-            "**/*.jsp",
-            "**/*.ksh",
-            "**/*.lock",
-            "**/lombok.config",
-            "**/[mM]akefile",
-            "**/*.md",
-            "**/*.mf",
-            "**/META-INF/services/**",
-            "**/META-INF/spring/**",
-            "**/META-INF/spring.factories",
-            "**/mvnw",
-            "**/mvnw.cmd",
-            "**/*.qute.java",
-            "**/.sdkmanrc",
-            "**/*.sh",
-            "**/*.sql",
-            "**/*.svg",
-            "**/*.tsx",
-            "**/*.txt",
-            "**/*.py"
+                "**/*.adoc",
+                "**/*.bash",
+                "**/*.bat",
+                "**/CODEOWNERS",
+                "**/*.css",
+                "**/*.config",
+                "**/[dD]ockerfile*",
+                "**/*.[dD]ockerfile",
+                "**/*.env",
+                "**/.gitattributes",
+                "**/.gitignore",
+                "**/*.htm*",
+                "**/gradlew",
+                "**/.java-version",
+                "**/*.jelly",
+                "**/*.jsp",
+                "**/*.ksh",
+                "**/*.lock",
+                "**/lombok.config",
+                "**/[mM]akefile",
+                "**/*.md",
+                "**/*.mf",
+                "**/META-INF/services/**",
+                "**/META-INF/spring/**",
+                "**/META-INF/spring.factories",
+                "**/mvnw",
+                "**/mvnw.cmd",
+                "**/*.qute.java",
+                "**/.sdkmanrc",
+                "**/*.sh",
+                "**/*.sql",
+                "**/*.svg",
+                "**/*.tsx",
+                "**/*.txt",
+                "**/*.py"
         ));
     }
 
 
     public static void configureRecipeOptions(Recipe recipe, Set<String> options) throws RuntimeException {
         if (recipe instanceof CompositeRecipe ||
-            recipe instanceof DeclarativeRecipe ||
-            recipe instanceof Recipe.DelegatingRecipe ||
-            !recipe.getRecipeList().isEmpty()) {
+                recipe instanceof DeclarativeRecipe ||
+                recipe instanceof Recipe.DelegatingRecipe ||
+                !recipe.getRecipeList().isEmpty()) {
             // We don't (yet) support configuring potentially nested recipes, as recipes might occur more than once,
             // and setting the same value twice might lead to unexpected behavior.
             throw new RuntimeException(
-                "Recipes containing other recipes can not be configured from the command line: " + recipe);
+                    "Recipes containing other recipes can not be configured from the command line: " + recipe);
         }
 
         Map<String, String> optionValues = new HashMap<>();
@@ -516,7 +570,7 @@ public class RewriteService {
         }
         if (!optionValues.isEmpty()) {
             throw new RuntimeException(
-                String.format("Unknown recipe options: %s", String.join(", ", optionValues.keySet())));
+                    String.format("Unknown recipe options: %s", String.join(", ", optionValues.keySet())));
         }
     }
 
@@ -531,13 +585,13 @@ public class RewriteService {
             field.setAccessible(false);
         } catch (IllegalArgumentException | IllegalAccessException e) {
             throw new RuntimeException(
-                String.format("Unable to configure recipe '%s' option '%s' with value '%s'",
-                    recipe.getClass().getSimpleName(), field.getName(), optionValue));
+                    String.format("Unable to configure recipe '%s' option '%s' with value '%s'",
+                            recipe.getClass().getSimpleName(), field.getName(), optionValue));
         }
     }
 
     private static @Nullable Object convertOptionValue(String name, @Nullable String optionValue, Class<?> type)
-        throws RuntimeException {
+            throws RuntimeException {
         if (optionValue == null) {
             return null;
         }
@@ -555,7 +609,7 @@ public class RewriteService {
         }
 
         throw new RuntimeException(
-            String.format("Unable to convert option: %s value: %s to type: %s", name, optionValue, type));
+                String.format("Unable to convert option: %s value: %s to type: %s", name, optionValue, type));
     }
 
     private static void writeAfter(Path root, Result result, ExecutionContext ctx) {
@@ -611,5 +665,4 @@ public class RewriteService {
             }
         }
     }
-
 }

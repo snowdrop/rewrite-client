@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.openrewrite.cli.RewriteService;
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +43,8 @@ public class FindPropertiesKeyTest extends BaseTest {
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of("propertyKey=spring.jpa.hibernate.ddl-auto","relaxedBinding=false"));
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
         String patchContent = Files.readString(rewritePatchFile);
@@ -68,7 +70,8 @@ public class FindPropertiesKeyTest extends BaseTest {
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of("propertyKey=spring.jpa.hibernate.ddlAuto","relaxedBinding=true"));
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
         String patchContent = Files.readString(rewritePatchFile);

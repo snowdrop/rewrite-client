@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.recipe.yaml.quarkus_resteasy;
 
+import dev.snowdrop.openrewrite.cli.RewriteService;
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,8 @@ public class RecipesYamlTest extends BaseTest {
         cfg.setFqNameRecipe(recipeName);
         cfg.setYamlRecipesPath("rewrite.yml");
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
         Assert.assertTrue(run.getChangeset().getAllResults().size() == 3);

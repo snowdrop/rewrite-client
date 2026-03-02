@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.openrewrite.cli.RewriteService;
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ public class AutoFormatTest extends BaseTest {
         cfg.setAppPath(Paths.get(appPath));
         cfg.setFqNameRecipe(recipeName);
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
         assertFalse(run.getDataTables().isEmpty());
 

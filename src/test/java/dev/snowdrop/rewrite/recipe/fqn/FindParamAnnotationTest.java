@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.openrewrite.cli.RewriteService;
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +44,8 @@ public class FindParamAnnotationTest extends BaseTest {
         cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
         cfg.setAdditionalJarPaths(List.of(""));
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
         List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
@@ -65,7 +67,8 @@ public class FindParamAnnotationTest extends BaseTest {
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of(String.format("annotationPattern=%s",annotationToSearch),"matchMetaAnnotations=false"));
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
         List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);

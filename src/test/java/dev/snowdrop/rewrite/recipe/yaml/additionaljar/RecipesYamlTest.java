@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.recipe.yaml.additionaljar;
 
+import dev.snowdrop.openrewrite.cli.RewriteService;
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ public class RecipesYamlTest extends BaseTest {
         cfg.setAdditionalJarPaths(List.of("org.openrewrite.recipe:rewrite-java-dependencies:1.51.0"));
         cfg.setYamlRecipesPath("rewrite-upgrade-dependencies-version.yml");
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
         var result = run.getChangeset().getAllResults().getFirst();
         String diff = result.diff();

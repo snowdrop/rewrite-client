@@ -61,9 +61,12 @@ public class ClassLoaderUtils {
      * Creates a URLClassLoader from the additional JAR paths or Maven GAV coordinates.
      *
      * @param additionalJarPaths list of JAR file paths or Maven GAV coordinates to load
+     * @param parent the parent classloader (e.g. the Quarkus AppClassLoader) so that
+     *               the returned classloader can see both the additional JARs and the
+     *               application classpath resources
      * @return URLClassLoader containing the additional Rewrite JARs, or null if no additional JARs are specified
      */
-    public URLClassLoader loadAdditionalJars(List<String> additionalJarPaths) {
+    public URLClassLoader loadAdditionalJars(List<String> additionalJarPaths, ClassLoader parent) {
         if (additionalJarPaths == null || additionalJarPaths.isEmpty()) {
             return null;
         }
@@ -98,6 +101,6 @@ public class ClassLoaderUtils {
         }
 
         return jarUrls.isEmpty() ? null :
-                URLClassLoader.newInstance(jarUrls.toArray(new URL[0]), this.getClass().getClassLoader());
+                URLClassLoader.newInstance(jarUrls.toArray(new URL[0]), parent);
     }
 }

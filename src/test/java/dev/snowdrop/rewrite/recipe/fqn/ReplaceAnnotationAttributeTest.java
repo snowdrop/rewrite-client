@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.recipe.fqn;
 
+import dev.snowdrop.openrewrite.cli.RewriteService;
 import dev.snowdrop.rewrite.cli.BaseTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,8 @@ public class ReplaceAnnotationAttributeTest extends BaseTest {
         cfg.setFqNameRecipe(recipeName);
         cfg.setRecipeOptions(Set.of("annotationType=jakarta.persistence.GeneratedValue","attributeName=strategy","attributeValue=IDENTITY"));
 
-        var results = rewriteCmd.execute(cfg);
+        RewriteService rewriteService = new RewriteService(cfg);
+        var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
         List<SourcesFileResults.Row> rows = findDataTableRows(run, "SourcesFileResults", SourcesFileResults.Row.class);

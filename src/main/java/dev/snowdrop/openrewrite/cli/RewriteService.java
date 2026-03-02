@@ -35,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -73,6 +74,7 @@ public class RewriteService {
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
     private final List<String> yamlDefinedRecipeNames = new ArrayList<>();
+    private URLClassLoader additionalJarsClassloader;
 
     /**
      * Creates a new RewriteService with the given configuration.
@@ -337,7 +339,7 @@ public class RewriteService {
         env.scanRuntimeClasspath();
 
         // Load additional JARs if specified
-        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
+        additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
 
         if (additionalJarsClassloader != null) {
             // Load recipes using the ClasspathScanningLoader with the additional classloader
@@ -485,7 +487,15 @@ public class RewriteService {
 
         RecipeRun rr = null;
         try {
-            rr = recipe.run(sourceSet, ctx);
+            // ---------------------------
+            // Use the MergedClassloader to instantiate the OpenRewriteLauncher class
+            // able to call "recipe.run"
+            // ---------------------------
+            Class<?> launcherClass = additionalJarsClassloader.loadClass("dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher");
+            Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
+            Method applyMethod = launcherClass.getMethod("apply", Recipe.class, LargeSourceSet.class, ExecutionContext.class);
+            rr = (RecipeRun)applyMethod.invoke(launcherInstance, recipe, sourceSet, ctx);
+
         } catch (Exception e) {
             LOG.error(RewriteService.class,"Execution of recipe(s) failed !",e);
         }

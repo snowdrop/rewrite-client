@@ -43,8 +43,11 @@ import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
 import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
+
 import picocli.CommandLine;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
@@ -194,11 +197,27 @@ public class RewriteCommand implements Runnable {
             URLClassLoader rewriteClassLoader = clu.loadAdditionalJars(rewriteJars, getClass().getClassLoader());
             Thread.currentThread().setContextClassLoader(rewriteClassLoader);
 
+            rewriteClassLoader.loadClass("org.openrewrite.ExecutionContext");
+            rewriteClassLoader.loadClass("org.openrewrite.LargeSourceSet");
+            rewriteClassLoader.loadClass("org.openrewrite.internal.InMemoryLargeSourceSet");
+
             // Create the RewriteConfig using the command parameters, options
-            RewriteService rewriteService = new RewriteService(setupRewriteCfg());
-            rewriteService.setLogger(this.LOG);
-            ResultsContainer results = rewriteService.runScanner();
-            rewriteService.showResults(results);
+            Class<?> clazz = rewriteClassLoader.loadClass("dev.snowdrop.openrewrite.cli.RewriteService");
+            Object launcherService = clazz.getConstructor(RewriteConfig.class).newInstance(setupRewriteCfg());
+
+            Method setLogger = launcherService.getClass().getMethod("setLogger",LoggingService.class);
+            setLogger.invoke(launcherService,LOG);
+
+            Method runScanner = launcherService.getClass().getMethod("runScanner");
+            ResultsContainer results = (ResultsContainer) runScanner.invoke(launcherService);
+
+            Method showResults = launcherService.getClass().getMethod("showResults",ResultsContainer.class);
+            showResults.invoke(launcherService,results);
+
+            //RewriteService rewriteService = new RewriteService(setupRewriteCfg());
+            //rewriteService.setLogger(this.LOG);
+            //ResultsContainer results = rewriteService.runScanner();
+            //rewriteService.showResults(results);
 
         } catch (Exception e) {
             LOG.error(RewriteCommand.class, "Error executing rewrite command", e);

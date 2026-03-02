@@ -42,17 +42,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+
 import java.util.HashSet;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -69,7 +67,6 @@ public class RewriteService {
     private LoggingService LOG;
     private ExecutionContext ctx;
     private List<Throwable> throwables = new ArrayList<>();
-    private Environment env;
     private LargeSourceSet sourceSet;
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
@@ -104,20 +101,11 @@ public class RewriteService {
      * @throws Exception if initialization fails
      */
     public void init() throws Exception {
-        createEnvironmentWithLoaders();
+        if (rewriteConfig.getAdditionalJarPaths() != null && !rewriteConfig.getAdditionalJarPaths().isEmpty()) {
+            additionalJarsClassloader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
+        }
         createExecutionContext();
         scanLoadResources();
-    }
-
-    /**
-     * Creates the OpenRewrite environment with recipe loaders.
-     */
-    public void createEnvironmentWithLoaders() {
-        try {
-            env = createEnvironment();
-        } catch (Exception ex) {
-            LOG.error(RewriteService.class, "Error while creating environment: " + ex.getMessage(), ex);
-        }
     }
 
     /**
@@ -152,14 +140,39 @@ public class RewriteService {
      *
      * @return the results container with all recipe run results
      */
-    public ResultsContainer run()  {
+    public ResultsContainer run() {
         if (rewriteConfig.isDryRun()) {
-            LOG.warn(RewriteService.class,"Recipe executed in dry run mode !");
+            LOG.warn(RewriteService.class, "Recipe executed in dry run mode !");
         }
-        ResultsContainer results = processRecipes();
+        ResultsContainer results = runWithMergedClassloader();
         // Create the patch file and apply the changes
         createPatchFile(results);
         return results;
+    }
+
+    /**
+     * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection
+     * using the merged classloader so that additional-JAR recipes are visible.
+     */
+    private ResultsContainer runWithMergedClassloader() {
+        try {
+            ClassLoader classLoader = additionalJarsClassloader != null
+                ? additionalJarsClassloader
+                : getClass().getClassLoader();
+            Class<?> launcherClass = classLoader.loadClass("dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher");
+            Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
+
+            Method initMethod = launcherClass.getMethod("init",
+                ExecutionContext.class, URLClassLoader.class, LargeSourceSet.class,
+                RewriteConfig.class, List.class);
+            initMethod.invoke(launcherInstance, ctx, additionalJarsClassloader, sourceSet, rewriteConfig, yamlDefinedRecipeNames);
+
+            Method applyMethod = launcherClass.getMethod("apply");
+            return (ResultsContainer) applyMethod.invoke(launcherInstance);
+        } catch (Exception e) {
+            LOG.error(RewriteService.class, "Execution of recipe(s) failed!", e);
+            return new ResultsContainer(Collections.emptyMap());
+        }
     }
 
     /**
@@ -271,134 +284,6 @@ public class RewriteService {
         }
     }
 
-    private ResultsContainer processRecipes() {
-        if (env == null) {
-            LOG.error(RewriteService.class, "Environment is not initialized. Cannot process recipes.");
-            return new ResultsContainer(Collections.emptyMap());
-        }
-
-        RecipeRun recipeRun = null;
-        Recipe recipe = null;
-        boolean yamlRecipes = false;
-        Map<String, RecipeRun> allResults = new HashMap<>();
-
-        // Process the Yaml recipes file if it has been defined
-        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            yamlRecipes = true;
-        } else {
-            // Check if we got a recipe with a FQName string and load it
-            if (rewriteConfig.getFqNameRecipe() != null && !rewriteConfig.getFqNameRecipe().isEmpty()) {
-                recipe = env.activateRecipes(rewriteConfig.getFqNameRecipe());
-
-                // When we use `activeRecipe` parameter, we can also optionally configure the parameters of the recipe where the fields will be set
-                // using the parameter "options"
-                // Set<String> options = Collections.singleton("annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication");
-                if (rewriteConfig.getRecipeOptions() != null && !rewriteConfig.getRecipeOptions().isEmpty()) {
-                    configureRecipeOptions(recipe, rewriteConfig.getRecipeOptions());
-                }
-            }
-        }
-
-        var listRecipes = env.listRecipes();
-        if (env.listRecipes().isEmpty()) {
-            LOG.warn(RewriteService.class, String.format("No recipes found in active selection or YAML configuration for path: %s", rewriteConfig.getAppPath()));
-            return new ResultsContainer(Collections.emptyMap());
-        }
-
-        // Run the recipe created using the FQName
-        if (!yamlRecipes) {
-            LOG.info(RewriteService.class, "Using active recipe(s): " + recipe.getName());
-
-            if ("org.openrewrite.Recipe$Noop".equals(recipe.getName())) {
-                LOG.error(RewriteService.class, "No recipes were activated. " +
-                    "Activate a recipe by providing it as a command line argument.");
-                return new ResultsContainer(Collections.emptyMap());
-            }
-
-            validatingRecipe(recipe);
-            recipeRun = runRecipe(recipe);
-            allResults.put(recipe.getName(),recipeRun);
-
-        } else {
-            LOG.info(RewriteService.class, "Using recipes from YAML configuration");
-            Recipe yamlRecipe = env.activateRecipes(yamlDefinedRecipeNames.toArray(new String[0]));
-            LOG.info(RewriteService.class, "Running recipe: " + yamlRecipe.getName());
-            validatingRecipe(yamlRecipe);
-            RecipeRun currentRun = runRecipe(yamlRecipe);
-            allResults.put(yamlRecipe.getName(), currentRun);
-        }
-
-        return new ResultsContainer(allResults);
-    }
-
-    private Environment createEnvironment() throws Exception {
-        ClassLoaderUtils classLoaderUtils = new ClassLoaderUtils();
-        Environment.Builder env = Environment.builder();
-
-        // Construct a ClasspathScanningLoader scans the runtime classpath of the current java process for recipes
-        env.scanRuntimeClasspath();
-
-        // Load additional JARs if specified
-        additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
-
-        if (additionalJarsClassloader != null) {
-            // Load recipes using the ClasspathScanningLoader with the additional classloader
-            env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-            LOG.info(RewriteService.class, "Loaded recipes from additional JARs");
-        }
-
-        // Load YAML recipes if configured, while the builder is still open
-        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
-            loadRecipesFromYAML(env,yamlClassLoader);
-        }
-
-        return env.build();
-    }
-
-    private void loadRecipesFromYAML(Environment.Builder envBuilder, ClassLoader additionalJarsClassloader) throws Exception {
-        Path configPath;
-        if (Paths.get(rewriteConfig.getYamlRecipesPath()).isAbsolute()) {
-            configPath = Paths.get(rewriteConfig.getYamlRecipesPath());
-        } else {
-            String appProject = System.getenv("APP_PROJECT");
-            if (appProject != null && !appProject.isEmpty()) {
-                configPath = Paths.get(appProject);
-            } else {
-                // Fall back to resolving against current working directory + YAML path
-                configPath = rewriteConfig.getAppPath().resolve(rewriteConfig.getYamlRecipesPath());
-            }
-        }
-
-        if (Files.exists(configPath)) {
-            try (InputStream is = Files.newInputStream(configPath)) {
-                var yamlRecipesPath = configPath.normalize().toUri();
-                YamlResourceLoader loader = new YamlResourceLoader(is, yamlRecipesPath, new Properties(), additionalJarsClassloader);
-                loader.listRecipes().forEach(rd -> yamlDefinedRecipeNames.add(rd.getName()));
-                envBuilder.load(loader);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private void validatingRecipe(Recipe recipe) {
-        LOG.info(RewriteService.class, "Validating active recipes...");
-        List<Validated<Object>> validations = new ArrayList<>();
-        recipe.validateAll(ctx, validations);
-        List<Validated.Invalid<Object>> failedValidations = validations.stream()
-            .map(Validated::failures)
-            .flatMap(Collection::stream)
-            .collect(toList());
-
-        if (!failedValidations.isEmpty()) {
-            failedValidations.forEach(failedValidation ->
-                LOG.error(RewriteService.class, "Recipe validation error in " + failedValidation.getProperty() +
-                    ": " + failedValidation.getMessage()));
-            LOG.warn(RewriteService.class, "Recipe validation errors detected as part of one or more activeRecipe(s). " +
-                "Execution will continue regardless.");
-        }
-    }
 
     private LargeSourceSet loadSourceSet(ExecutionContext ctx) throws Exception {
         // TODO: Do we need such Styles for the Java parser. To be investigated !
@@ -482,33 +367,6 @@ public class RewriteService {
         return new InMemoryLargeSourceSet(sourceFiles);
     }
 
-    private RecipeRun runRecipe(Recipe recipe) {
-        LOG.info(RewriteService.class, "Running recipe(s)...");
-
-        RecipeRun rr = null;
-        try {
-            // ---------------------------
-            // Use the MergedClassloader to instantiate the OpenRewriteLauncher class
-            // able to call "recipe.run"
-            // ---------------------------
-            Class<?> launcherClass = additionalJarsClassloader.loadClass("dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher");
-            Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
-            Method applyMethod = launcherClass.getMethod("apply", Recipe.class, LargeSourceSet.class, ExecutionContext.class);
-            rr = (RecipeRun)applyMethod.invoke(launcherInstance, recipe, sourceSet, ctx);
-
-        } catch (Exception e) {
-            LOG.error(RewriteService.class,"Execution of recipe(s) failed !",e);
-        }
-
-        if (rewriteConfig.canExportDatatables()) {
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
-            Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
-            LOG.info(RewriteService.class, "Printing available datatables to: " + datatableDirectoryPath);
-            rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
-        }
-
-        return rr;
-    }
 
     private List<Path> findFiles(Path root, String extension) throws IOException {
         List<Path> files = new ArrayList<>();
@@ -634,7 +492,7 @@ public class RewriteService {
     }
 
 
-    private static void configureRecipeOptions(Recipe recipe, Set<String> options) throws RuntimeException {
+    public static void configureRecipeOptions(Recipe recipe, Set<String> options) throws RuntimeException {
         if (recipe instanceof CompositeRecipe ||
             recipe instanceof DeclarativeRecipe ||
             recipe instanceof Recipe.DelegatingRecipe ||

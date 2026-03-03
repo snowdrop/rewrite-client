@@ -2,6 +2,7 @@ package dev.snowdrop.rewrite.service;
 
 import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.ResultsContainer;
+import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
 import dev.snowdrop.rewrite.toolbox.MavenArtifactResolver;
 import dev.snowdrop.rewrite.toolbox.SanitizedMarkerPrinter;
 
@@ -42,6 +43,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.jboss.logging.Logger;
@@ -60,6 +63,7 @@ public class RewriteService {
 
     private ExecutionContext ctx;
     private List<Throwable> throwables = new ArrayList<>();
+    private Environment env;
     private LargeSourceSet sourceSet;
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
@@ -89,7 +93,7 @@ public class RewriteService {
         */
 
         init();
-        return null;
+        return run();
     }
 
     /**
@@ -102,9 +106,20 @@ public class RewriteService {
      * @throws Exception if initialization fails
      */
     public void init() throws Exception {
-        //createEnvironmentWithLoaders();
+        createEnvironmentWithLoaders();
         createExecutionContext();
         scanLoadResources();
+    }
+
+    /**
+     * Creates the OpenRewrite environment with recipe loaders.
+     */
+    public void createEnvironmentWithLoaders() {
+        try {
+            env = createEnvironment();
+        } catch (Exception ex) {
+            LOG.error("Error while creating environment: " + ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -162,20 +177,171 @@ public class RewriteService {
         LOG.info("Client execution is finishing ...");
     }
 
+    private Environment createEnvironment() throws Exception {
+        ClassLoaderUtils classLoaderUtils = new ClassLoaderUtils();
+        Environment.Builder env = Environment.builder();
+
+        // Construct a ClasspathScanningLoader scans the runtime classpath of the current java process for recipes
+        env.scanRuntimeClasspath();
+
+        // Load additional JARs if specified
+        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
+
+        if (additionalJarsClassloader != null) {
+            // Load recipes using the ClasspathScanningLoader with the additional classloader
+            env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
+            LOG.info("Loaded recipes from additional JARs");
+        }
+
+        // Load YAML recipes if configured, while the builder is still open
+        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
+            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
+            loadRecipesFromYAML(env,yamlClassLoader);
+        }
+
+        return env.build();
+    }
+
+    private void loadRecipesFromYAML(Environment.Builder envBuilder, ClassLoader additionalJarsClassloader) throws Exception {
+        Path configPath;
+        if (Paths.get(rewriteConfig.getYamlRecipesPath()).isAbsolute()) {
+            configPath = Paths.get(rewriteConfig.getYamlRecipesPath());
+        } else {
+            String appProject = System.getenv("APP_PROJECT");
+            if (appProject != null && !appProject.isEmpty()) {
+                configPath = Paths.get(appProject);
+            } else {
+                // Fall back to resolving against current working directory + YAML path
+                configPath = rewriteConfig.getAppPath().resolve(rewriteConfig.getYamlRecipesPath());
+            }
+        }
+
+        if (Files.exists(configPath)) {
+            try (InputStream is = Files.newInputStream(configPath)) {
+                var yamlRecipesPath = configPath.normalize().toUri();
+                YamlResourceLoader loader = new YamlResourceLoader(is, yamlRecipesPath, new Properties(), additionalJarsClassloader);
+                loader.listRecipes().forEach(rd -> yamlDefinedRecipeNames.add(rd.getName()));
+                envBuilder.load(loader);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     /**
      * Runs the configured recipes and optionally generates a patch file.
      *
      * @return the results container with all recipe run results
      */
-    public ResultsContainer run(URLClassLoader rewriteClassLoader) {
+    public ResultsContainer run() {
         if (rewriteConfig.isDryRun()) {
             LOG.warn("Recipe executed in dry run mode !");
         }
-        ResultsContainer results = runWithMergedClassloader(rewriteClassLoader);
+        ResultsContainer results = processRecipes();
         // Create the patch file and apply the changes
         createPatchFile(results);
         return results;
     }
+
+    private ResultsContainer processRecipes() {
+        if (env == null) {
+            LOG.error("Environment is not initialized. Cannot process recipes.");
+            return new ResultsContainer(Collections.emptyMap());
+        }
+
+        RecipeRun recipeRun = null;
+        Recipe recipe = null;
+        boolean yamlRecipes = false;
+        Map<String, RecipeRun> allResults = new HashMap<>();
+
+        // Process the Yaml recipes file if it has been defined
+        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
+            yamlRecipes = true;
+        } else {
+            // Check if we got a recipe with a FQName string and load it
+            if (rewriteConfig.getFqNameRecipe() != null && !rewriteConfig.getFqNameRecipe().isEmpty()) {
+                recipe = env.activateRecipes(rewriteConfig.getFqNameRecipe());
+
+                // When we use `activeRecipe` parameter, we can also optionally configure the parameters of the recipe where the fields will be set
+                // using the parameter "options"
+                // Set<String> options = Collections.singleton("annotationPattern=@org.springframework.boot.autoconfigure.SpringBootApplication");
+                if (rewriteConfig.getRecipeOptions() != null && !rewriteConfig.getRecipeOptions().isEmpty()) {
+                    configureRecipeOptions(recipe, rewriteConfig.getRecipeOptions());
+                }
+            }
+        }
+
+        var listRecipes = env.listRecipes();
+        if (env.listRecipes().isEmpty()) {
+            LOG.warn(String.format("No recipes found in active selection or YAML configuration for path: %s", rewriteConfig.getAppPath()));
+            return new ResultsContainer(Collections.emptyMap());
+        }
+
+        // Run the recipe created using the FQName
+        if (!yamlRecipes) {
+            LOG.info("Using active recipe(s): " + recipe.getName());
+
+            if ("org.openrewrite.Recipe$Noop".equals(recipe.getName())) {
+                LOG.error("No recipes were activated. " +
+                        "Activate a recipe by providing it as a command line argument.");
+                return new ResultsContainer(Collections.emptyMap());
+            }
+
+            validatingRecipe(recipe);
+            recipeRun = runRecipe(recipe);
+            allResults.put(recipe.getName(),recipeRun);
+
+        } else {
+            LOG.info("Using recipes from YAML configuration");
+            Recipe yamlRecipe = env.activateRecipes(yamlDefinedRecipeNames.toArray(new String[0]));
+            LOG.info("Running recipe: " + yamlRecipe.getName());
+            validatingRecipe(yamlRecipe);
+            RecipeRun currentRun = runRecipe(yamlRecipe);
+            allResults.put(yamlRecipe.getName(), currentRun);
+        }
+
+        return new ResultsContainer(allResults);
+    }
+
+    private void validatingRecipe(Recipe recipe) {
+        LOG.info("Validating active recipes...");
+        List<Validated<Object>> validations = new ArrayList<>();
+        recipe.validateAll(ctx, validations);
+        List<Validated.Invalid<Object>> failedValidations = validations.stream()
+                .map(Validated::failures)
+                .flatMap(Collection::stream)
+                .collect(toList());
+
+        if (!failedValidations.isEmpty()) {
+            failedValidations.forEach(failedValidation ->
+                    LOG.error("Recipe validation error in " + failedValidation.getProperty() +
+                            ": " + failedValidation.getMessage()));
+            LOG.warn("Recipe validation errors detected as part of one or more activeRecipe(s). " +
+                    "Execution will continue regardless.");
+        }
+    }
+
+
+    private RecipeRun runRecipe(Recipe recipe) {
+        LOG.info("Running recipe(s)...");
+
+        RecipeRun rr = null;
+        try {
+            rr = recipe.run(sourceSet, ctx);
+        } catch (Exception e) {
+            LOG.error("Execution of recipe(s) failed !",e);
+        }
+
+        if (rewriteConfig.canExportDatatables()) {
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
+            Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
+            LOG.info("Printing available datatables to: " + datatableDirectoryPath);
+            rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
+        }
+
+        return rr;
+    }
+
 
     /**
      * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection

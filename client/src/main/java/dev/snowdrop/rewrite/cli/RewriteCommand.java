@@ -178,7 +178,7 @@ public class RewriteCommand implements Runnable {
 
             // Include the OpenRewrite artifacts: core, java part of the merged classloader
             // and our RewriteService
-            URLClassLoader mergedLoader = clu.loadAdditionalJars(rewriteJars,appClassloader);
+            URLClassLoader mergedLoader = clu.loadAdditionalJars(rewriteJars);
 
             Class<?> rewriteServiceClass = mergedLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
             System.out.printf("Service loaded via: %s%n", rewriteServiceClass.getClassLoader());

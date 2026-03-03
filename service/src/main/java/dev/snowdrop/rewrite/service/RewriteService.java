@@ -76,10 +76,6 @@ public class RewriteService {
     }
 
     public ResultsContainer runScanner() throws Exception {
-        return runScanner(null);
-    }
-
-    public ResultsContainer runScanner(URLClassLoader rewriteClassLoader) throws Exception {
 
         LOG.info("Starting Rewrite ...");
         LOG.info(String.format("Project root: %s", rewriteConfig));
@@ -90,10 +86,10 @@ public class RewriteService {
             additionalJarsClassloader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), getClass().getClassLoader());
             LOG.info("Additional JAR files: " + rewriteConfig.getAdditionalJarPaths());
         }
+        */
 
         init();
-         */
-        return run(rewriteClassLoader);
+        return null;
     }
 
     /**

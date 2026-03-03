@@ -168,43 +168,15 @@ public class RewriteCommand implements Runnable {
                 exclusions.addAll(Arrays.asList(config.exclusions().get().split(",")));
             }
 
+            // We use the Snowdrop Openrewrite Service GAV which is a shaded JAR packaging the OpenRewrite artifacts
             List<String> rewriteJars = List.of(
-                    "dev.snowdrop.openrewrite:service:0.2.12-SNAPSHOT",
-                    "org.openrewrite:rewrite-core:8.70.4",
-                    "org.openrewrite:rewrite-java:8.70.4");
-
-            /* Used for temporary test
-
-            List<String> rewriteJarPaths = List.of(
-            "/Users/cmoullia/.m2/repository/dev/snowdrop/openrewrite/service/0.2.12-SNAPSHOT/service-0.2.12-SNAPSHOT-runner.jar",
-            "/Users/cmoullia/.m2/repository/org/openrewrite/rewrite-core/8.70.4/rewrite-core-8.70.4.jar",
-            "/Users/cmoullia/.m2/repository/org/openrewrite/rewrite-java/8.70.4/rewrite-java-8.70.4.jar");
-
-            List<URL> urls = new ArrayList<>();
-            for (String path : rewriteJarPaths) {
-                File jar = new File(path);
-                if (!jar.exists()) {
-                    System.err.printf("JAR not found, skipping: %s%n", path);
-                    continue;
-                }
-                urls.add(jar.toURI().toURL());
-                System.out.printf("  + %s%n", jar.getAbsolutePath());
-            }
-
-            if (urls.isEmpty()) {
-                System.err.println("No valid JARs found. Aborting.");
-                return;
-            }
-
-            ClassLoader appClassLoader = getClass().getClassLoader();
-            URLClassLoader mergedLoader = new URLClassLoader(
-                    urls.toArray(new URL[0]),
-                    appClassLoader   // add the running app's classloader
-            )
-            */
+                    "dev.snowdrop.openrewrite:service:0.2.12-SNAPSHOT");
 
             ClassLoaderUtils clu = new ClassLoaderUtils();
             ClassLoader appClassloader = getClass().getClassLoader();
+
+            // Include the OpenRewrite artifacts: core, java part of the merged classloader
+            // and our RewriteService
             URLClassLoader mergedLoader = clu.loadAdditionalJars(rewriteJars,appClassloader);
 
             Class<?> rewriteServiceClass = mergedLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
@@ -225,7 +197,6 @@ public class RewriteCommand implements Runnable {
              */
 
         } catch (Exception e) {
-            //LOG.error(RewriteCommand.class, "Error executing rewrite command", e);
             e.printStackTrace();
             System.exit(1);
         }

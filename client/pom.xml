@@ -20,19 +20,12 @@
     </properties>
 
     <dependencies>
-        <!-- Common -->
-        <dependency>
-            <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!--
+        <!-- Project GAVs -->
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>service</artifactId>
             <version>${project.version}</version>
         </dependency>
-        -->
 
         <!-- Quarkus dependencies -->
         <dependency>

@@ -20,7 +20,7 @@
     </properties>
 
     <dependencies>
-        <!-- Common -->
+        <!-- Project Gavs -->
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>common</artifactId>

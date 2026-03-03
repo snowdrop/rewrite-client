@@ -21,6 +21,7 @@
 
 package dev.snowdrop.rewrite.cli;
 
+import dev.snowdrop.rewrite.ResultsContainer;
 import dev.snowdrop.rewrite.cli.toolbox.LoggerUtils;
 import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
@@ -184,7 +185,10 @@ public class RewriteCommand implements Runnable {
 
             Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteConfig.class).newInstance(setupRewriteCfg());
             Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
-            runScannerMethod.invoke(rewriteServiceInstance);
+            ResultsContainer results = (ResultsContainer) runScannerMethod.invoke(rewriteServiceInstance);
+
+            Method showResultsMethod = rewriteServiceClass.getMethod("showResults", ResultsContainer.class);
+            showResultsMethod.invoke(rewriteServiceInstance,results);
 
             System.out.println("Launcher finished successfully.");
 

@@ -224,35 +224,6 @@ public class RewriteCommand implements Runnable {
             rewriteService.showResults(results);
              */
 
-            /*
-            ERROR [dev.snowdrop.openrewrite.cli.RewriteCommand] Error executing rewrite command:
-            java.lang.ClassCastException: class jdk.internal.loader.ClassLoaders$AppClassLoader cannot be cast to class dev.snowdrop.openrewrite.cli.toolbox.RewriteClassLoader
-            (jdk.internal.loader.ClassLoaders$AppClassLoader is in module java.base of loader 'bootstrap'; dev.snowdrop.openrewrite.cli.toolbox.RewriteClassLoader is in unnamed module of loader 'app')
-
-            RewriteClassLoader rcl = (RewriteClassLoader) getClass().getClassLoader();
-            ClassLoaderUtils clu = new ClassLoaderUtils();
-            clu.resolveAdditionalJarPaths(rewriteJars).forEach(p -> {
-                try {
-                    rcl.addURL(URI.create(p.toString()).toURL());
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-
-            Thread.currentThread().setContextClassLoader(rcl);
-            */
-
-            /* To check if the classes have been well loaded
-               Class c = rcl.loadClass("org.openrewrite.InMemoryExecutionContext");
-               c = rcl.loadClass("org.openrewrite.internal.InMemoryLargeSourceSet");
-               c = rcl.loadClass("org.openrewrite.ExecutionContext");
-               c = rcl.loadClass("org.openrewrite.LargeSourceSet");
-
-               ClassLoaderUtils clu = new ClassLoaderUtils();
-               ClassLoader appClassloader = getClass().getClassLoader();
-               URLClassLoader rcl = clu.loadAdditionalJars(rewriteJars,appClassloader);
-             */
-
         } catch (Exception e) {
             //LOG.error(RewriteCommand.class, "Error executing rewrite command", e);
             e.printStackTrace();

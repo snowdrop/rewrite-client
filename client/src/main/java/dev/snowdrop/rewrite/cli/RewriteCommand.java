@@ -32,10 +32,13 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Quarkus-based standalone CLI for OpenRewrite
@@ -169,21 +172,35 @@ public class RewriteCommand implements Runnable {
                 exclusions.addAll(Arrays.asList(config.exclusions().get().split(",")));
             }
 
-            // We use the Snowdrop Openrewrite Service GAV which is a shaded JAR packaging the OpenRewrite artifacts
-            List<String> rewriteJars = List.of(
-                    "dev.snowdrop.openrewrite:service:0.2.12-SNAPSHOT");
+            // We use the snowdrop OpenRewrite Service GAV which is a shaded JAR packaging the OpenRewrite artifacts
+            List<String> rewriteJars = new ArrayList<>(List.of(
+                    "dev.snowdrop.openrewrite:service:0.2.12-SNAPSHOT"));
 
+            RewriteConfig cfg = setupRewriteCfg();
+            if (!cfg.getAdditionalJarPaths().isEmpty()) {
+                rewriteJars.addAll(cfg.getAdditionalJarPaths());
+            }
+
+            // Include the OpenRewrite artifacts: core, java, our RewriteService
+            // and if they exist the additional jar to a mergedClassloader
             ClassLoaderUtils clu = new ClassLoaderUtils();
-            ClassLoader appClassloader = getClass().getClassLoader();
+            URLClassLoader mergedClassLoader = clu.loadAdditionalJars(rewriteJars);
 
-            // Include the OpenRewrite artifacts: core, java part of the merged classloader
-            // and our RewriteService
-            URLClassLoader mergedLoader = clu.loadAdditionalJars(rewriteJars);
+            // Verify if the mergedClassLoader contains: META-INF/rewrite/classpath.tsv.gz
+            Enumeration<URL> urls = mergedClassLoader.findResources("META-INF/rewrite/classpath.tsv.gz");
+            Stream<URL> urlStream = StreamSupport.stream(
+                    Spliterators.spliteratorUnknownSize(
+                            urls.asIterator(),
+                            Spliterator.ORDERED
+                    ),
+                    false
+            );
+            urlStream.forEach(System.out::println);
 
-            Class<?> rewriteServiceClass = mergedLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
+            Class<?> rewriteServiceClass = mergedClassLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
             System.out.printf("Service loaded via: %s%n", rewriteServiceClass.getClassLoader());
 
-            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteConfig.class).newInstance(setupRewriteCfg());
+            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteConfig.class).newInstance(cfg);
             Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
             ResultsContainer results = (ResultsContainer) runScannerMethod.invoke(rewriteServiceInstance);
 

@@ -74,11 +74,12 @@
             <artifactId>rewrite-json</artifactId>
             <!--<scope>provided</scope>-->
         </dependency>
+        <!--
         <dependency>
             <groupId>org.openrewrite</groupId>
             <artifactId>rewrite-gradle</artifactId>
-            <!--<scope>provided</scope>-->
         </dependency>
+        -->
         <dependency>
             <groupId>org.openrewrite</groupId>
             <artifactId>rewrite-maven</artifactId>

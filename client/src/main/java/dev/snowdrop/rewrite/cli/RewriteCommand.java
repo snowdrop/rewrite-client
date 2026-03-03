@@ -24,7 +24,6 @@ package dev.snowdrop.rewrite.cli;
 import dev.snowdrop.rewrite.cli.toolbox.LoggerUtils;
 import dev.snowdrop.rewrite.config.RewriteConfig;
 //import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
-import dev.snowdrop.rewrite.service.RewriteService;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
 
@@ -206,7 +205,7 @@ public class RewriteCommand implements Runnable {
             Class<?> rewriteServiceClass = mergedLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
             System.out.printf("Service loaded via: %s%n", rewriteServiceClass.getClassLoader());
 
-            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteService.class).newInstance(setupRewriteCfg());
+            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteConfig.class).newInstance(setupRewriteCfg());
             Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
             runScannerMethod.invoke(rewriteServiceInstance);
 

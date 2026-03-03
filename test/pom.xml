@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>client</artifactId>
+            <artifactId>service</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- OpenRewrite dependencies -->

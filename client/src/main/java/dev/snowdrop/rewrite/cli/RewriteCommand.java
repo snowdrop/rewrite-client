@@ -23,16 +23,14 @@ package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.rewrite.cli.toolbox.LoggerUtils;
 import dev.snowdrop.rewrite.config.RewriteConfig;
-//import dev.snowdrop.openrewrite.cli.toolbox.ClassLoaderUtils;
+import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
@@ -171,13 +169,16 @@ public class RewriteCommand implements Runnable {
             }
 
             List<String> rewriteJars = List.of(
+                    "dev.snowdrop.openrewrite:service:0.2.12-SNAPSHOT",
                     "org.openrewrite:rewrite-core:8.70.4",
                     "org.openrewrite:rewrite-java:8.70.4");
 
+            /* Used for temporary test
+
             List<String> rewriteJarPaths = List.of(
-                    "/Users/cmoullia/.m2/repository/dev/snowdrop/openrewrite/service/0.2.12-SNAPSHOT/service-0.2.12-SNAPSHOT-runner.jar",
-                    "/Users/cmoullia/.m2/repository/org/openrewrite/rewrite-core/8.70.4/rewrite-core-8.70.4.jar",
-                    "/Users/cmoullia/.m2/repository/org/openrewrite/rewrite-java/8.70.4/rewrite-java-8.70.4.jar");
+            "/Users/cmoullia/.m2/repository/dev/snowdrop/openrewrite/service/0.2.12-SNAPSHOT/service-0.2.12-SNAPSHOT-runner.jar",
+            "/Users/cmoullia/.m2/repository/org/openrewrite/rewrite-core/8.70.4/rewrite-core-8.70.4.jar",
+            "/Users/cmoullia/.m2/repository/org/openrewrite/rewrite-java/8.70.4/rewrite-java-8.70.4.jar");
 
             List<URL> urls = new ArrayList<>();
             for (String path : rewriteJarPaths) {
@@ -199,8 +200,12 @@ public class RewriteCommand implements Runnable {
             URLClassLoader mergedLoader = new URLClassLoader(
                     urls.toArray(new URL[0]),
                     appClassLoader   // add the running app's classloader
-            );
+            )
+            */
 
+            ClassLoaderUtils clu = new ClassLoaderUtils();
+            ClassLoader appClassloader = getClass().getClassLoader();
+            URLClassLoader mergedLoader = clu.loadAdditionalJars(rewriteJars,appClassloader);
 
             Class<?> rewriteServiceClass = mergedLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
             System.out.printf("Service loaded via: %s%n", rewriteServiceClass.getClassLoader());

@@ -1,0 +1,655 @@
+package dev.snowdrop.rewrite.service;
+
+import dev.snowdrop.rewrite.config.RewriteConfig;
+import dev.snowdrop.rewrite.ResultsContainer;
+import dev.snowdrop.rewrite.toolbox.MavenArtifactResolver;
+import dev.snowdrop.rewrite.toolbox.SanitizedMarkerPrinter;
+
+import org.jspecify.annotations.Nullable;
+import org.openrewrite.*;
+import org.openrewrite.binary.Binary;
+import org.openrewrite.config.*;
+import org.openrewrite.internal.InMemoryLargeSourceSet;
+import org.openrewrite.java.JavaParser;
+import org.openrewrite.java.internal.JavaTypeCache;
+import org.openrewrite.java.marker.JavaProject;
+import org.openrewrite.java.marker.JavaSourceSet;
+import org.openrewrite.java.marker.JavaVersion;
+import org.openrewrite.kotlin.KotlinParser;
+import org.openrewrite.marker.BuildTool;
+import org.openrewrite.marker.Marker;
+import org.openrewrite.marker.Markers;
+import org.openrewrite.marker.OperatingSystemProvenance;
+import org.openrewrite.marker.ci.BuildEnvironment;
+import org.openrewrite.maven.MavenParser;
+import org.openrewrite.polyglot.OmniParser;
+import org.openrewrite.quark.Quark;
+import org.openrewrite.remote.Remote;
+import org.openrewrite.table.SearchResults;
+import org.openrewrite.text.PlainTextParser;
+
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.util.*;
+
+import org.jboss.logging.Logger;
+import java.util.stream.Stream;
+
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
+import static org.openrewrite.Tree.randomId;
+
+/**
+ * Service that orchestrates OpenRewrite recipe execution including environment setup,
+ * resources parsing, recipe running, and result processing.
+ */
+public class RewriteService {
+    private static Logger LOG = Logger.getLogger(RewriteService.class.getName());
+
+    private ExecutionContext ctx;
+    private List<Throwable> throwables = new ArrayList<>();
+    private LargeSourceSet sourceSet;
+    private RewriteConfig rewriteConfig;
+    private boolean sourceSetInitialized;
+    private final List<String> yamlDefinedRecipeNames = new ArrayList<>();
+    private URLClassLoader additionalJarsClassloader;
+
+    /**
+     * Creates a new RewriteService with the given configuration.
+     *
+     * @param cfg the rewrite configuration
+     */
+    public RewriteService(RewriteConfig cfg) {
+        this.rewriteConfig = cfg;
+    }
+
+    public ResultsContainer runScanner() throws Exception {
+        return runScanner(null);
+    }
+
+    public ResultsContainer runScanner(URLClassLoader rewriteClassLoader) throws Exception {
+
+        LOG.info("Starting Rewrite ...");
+        LOG.info(String.format("Project root: %s", rewriteConfig));
+        LOG.info(String.format("Fully Qualified named of the Recipe java class: %s", rewriteConfig.getFqNameRecipe()));
+
+        /*
+        if (rewriteConfig.getAdditionalJarPaths() != null && !rewriteConfig.getAdditionalJarPaths().isEmpty()) {
+            additionalJarsClassloader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), getClass().getClassLoader());
+            LOG.info("Additional JAR files: " + rewriteConfig.getAdditionalJarPaths());
+        }
+
+        init();
+         */
+        return run(rewriteClassLoader);
+    }
+
+    /**
+     * Configure Openrewrite by creating the:
+     * <p>
+     * - Environment holding the resource loaders able to find Recipe classes from jar, classes loaded or Yaml
+     * - ExecutionContext able to collect from the execution of the different Recipe the messages containing the Map of the DataTable, etc
+     * - LargeSourceSet using different parsers able to read: Java, Maven, Properties, XML, JSON, etc files
+     *
+     * @throws Exception if initialization fails
+     */
+    public void init() throws Exception {
+        //createEnvironmentWithLoaders();
+        createExecutionContext();
+        scanLoadResources();
+    }
+
+    /**
+     * Creates the execution context for collecting recipe execution messages.
+     */
+    public void createExecutionContext() {
+        ctx = createExecutionContext(throwables);
+    }
+
+    /**
+     * Scans and loads source files from the project.
+     */
+    public void scanLoadResources() {
+        try {
+            sourceSet = loadSourceSet(ctx);
+        } catch (Exception ex) {
+            LOG.error("Error while initializing", ex);
+        }
+    }
+
+    /**
+     * Returns whether the source set has been initialized.
+     *
+     * @return true if source files were successfully parsed
+     */
+    public boolean isSourceSetInitialized() {
+        return sourceSetInitialized;
+    }
+
+    public void showResults(ResultsContainer results) {
+        results.getRecipeRuns().forEach((k, v) -> {
+            if (!v.getDataTables().isEmpty()) {
+                LOG.info(String.format("Execution of the recipe %s succeeded.%n", k));
+
+                //System.out.printf("Execution of the recipe %s succeeded\n",k);
+                // The DataTable<SearchResult> will be available starting from: 8.69.0 !
+
+                Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
+                if (searchResults != null) {
+                    searchResults.forEach((result, list) -> {
+                        if (result.getClass().getSimpleName().startsWith("SearchResults")) {
+                            LOG.info("# Found " + list.size() + " search results.");
+                            list.forEach(r -> {
+                                var row = (SearchResults.Row) r;
+                                LOG.info("# SourcePath: " + row.getSourcePath());
+                                LOG.info("# Result: " + row.getResult());
+                                LOG.info("# Recipe: " + row.getRecipe());
+                                LOG.info("==============================================");
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        LOG.info("Client execution is finishing ...");
+    }
+
+    /**
+     * Runs the configured recipes and optionally generates a patch file.
+     *
+     * @return the results container with all recipe run results
+     */
+    public ResultsContainer run(URLClassLoader rewriteClassLoader) {
+        if (rewriteConfig.isDryRun()) {
+            LOG.warn("Recipe executed in dry run mode !");
+        }
+        ResultsContainer results = runWithMergedClassloader(rewriteClassLoader);
+        // Create the patch file and apply the changes
+        createPatchFile(results);
+        return results;
+    }
+
+    /**
+     * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection
+     * using the merged classloader so that additional-JAR recipes are visible.
+     */
+    private ResultsContainer runWithMergedClassloader(URLClassLoader rewriteClassLoader) {
+        try {
+            String launcherClassName = "dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher";
+
+            Class<?> launcherClass;
+            launcherClass = rewriteClassLoader.loadClass(launcherClassName);
+            Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
+
+            Method initMethod = launcherClass.getMethod("init",
+                    ExecutionContext.class, URLClassLoader.class, LargeSourceSet.class,
+                    RewriteConfig.class, List.class);
+            initMethod.invoke(launcherInstance, ctx, additionalJarsClassloader, sourceSet, rewriteConfig, yamlDefinedRecipeNames);
+
+            Method applyMethod = launcherClass.getMethod("apply");
+            return (ResultsContainer) applyMethod.invoke(launcherInstance);
+        } catch (Exception e) {
+            LOG.error("Execution of recipe(s) failed!", e);
+            return new ResultsContainer(Collections.emptyMap());
+        }
+    }
+
+    /**
+     * Updates the rewrite configuration.
+     *
+     * @param cfg the new configuration
+     */
+    public void updateConfig(RewriteConfig cfg) {
+        this.rewriteConfig = cfg;
+    }
+
+    private ExecutionContext createExecutionContext(List<Throwable> throwables) {
+        return new InMemoryExecutionContext(t -> {
+            LOG.debug("Debug: " + t.getMessage());
+            throwables.add(t);
+        });
+    }
+
+    private void createPatchFile(ResultsContainer results) {
+        RuntimeException firstException = results.getFirstException();
+        if (firstException != null) {
+            LOG.error("The recipe produced an error. Please report this to the recipe author.");
+            throw firstException;
+        }
+
+        if (!throwables.isEmpty()) {
+            LOG.warn("The recipe produced " + throwables.size() + " warning(s). Please report this to the recipe author.");
+            for (Throwable throwable : throwables) {
+                LOG.warn("Warning: " + throwable.getMessage());
+            }
+        }
+
+        // TODO: Review this code with maven plugin: AbstractRewriteRunMojo & AbstractRewriteDryRunMojo !
+        if (results.isNotEmpty()) {
+            Duration estimateTimeSaved = Duration.ZERO;
+
+            for (Result result : results.getGenerated()) {
+                assert result.getAfter() != null;
+                if (!rewriteConfig.isDryRun()) {
+                    writeAfter(rewriteConfig.getAppPath(), result, ctx);
+                }
+                LOG.info("These recipes would generate a new file " +
+                        result.getAfter().getSourcePath() + ":");
+                logRecipesThatMadeChanges(result);
+                estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
+                        result.getTimeSavings() : Duration.ZERO);
+            }
+
+            for (Result result : results.getDeleted()) {
+                assert result.getBefore() != null;
+                LOG.info("These recipes would delete a file " +
+                        result.getBefore().getSourcePath() + ":");
+                logRecipesThatMadeChanges(result);
+                estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
+                        result.getTimeSavings() : Duration.ZERO);
+            }
+
+            for (Result result : results.getMoved()) {
+                assert result.getBefore() != null;
+                assert result.getAfter() != null;
+                LOG.info("These recipes would move a file from " +
+                        result.getBefore().getSourcePath() + " to " +
+                        result.getAfter().getSourcePath() + ":");
+                logRecipesThatMadeChanges(result);
+                estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
+                        result.getTimeSavings() : Duration.ZERO);
+                if (!rewriteConfig.isDryRun()) {
+                    writeAfter(rewriteConfig.getAppPath(), result, ctx);
+                }
+            }
+
+            for (Result result : results.getRefactoredInPlace()) {
+                assert result.getBefore() != null;
+                LOG.info("These recipes would make changes to " +
+                        result.getBefore().getSourcePath() + ":");
+                logRecipesThatMadeChanges(result);
+                estimateTimeSaved = estimateTimeSaved.plus(result.getTimeSavings() != null ?
+                        result.getTimeSavings() : Duration.ZERO);
+                if (!rewriteConfig.isDryRun()) {
+                    writeAfter(rewriteConfig.getAppPath(), result, ctx);
+                }
+            }
+
+            // Create patch file
+            Path outPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite");
+            try {
+                Files.createDirectories(outPath);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not create the folder [" + outPath + "].", e);
+            }
+
+            Path patchFile = outPath.resolve("rewrite.patch");
+            try (BufferedWriter writer = Files.newBufferedWriter(patchFile)) {
+                Stream.concat(
+                                Stream.concat(results.getGenerated().stream(), results.getDeleted().stream()),
+                                Stream.concat(results.getMoved().stream(), results.getRefactoredInPlace().stream())
+                        )
+                        .map(Result::diff)
+                        .forEach(diff -> {
+                            try {
+                                writer.write(diff + "\n");
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to generate rewrite result.", e);
+            }
+
+            LOG.info("Patch file available:");
+            LOG.info("    " + patchFile.normalize());
+            LOG.info("Estimate time saved: " + formatDuration(estimateTimeSaved));
+        } else {
+            LOG.info("Applying recipe would make no changes. No patch file generated.");
+        }
+    }
+
+
+    private LargeSourceSet loadSourceSet(ExecutionContext ctx) throws Exception {
+        // TODO: Do we need such Styles for the Java parser. To be investigated !
+        // List<NamedStyles> styles = env.activateStyles(emptySet());
+
+        LOG.info("Parsing source files...");
+        List<SourceFile> sourceFiles = new ArrayList<>();
+
+        LOG.info("Application absolute path: " + rewriteConfig.getAppPath());
+
+        // Parse Java files
+        List<Path> javaFiles = findFiles(rewriteConfig.getAppPath(), ".java");
+        if (!javaFiles.isEmpty()) {
+            // If we have java files, then we assume that we have a pom and dependencies
+            // Collect the GAVs and their transitive dependencies
+            List<Path> classpaths;
+            try (MavenArtifactResolver mar = new MavenArtifactResolver()) {
+                classpaths = mar.resolveArtifactsWithDependencies(mar.loadModel(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml")));
+            }
+
+            LOG.debug("Classpath jar entries size: " + classpaths.size());
+            LOG.debug("Classpath entries of the application scanned");
+            classpaths.forEach(cp -> {
+                LOG.debug(cp.toString());
+            });
+
+            // Create the JavaParser and set the classpaths
+            JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);
+            JavaTypeCache typeCache = new JavaTypeCache();
+            javaParserBuilder.classpath(classpaths).typeCache(typeCache);
+
+            // Load the Java source files
+            JavaParser jp = javaParserBuilder.build();
+            sourceFiles.addAll(jp.parse(javaFiles, rewriteConfig.getAppPath(), ctx).toList());
+            LOG.info("Parsed " + javaFiles.size() + " Java files");
+        }
+
+        // Parse Kotlin files
+        List<Path> kotlinFiles = findFiles(rewriteConfig.getAppPath(), ".kt");
+        if (!kotlinFiles.isEmpty()) {
+            KotlinParser kotlinParser = KotlinParser.builder().build();
+            sourceFiles.addAll(kotlinParser.parse(kotlinFiles, rewriteConfig.getAppPath(), ctx).toList());
+            LOG.info("Parsed " + kotlinFiles.size() + " Kotlin files");
+        }
+
+        List<Path> poms = findFiles(rewriteConfig.getAppPath(), ".xml");
+        MavenParser.Builder mavenParserBuilder = MavenParser.builder();
+        List<SourceFile> mavens = mavenParserBuilder.build()
+                .parse(poms, rewriteConfig.getAppPath(), ctx)
+                .toList();
+        sourceFiles.addAll(mavens);
+
+        // Parse other files (XML, YAML, properties, etc.)
+        Set<String> masks = rewriteConfig.getPlainTextMasks().isEmpty() ? getDefaultPlainTextMasks() : rewriteConfig.getPlainTextMasks();
+        OmniParser omniParser = OmniParser.builder(
+                        OmniParser.defaultResourceParsers(),
+                        PlainTextParser.builder()
+                                .plainTextMasks(rewriteConfig.getAppPath(), masks)
+                                .build()
+                )
+                .sizeThresholdMb(rewriteConfig.getSizeThresholdMb())
+                .build();
+
+        List<Path> otherFiles = omniParser.acceptedPaths(rewriteConfig.getAppPath(), rewriteConfig.getAppPath());
+        sourceFiles.addAll(omniParser.parse(otherFiles, rewriteConfig.getAppPath(), ctx).toList());
+
+        // Add provenance markers
+        List<Marker> provenance = generateProvenance();
+        sourceFiles = sourceFiles.stream()
+                .map(sf -> addProvenance(sf, provenance))
+                .collect(toList());
+
+        LOG.info("Total source files parsed: " + sourceFiles.size());
+        if (!sourceFiles.isEmpty()) {
+            sourceSetInitialized = true;
+        } else {
+            throw new IllegalStateException("No source files parsed from the project scanned !");
+        }
+
+        LOG.debug("List of resources loaded");
+        sourceFiles.forEach(f -> {
+            LOG.debug(f.getSourcePath().toString());
+        });
+
+        return new InMemoryLargeSourceSet(sourceFiles);
+    }
+
+
+    private List<Path> findFiles(Path root, String extension) throws IOException {
+        List<Path> files = new ArrayList<>();
+
+        Collection<PathMatcher> exclusionMatchers = rewriteConfig.getExclusions().stream()
+                .map(pattern -> root.getFileSystem().getPathMatcher("glob:" + pattern))
+                .toList();
+
+        Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (file.toString().endsWith(extension)) {
+                    // Check if file is excluded
+                    boolean excluded = false;
+                    Path relativePath = root.relativize(file);
+                    for (PathMatcher matcher : exclusionMatchers) {
+                        if (matcher.matches(relativePath)) {
+                            excluded = true;
+                            break;
+                        }
+                    }
+
+                    if (!excluded) {
+                        files.add(file);
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                // Skip target directories and .git directories
+                String dirName = dir.getFileName().toString();
+                if (dirName.equals("target") || dirName.equals(".git") || dirName.startsWith(".")) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return files;
+    }
+
+    private List<Marker> generateProvenance() {
+        BuildEnvironment buildEnvironment = BuildEnvironment.build(System::getenv);
+        String javaRuntimeVersion = System.getProperty("java.specification.version");
+        String javaVendor = System.getProperty("java.vm.vendor");
+
+        return Arrays.asList(
+                buildEnvironment,
+                OperatingSystemProvenance.current(),
+                new BuildTool(randomId(), BuildTool.Type.Gradle, "standalone"), // Generic build tool
+                new JavaProject(randomId(), rewriteConfig.getAppPath().getFileName().toString(),
+                        new JavaProject.Publication("standalone", "standalone", "1.0.0")),
+                new JavaVersion(randomId(), javaRuntimeVersion, javaVendor, javaRuntimeVersion, javaRuntimeVersion),
+                JavaSourceSet.build("main", emptyList())
+        );
+    }
+
+    private <T extends SourceFile> T addProvenance(T sourceFile, List<Marker> provenance) {
+        Markers markers = sourceFile.getMarkers();
+        for (Marker marker : provenance) {
+            markers = markers.addIfAbsent(marker);
+        }
+        return sourceFile.withMarkers(markers);
+    }
+
+    private void logRecipesThatMadeChanges(Result result) {
+        String indent = "    ";
+        String prefix = "    ";
+        for (RecipeDescriptor recipeDescriptor : result.getRecipeDescriptorsThatMadeChanges()) {
+            LOG.info(prefix + recipeDescriptor.getName());
+            prefix = prefix + indent;
+        }
+    }
+
+    private String formatDuration(Duration duration) {
+        return duration.toString()
+                .substring(2)
+                .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                .toLowerCase()
+                .trim();
+    }
+
+    private Set<String> getDefaultPlainTextMasks() {
+        return new HashSet<>(Arrays.asList(
+                "**/*.adoc",
+                "**/*.bash",
+                "**/*.bat",
+                "**/CODEOWNERS",
+                "**/*.css",
+                "**/*.config",
+                "**/[dD]ockerfile*",
+                "**/*.[dD]ockerfile",
+                "**/*.env",
+                "**/.gitattributes",
+                "**/.gitignore",
+                "**/*.htm*",
+                "**/gradlew",
+                "**/.java-version",
+                "**/*.jelly",
+                "**/*.jsp",
+                "**/*.ksh",
+                "**/*.lock",
+                "**/lombok.config",
+                "**/[mM]akefile",
+                "**/*.md",
+                "**/*.mf",
+                "**/META-INF/services/**",
+                "**/META-INF/spring/**",
+                "**/META-INF/spring.factories",
+                "**/mvnw",
+                "**/mvnw.cmd",
+                "**/*.qute.java",
+                "**/.sdkmanrc",
+                "**/*.sh",
+                "**/*.sql",
+                "**/*.svg",
+                "**/*.tsx",
+                "**/*.txt",
+                "**/*.py"
+        ));
+    }
+
+
+    public static void configureRecipeOptions(Recipe recipe, Set<String> options) throws RuntimeException {
+        if (recipe instanceof CompositeRecipe ||
+                recipe instanceof DeclarativeRecipe ||
+                recipe instanceof Recipe.DelegatingRecipe ||
+                !recipe.getRecipeList().isEmpty()) {
+            // We don't (yet) support configuring potentially nested recipes, as recipes might occur more than once,
+            // and setting the same value twice might lead to unexpected behavior.
+            throw new RuntimeException(
+                    "Recipes containing other recipes can not be configured from the command line: " + recipe);
+        }
+
+        Map<String, String> optionValues = new HashMap<>();
+        for (String option : options) {
+            String[] parts = option.split("=", 2);
+            if (parts.length == 2) {
+                optionValues.put(parts[0], parts[1]);
+            }
+        }
+        for (Field field : recipe.getClass().getDeclaredFields()) {
+            String removed = optionValues.remove(field.getName());
+            updateOption(recipe, field, removed);
+        }
+        if (!optionValues.isEmpty()) {
+            throw new RuntimeException(
+                    String.format("Unknown recipe options: %s", String.join(", ", optionValues.keySet())));
+        }
+    }
+
+    private static void updateOption(Recipe recipe, Field field, @Nullable String optionValue) throws RuntimeException {
+        Object convertedOptionValue = convertOptionValue(field.getName(), optionValue, field.getType());
+        if (convertedOptionValue == null) {
+            return;
+        }
+        try {
+            field.setAccessible(true);
+            field.set(recipe, convertedOptionValue);
+            field.setAccessible(false);
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            throw new RuntimeException(
+                    String.format("Unable to configure recipe '%s' option '%s' with value '%s'",
+                            recipe.getClass().getSimpleName(), field.getName(), optionValue));
+        }
+    }
+
+    private static @Nullable Object convertOptionValue(String name, @Nullable String optionValue, Class<?> type)
+            throws RuntimeException {
+        if (optionValue == null) {
+            return null;
+        }
+        if (type.isAssignableFrom(String.class)) {
+            return optionValue;
+        }
+        if (type.isAssignableFrom(boolean.class) || type.isAssignableFrom(Boolean.class)) {
+            return Boolean.parseBoolean(optionValue);
+        }
+        if (type.isAssignableFrom(int.class) || type.isAssignableFrom(Integer.class)) {
+            return Integer.parseInt(optionValue);
+        }
+        if (type.isAssignableFrom(long.class) || type.isAssignableFrom(Long.class)) {
+            return Long.parseLong(optionValue);
+        }
+
+        throw new RuntimeException(
+                String.format("Unable to convert option: %s value: %s to type: %s", name, optionValue, type));
+    }
+
+    private static void writeAfter(Path root, Result result, ExecutionContext ctx) {
+        if (result.getAfter() == null || result.getAfter() instanceof Quark) {
+            return;
+        }
+        Path targetPath = root.resolve(result.getAfter().getSourcePath());
+        File targetFile = targetPath.toFile();
+        if (!targetFile.getParentFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            targetFile.getParentFile().mkdirs();
+        }
+        if (result.getAfter() instanceof Binary) {
+            try (FileOutputStream sourceFileWriter = new FileOutputStream(targetFile)) {
+                sourceFileWriter.write(((Binary) result.getAfter()).getBytes());
+            } catch (IOException e) {
+                throw new UncheckedIOException("Unable to rewrite source files", e);
+            }
+        } else if (result.getAfter() instanceof Remote) {
+            Remote remote = (Remote) result.getAfter();
+            try (FileOutputStream sourceFileWriter = new FileOutputStream(targetFile)) {
+                InputStream source = remote.getInputStream(ctx);
+                byte[] buf = new byte[4096];
+                int length;
+                while ((length = source.read(buf)) > 0) {
+                    sourceFileWriter.write(buf, 0, length);
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException("Unable to rewrite source files", e);
+            }
+        } else if (!(result.getAfter() instanceof Quark)) {
+            // Don't attempt to write to a Quark; it has already been logged as change that has been made
+            Charset charset = result.getAfter().getCharset() == null ? StandardCharsets.UTF_8 : result.getAfter().getCharset();
+            try (BufferedWriter sourceFileWriter = Files.newBufferedWriter(targetPath, charset)) {
+                sourceFileWriter.write(result.getAfter().printAll(new PrintOutputCapture<>(0, new SanitizedMarkerPrinter())));
+            } catch (IOException e) {
+                throw new UncheckedIOException("Unable to rewrite source files", e);
+            }
+        }
+        if (result.getAfter().getFileAttributes() != null) {
+            FileAttributes fileAttributes = result.getAfter().getFileAttributes();
+            if (targetFile.canRead() != fileAttributes.isReadable()) {
+                //noinspection ResultOfMethodCallIgnored
+                targetFile.setReadable(fileAttributes.isReadable());
+            }
+            if (targetFile.canWrite() != fileAttributes.isWritable()) {
+                //noinspection ResultOfMethodCallIgnored
+                targetFile.setWritable(fileAttributes.isWritable());
+            }
+            if (targetFile.canExecute() != fileAttributes.isExecutable()) {
+                //noinspection ResultOfMethodCallIgnored
+                targetFile.setExecutable(fileAttributes.isExecutable());
+            }
+        }
+    }
+}

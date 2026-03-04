@@ -177,30 +177,24 @@ public class RewriteCommand implements Runnable {
                     "dev.snowdrop.openrewrite:service:0.2.12-SNAPSHOT"));
 
             RewriteConfig cfg = setupRewriteCfg();
-            if (!cfg.getAdditionalJarPaths().isEmpty()) {
-                rewriteJars.addAll(cfg.getAdditionalJarPaths());
-            }
 
-            // Include the OpenRewrite artifacts: core, java, our RewriteService
-            // and if they exist the additional jar to a mergedClassloader
+            // Don't do this here but within the RewriteService using createEnvironment()
+            // if (!cfg.getAdditionalJarPaths().isEmpty()) {
+            //    rewriteJars.addAll(cfg.getAdditionalJarPaths());
+            //}
+
+            // Include the OpenRewrite artifacts: core, java, maven, properties, json, yaml and our RewriteService
             ClassLoaderUtils clu = new ClassLoaderUtils();
-            URLClassLoader mergedClassLoader = clu.loadAdditionalJars(rewriteJars);
+            URLClassLoader mergedClassLoader = clu.loadAdditionalJars(rewriteJars, null);
 
             // Verify if the mergedClassLoader contains: META-INF/rewrite/classpath.tsv.gz
-            Enumeration<URL> urls = mergedClassLoader.findResources("META-INF/rewrite/classpath.tsv.gz");
-            Stream<URL> urlStream = StreamSupport.stream(
-                    Spliterators.spliteratorUnknownSize(
-                            urls.asIterator(),
-                            Spliterator.ORDERED
-                    ),
-                    false
-            );
-            urlStream.forEach(System.out::println);
+            // verifyTsvFiles(mergedClassLoader);
 
             Class<?> rewriteServiceClass = mergedClassLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
-            System.out.printf("Service loaded via: %s%n", rewriteServiceClass.getClassLoader());
+            System.out.printf("RewriteService loaded via: %s%n", rewriteServiceClass.getClassLoader());
 
-            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteConfig.class).newInstance(cfg);
+            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(RewriteConfig.class, URLClassLoader.class).newInstance(cfg, mergedClassLoader);
+
             Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
             ResultsContainer results = (ResultsContainer) runScannerMethod.invoke(rewriteServiceInstance);
 
@@ -247,5 +241,12 @@ public class RewriteCommand implements Runnable {
 
         cfg.setVerbose(verbose);
         return cfg;
+    }
+
+    // Verify if the mergedClassLoader contains: META-INF/rewrite/classpath.tsv.gz
+    public static void verifyTsvFiles(ClassLoader mergedClassLoader) {
+        Stream<URL> urls = mergedClassLoader.resources("META-INF/rewrite/classpath.tsv.gz");
+        System.out.println("RewriteCommand: Printing the classpath.tsv.gz files found: ");
+        urls.forEach(System.out::println);
     }
 }

@@ -1,12 +1,15 @@
 package dev.snowdrop.rewrite.toolbox;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import org.jboss.logging.Logger;
 
 /**
  * Utility methods for loading additional JARs and merging classloaders.
@@ -38,20 +41,19 @@ public class ClassLoaderUtils {
             List<Path> validPaths = new ArrayList<>();
             for (Path jarPath : resolvedPaths) {
                 if (!Files.exists(jarPath)) {
-                    System.err.println("Warning: JAR file does not exist: " + jarPath);
+                    LOG.error("Warning: JAR file does not exist: " + jarPath);
                     continue;
                 }
                 if (!jarPath.toString().toLowerCase().endsWith(".jar")) {
-                    System.err.println("Warning: File is not a JAR: " + jarPath);
+                    LOG.error("Warning: File is not a JAR: " + jarPath);
                     continue;
                 }
                 validPaths.add(jarPath);
-                System.out.println("Resolved additional JAR: " + jarPath);
+                LOG.info("Resolved additional JAR: " + jarPath);
             }
             return validPaths;
         } catch (Exception e) {
-            System.err.println("Error resolving Maven artifacts: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Error resolving Maven artifacts: ", e);
             return List.of();
         }
     }
@@ -63,9 +65,16 @@ public class ClassLoaderUtils {
      * @param additionalJarPaths list of JAR file paths or Maven GAV coordinates to load
      * @return URLClassLoader containing the additional Rewrite JARs, or null if no additional JARs are specified
      */
-    public URLClassLoader loadAdditionalJars(List<String> additionalJarPaths) {
+    public URLClassLoader loadAdditionalJars(List<String> additionalJarPaths, ClassLoader rewriteClassLoader) {
         if (additionalJarPaths == null || additionalJarPaths.isEmpty()) {
             return null;
+        }
+
+        ClassLoader cl;
+        if(rewriteClassLoader == null) {
+            cl = this.getClass().getClassLoader();
+        } else {
+            cl = rewriteClassLoader;
         }
 
         List<URL> jarUrls = new ArrayList<>();
@@ -78,26 +87,70 @@ public class ClassLoaderUtils {
             for (Path jarPath : resolvedPaths) {
                 try {
                     if (!Files.exists(jarPath)) {
-                        System.err.println("Warning: JAR file does not exist: " + jarPath);
+                        LOG.error("Warning: JAR file does not exist: " + jarPath);
                         continue;
                     }
                     if (!jarPath.toString().toLowerCase().endsWith(".jar")) {
-                        System.err.println("Warning: File is not a JAR: " + jarPath);
+                        LOG.error("Warning: File is not a JAR: " + jarPath);
                         continue;
                     }
                     jarUrls.add(jarPath.toUri().toURL());
-                    System.out.println("Loaded additional JAR: " + jarPath);
+                    LOG.info("Loaded additional JAR: " + jarPath);
                 } catch (MalformedURLException e) {
-                    System.err.println("Could not load JAR: " + jarPath + " - " + e.getMessage());
+                    LOG.error("Could not load JAR: " + jarPath + " - " + e.getMessage());
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error resolving Maven artifacts: " + e.getMessage());
-            e.printStackTrace();
+            LOG.error("Error resolving Maven artifacts",e);
             return null;
         }
 
         return jarUrls.isEmpty() ? null :
-                new URLClassLoader(jarUrls.toArray(new URL[0]),ClassLoaderUtils.class.getClassLoader());
+                new URLClassLoader(jarUrls.toArray(new URL[0]),cl);
+    }
+
+    public void exportClassLoaderResources(ClassLoader cl, String... filters) throws IOException {
+        // 1. Determine a clean filename based on the ClassLoader name
+        String loaderName = (cl.getName() != null) ? cl.getName() : "loader-" + cl.hashCode();
+        String fileName = loaderName.replaceAll("[^a-zA-Z0-9.-]", "_") + ".txt";
+
+        // 2. Open the file writer
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            writer.write("Listing resources for ClassLoader: " + loaderName);
+            writer.newLine();
+            writer.write("Filters applied: " + Arrays.toString(filters));
+            writer.newLine();
+            writer.write("--------------------------------------------------");
+            writer.newLine();
+
+            // 3. Scan roots
+            Enumeration<URL> en = cl.getResources("");
+            while (en.hasMoreElements()) {
+                URL url = en.nextElement();
+                URLConnection urlConnection = url.openConnection();
+
+                if (urlConnection instanceof JarURLConnection jarCon) {
+                    try (JarFile jar = jarCon.getJarFile()) {
+                        Enumeration<JarEntry> entries = jar.entries();
+                        while (entries.hasMoreElements()) {
+                            String entryName = entries.nextElement().getName();
+
+                            // 4. Filter logic
+                            boolean matches = (filters.length == 0) ||
+                                    Arrays.stream(filters).anyMatch(entryName::contains);
+
+                            if (matches) {
+                                writer.write(entryName);
+                                writer.newLine();
+                            }
+                        }
+                    }
+                } else {
+                    writer.write("[SystemPath] Skipping non-JAR root: " + url);
+                    writer.newLine();
+                }
+            }
+            LOG.info("Resource list exported successfully to: " + fileName);
+        }
     }
 }

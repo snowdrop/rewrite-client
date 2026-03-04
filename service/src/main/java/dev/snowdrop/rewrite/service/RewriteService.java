@@ -48,6 +48,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import org.jboss.logging.Logger;
+
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
@@ -68,7 +69,7 @@ public class RewriteService {
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
     private final List<String> yamlDefinedRecipeNames = new ArrayList<>();
-    private URLClassLoader additionalJarsClassloader;
+    private URLClassLoader rewriteURLClassLoader;
 
     /**
      * Creates a new RewriteService with the given configuration.
@@ -79,21 +80,56 @@ public class RewriteService {
         this.rewriteConfig = cfg;
     }
 
+    /**
+     * Creates a new RewriteService with the given configuration and classloader
+     * @param cfg the rewrite configuration
+     * @param rewriteURLClassLoader the URLClassloader containing the OpenRewrite GAVs
+     */
+    public RewriteService(RewriteConfig cfg, URLClassLoader rewriteURLClassLoader) {
+        this.rewriteConfig = cfg;
+        this.rewriteURLClassLoader = rewriteURLClassLoader;
+    }
+
+    /**
+     * Returns whether the source set has been initialized.
+     *
+     * @return true if source files were successfully parsed
+     */
+    public boolean isSourceSetInitialized() {
+        return sourceSetInitialized;
+    }
+
+    /**
+     * Updates the rewrite configuration.
+     *
+     * @param cfg the new configuration
+     */
+    public void updateConfig(RewriteConfig cfg) {
+        this.rewriteConfig = cfg;
+    }
+
+    /**
+     *
+     * @return
+     * @throws Exception
+     */
     public ResultsContainer runScanner() throws Exception {
 
         LOG.info("Starting Rewrite ...");
         LOG.info(String.format("Project root: %s", rewriteConfig));
         LOG.info(String.format("Fully Qualified named of the Recipe java class: %s", rewriteConfig.getFqNameRecipe()));
 
-        /*
-        if (rewriteConfig.getAdditionalJarPaths() != null && !rewriteConfig.getAdditionalJarPaths().isEmpty()) {
-            additionalJarsClassloader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), getClass().getClassLoader());
-            LOG.info("Additional JAR files: " + rewriteConfig.getAdditionalJarPaths());
-        }
-        */
-
+        // Create the OpenRewrite contex, environment and scan/load the resources
         init();
-        return run();
+
+        if (rewriteConfig.isDryRun()) {
+            LOG.warn("Recipe executed in dry run mode !");
+        }
+
+        ResultsContainer results = processRecipes();
+        // Create the patch file and apply the changes
+        createPatchFile(results);
+        return results;
     }
 
     /**
@@ -106,19 +142,19 @@ public class RewriteService {
      * @throws Exception if initialization fails
      */
     public void init() throws Exception {
-        createEnvironmentWithLoaders();
+        createEnvironment();
         createExecutionContext();
         scanLoadResources();
     }
 
     /**
-     * Creates the OpenRewrite environment with recipe loaders.
+     * Creates the OpenRewrite environment where the Recipe loaders are created using the URLClassLoader
      */
-    public void createEnvironmentWithLoaders() {
+    public void createEnvironment() {
         try {
-            env = createEnvironment();
+            env = buildOpenRewriteEnvironment();
         } catch (Exception ex) {
-            LOG.error("Error while creating environment: " + ex.getMessage(), ex);
+            LOG.error("Error while building the OpenRewrite Environment", ex);
         }
     }
 
@@ -140,63 +176,43 @@ public class RewriteService {
         }
     }
 
-    /**
-     * Returns whether the source set has been initialized.
-     *
-     * @return true if source files were successfully parsed
-     */
-    public boolean isSourceSetInitialized() {
-        return sourceSetInitialized;
-    }
-
-    public void showResults(ResultsContainer results) {
-        results.getRecipeRuns().forEach((k, v) -> {
-            if (!v.getDataTables().isEmpty()) {
-                LOG.info(String.format("Execution of the recipe %s succeeded.%n", k));
-
-                //System.out.printf("Execution of the recipe %s succeeded\n",k);
-                // The DataTable<SearchResult> will be available starting from: 8.69.0 !
-
-                Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
-                if (searchResults != null) {
-                    searchResults.forEach((result, list) -> {
-                        if (result.getClass().getSimpleName().startsWith("SearchResults")) {
-                            LOG.info("# Found " + list.size() + " search results.");
-                            list.forEach(r -> {
-                                var row = (SearchResults.Row) r;
-                                LOG.info("# SourcePath: " + row.getSourcePath());
-                                LOG.info("# Result: " + row.getResult());
-                                LOG.info("# Recipe: " + row.getRecipe());
-                                LOG.info("==============================================");
-                            });
-                        }
-                    });
-                }
-            }
-        });
-        LOG.info("Client execution is finishing ...");
-    }
-
-    private Environment createEnvironment() throws Exception {
-        ClassLoaderUtils classLoaderUtils = new ClassLoaderUtils();
+    private Environment buildOpenRewriteEnvironment() throws Exception {
         Environment.Builder env = Environment.builder();
-
-        // Construct a ClasspathScanningLoader scans the runtime classpath of the current java process for recipes
-        env.scanRuntimeClasspath();
+        ClassLoaderUtils clu = new ClassLoaderUtils();
 
         // Load additional JARs if specified
-        URLClassLoader additionalJarsClassloader = classLoaderUtils.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths());
+        URLClassLoader additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), this.rewriteURLClassLoader);
+        // Create an OpenRewrite ScanClassLoader with the classloader including: openrewrite artifacts and additional jars: recipes
+        env.scanClassLoader(additionalJarsClassloader);
 
-        if (additionalJarsClassloader != null) {
-            // Load recipes using the ClasspathScanningLoader with the additional classloader
-            env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-            LOG.info("Loaded recipes from additional JARs");
-        }
+        // Old code replaced now with env.scanClassLoader()
+        //
+        // if (additionalJarsClassloader != null) {
+        //    // Load recipes using the ClasspathScanningLoader with the additional classloader
+        //    env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
+        //    LOG.info("Loaded recipes from additional JARs");
+        //}
+
+        LOG.debug("Show the resources of the classloader: " + additionalJarsClassloader);
+        clu.exportClassLoaderResources(additionalJarsClassloader,
+                "org.openrewrite",
+                "org/openrewrite",
+                "com/todo",
+                "com.todo",
+                "classpath.tsv.gz");
+
+        LOG.debug("Show the resources of the parent classloader: " + additionalJarsClassloader.getParent());
+        clu.exportClassLoaderResources(additionalJarsClassloader.getParent(),
+                "org.openrewrite",
+                "org/openrewrite",
+                "com/todo",
+                "com.todo",
+                "classpath.tsv.gz");
 
         // Load YAML recipes if configured, while the builder is still open
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
             ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
-            loadRecipesFromYAML(env,yamlClassLoader);
+            loadRecipesFromYAML(env, yamlClassLoader);
         }
 
         return env.build();
@@ -233,6 +249,7 @@ public class RewriteService {
      *
      * @return the results container with all recipe run results
      */
+    @Deprecated
     public ResultsContainer run() {
         if (rewriteConfig.isDryRun()) {
             LOG.warn("Recipe executed in dry run mode !");
@@ -243,6 +260,13 @@ public class RewriteService {
         return results;
     }
 
+    /**
+     * Process the different recipes: FQN or YAML
+     * Create the Recipe(s) using env.activateRecipes() and set the values using the options
+     * Call run() to run the Recipe and get the results
+     *
+     * @return the ResultsContainer containing the DataTables and changes
+     */
     private ResultsContainer processRecipes() {
         if (env == null) {
             LOG.error("Environment is not initialized. Cannot process recipes.");
@@ -289,7 +313,7 @@ public class RewriteService {
 
             validatingRecipe(recipe);
             recipeRun = runRecipe(recipe);
-            allResults.put(recipe.getName(),recipeRun);
+            allResults.put(recipe.getName(), recipeRun);
 
         } else {
             LOG.info("Using recipes from YAML configuration");
@@ -321,7 +345,12 @@ public class RewriteService {
         }
     }
 
+    /**
+     * Run the recipe and export the DataTables CSV result if enabled
 
+     * @param recipe The recipe object to be executed
+     * @return the RecipeRun result
+     */
     private RecipeRun runRecipe(Recipe recipe) {
         LOG.info("Running recipe(s)...");
 
@@ -329,7 +358,7 @@ public class RewriteService {
         try {
             rr = recipe.run(sourceSet, ctx);
         } catch (Exception e) {
-            LOG.error("Execution of recipe(s) failed !",e);
+            LOG.error("Execution of recipe(s) failed !", e);
         }
 
         if (rewriteConfig.canExportDatatables()) {
@@ -347,18 +376,19 @@ public class RewriteService {
      * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection
      * using the merged classloader so that additional-JAR recipes are visible.
      */
-    private ResultsContainer runWithMergedClassloader(URLClassLoader rewriteClassLoader) {
+    @Deprecated
+    private ResultsContainer runWithMergedClassloader() {
         try {
             String launcherClassName = "dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher";
 
             Class<?> launcherClass;
-            launcherClass = rewriteClassLoader.loadClass(launcherClassName);
+            launcherClass = rewriteURLClassLoader.loadClass(launcherClassName);
             Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
 
             Method initMethod = launcherClass.getMethod("init",
                     ExecutionContext.class, URLClassLoader.class, LargeSourceSet.class,
                     RewriteConfig.class, List.class);
-            initMethod.invoke(launcherInstance, ctx, additionalJarsClassloader, sourceSet, rewriteConfig, yamlDefinedRecipeNames);
+            initMethod.invoke(launcherInstance, ctx, rewriteURLClassLoader, sourceSet, rewriteConfig, yamlDefinedRecipeNames);
 
             Method applyMethod = launcherClass.getMethod("apply");
             return (ResultsContainer) applyMethod.invoke(launcherInstance);
@@ -368,14 +398,6 @@ public class RewriteService {
         }
     }
 
-    /**
-     * Updates the rewrite configuration.
-     *
-     * @param cfg the new configuration
-     */
-    public void updateConfig(RewriteConfig cfg) {
-        this.rewriteConfig = cfg;
-    }
 
     private ExecutionContext createExecutionContext(List<Throwable> throwables) {
         return new InMemoryExecutionContext(t -> {
@@ -503,10 +525,10 @@ public class RewriteService {
                 classpaths = mar.resolveArtifactsWithDependencies(mar.loadModel(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml")));
             }
 
-            LOG.debug("Classpath jar entries size: " + classpaths.size());
-            LOG.debug("Classpath entries of the application scanned");
+            LOG.trace("Classpath jar entries size: " + classpaths.size());
+            LOG.trace("Classpath entries of the application scanned");
             classpaths.forEach(cp -> {
-                LOG.debug(cp.toString());
+                LOG.trace(cp.toString());
             });
 
             // Create the JavaParser and set the classpaths
@@ -694,7 +716,6 @@ public class RewriteService {
         ));
     }
 
-
     public static void configureRecipeOptions(Recipe recipe, Set<String> options) throws RuntimeException {
         if (recipe instanceof CompositeRecipe ||
                 recipe instanceof DeclarativeRecipe ||
@@ -813,5 +834,33 @@ public class RewriteService {
                 targetFile.setExecutable(fileAttributes.isExecutable());
             }
         }
+    }
+
+    public void showResults(ResultsContainer results) {
+        results.getRecipeRuns().forEach((k, v) -> {
+            if (!v.getDataTables().isEmpty()) {
+                LOG.info(String.format("Execution of the recipe %s succeeded.%n", k));
+
+                //System.out.printf("Execution of the recipe %s succeeded\n",k);
+                // The DataTable<SearchResult> will be available starting from: 8.69.0 !
+
+                Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
+                if (searchResults != null) {
+                    searchResults.forEach((result, list) -> {
+                        if (result.getClass().getSimpleName().startsWith("SearchResults")) {
+                            LOG.info("# Found " + list.size() + " search results.");
+                            list.forEach(r -> {
+                                var row = (SearchResults.Row) r;
+                                LOG.info("# SourcePath: " + row.getSourcePath());
+                                LOG.info("# Result: " + row.getResult());
+                                LOG.info("# Recipe: " + row.getRecipe());
+                                LOG.info("==============================================");
+                            });
+                        }
+                    });
+                }
+            }
+        });
+        LOG.info("Client execution is finishing ...");
     }
 }

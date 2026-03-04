@@ -18,6 +18,12 @@
     </properties>
 
     <dependencies>
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-arc</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>service</artifactId>
@@ -34,8 +40,6 @@
             <artifactId>rewrite-java</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <!-- Test dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>

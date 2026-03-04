@@ -365,10 +365,12 @@ public class RewriteService {
         LOG.info("Running recipe(s)...");
 
         RecipeRun rr = null;
+        ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(rewriteURLClassLoader);
             rr = recipe.run(sourceSet, ctx);
-        } catch (Exception e) {
-            LOG.error("Execution of recipe(s) failed !", e);
+        } finally {
+            Thread.currentThread().setContextClassLoader(previousCl);
         }
 
         if (rewriteConfig.canExportDatatables()) {

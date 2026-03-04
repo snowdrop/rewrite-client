@@ -27,6 +27,7 @@ public class AutoFormatTest extends BaseTest {
         cfg.setFqNameRecipe(recipeName);
 
         RewriteService rewriteService = new RewriteService(cfg);
+        rewriteService.init();
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
         assertFalse(run.getDataTables().isEmpty());

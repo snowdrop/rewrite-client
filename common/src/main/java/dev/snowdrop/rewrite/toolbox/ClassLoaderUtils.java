@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
+
 import org.jboss.logging.Logger;
 
 /**
@@ -71,7 +73,7 @@ public class ClassLoaderUtils {
         }
 
         ClassLoader cl;
-        if(rewriteClassLoader == null) {
+        if (rewriteClassLoader == null) {
             cl = this.getClass().getClassLoader();
         } else {
             cl = rewriteClassLoader;
@@ -101,56 +103,67 @@ public class ClassLoaderUtils {
                 }
             }
         } catch (Exception e) {
-            LOG.error("Error resolving Maven artifacts",e);
+            LOG.error("Error resolving Maven artifacts", e);
             return null;
         }
 
         return jarUrls.isEmpty() ? null :
-                new URLClassLoader(jarUrls.toArray(new URL[0]),cl);
+                new URLClassLoader(jarUrls.toArray(new URL[0]), cl);
     }
 
     public void exportClassLoaderResources(ClassLoader cl, String... filters) throws IOException {
-        // 1. Determine a clean filename based on the ClassLoader name
-        String loaderName = (cl.getName() != null) ? cl.getName() : "loader-" + cl.hashCode();
-        String fileName = loaderName.replaceAll("[^a-zA-Z0-9.-]", "_") + ".txt";
+        if (cl == null) {
+            LOG.warn("Classloader name is null !");
+        } else {
+            // 1. Determine a clean filename based on the ClassLoader name
+            String loaderName = (cl.getName() != null) ? cl.getName() : "loader-" + cl.hashCode();
+            String fileName = loaderName.replaceAll("[^a-zA-Z0-9.-]", "_") + ".txt";
 
-        // 2. Open the file writer
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
-            writer.write("Listing resources for ClassLoader: " + loaderName);
-            writer.newLine();
-            writer.write("Filters applied: " + Arrays.toString(filters));
-            writer.newLine();
-            writer.write("--------------------------------------------------");
-            writer.newLine();
+            // 2. Open the file writer
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+                writer.write("Listing resources for ClassLoader: " + loaderName);
+                writer.newLine();
+                writer.write("Filters applied: " + Arrays.toString(filters));
+                writer.newLine();
+                writer.write("--------------------------------------------------");
+                writer.newLine();
 
-            // 3. Scan roots
-            Enumeration<URL> en = cl.getResources("");
-            while (en.hasMoreElements()) {
-                URL url = en.nextElement();
-                URLConnection urlConnection = url.openConnection();
+                // 3. Scan roots
+                Enumeration<URL> en = cl.getResources("");
+                while (en.hasMoreElements()) {
+                    URL url = en.nextElement();
+                    URLConnection urlConnection = url.openConnection();
 
-                if (urlConnection instanceof JarURLConnection jarCon) {
-                    try (JarFile jar = jarCon.getJarFile()) {
-                        Enumeration<JarEntry> entries = jar.entries();
-                        while (entries.hasMoreElements()) {
-                            String entryName = entries.nextElement().getName();
+                    if (urlConnection instanceof JarURLConnection jarCon) {
+                        try (JarFile jar = jarCon.getJarFile()) {
+                            Enumeration<JarEntry> entries = jar.entries();
+                            while (entries.hasMoreElements()) {
+                                String entryName = entries.nextElement().getName();
 
-                            // 4. Filter logic
-                            boolean matches = (filters.length == 0) ||
-                                    Arrays.stream(filters).anyMatch(entryName::contains);
+                                // 4. Filter logic
+                                boolean matches = (filters.length == 0) ||
+                                        Arrays.stream(filters).anyMatch(entryName::contains);
 
-                            if (matches) {
-                                writer.write(entryName);
-                                writer.newLine();
+                                if (matches) {
+                                    writer.write(entryName);
+                                    writer.newLine();
+                                }
                             }
                         }
+                    } else {
+                        writer.write("[SystemPath] Skipping non-JAR root: " + url);
+                        writer.newLine();
                     }
-                } else {
-                    writer.write("[SystemPath] Skipping non-JAR root: " + url);
-                    writer.newLine();
                 }
+                LOG.info("Resource list exported successfully to: " + fileName);
             }
-            LOG.info("Resource list exported successfully to: " + fileName);
         }
+    }
+
+    // Verify if the mergedClassLoader contains: META-INF/rewrite/classpath.tsv.gz
+    public void verifyTsvFiles(String className, ClassLoader mergedClassLoader) {
+        Stream<URL> urls = mergedClassLoader.resources("META-INF/rewrite/classpath.tsv.gz");
+        LOG.info("RewriteCommand: Printing the classpath.tsv.gz files found: " + className);
+        urls.forEach(System.out::println);
     }
 }

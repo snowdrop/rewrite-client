@@ -15,6 +15,7 @@ import java.util.*;
 
 import static dev.snowdrop.rewrite.service.RewriteService.configureRecipeOptions;
 
+@Deprecated
 public class OpenRewriteLauncher {
     private static final Logger log = Logger.getLogger(OpenRewriteLauncher.class.getName());
 

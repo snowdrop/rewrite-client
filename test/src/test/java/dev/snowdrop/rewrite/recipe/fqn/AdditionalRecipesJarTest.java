@@ -32,6 +32,7 @@ public class AdditionalRecipesJarTest extends BaseTest {
         cfg.setAdditionalJarPaths(List.of("org.openrewrite.recipe:rewrite-java-dependencies:1.51.0"));
 
         RewriteService rewriteService = new RewriteService(cfg);
+        rewriteService.init();
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
         Assert.assertNotNull(run);

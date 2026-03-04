@@ -179,11 +179,37 @@ public class RewriteService {
     private Environment buildOpenRewriteEnvironment() throws Exception {
         Environment.Builder env = Environment.builder();
         ClassLoaderUtils clu = new ClassLoaderUtils();
+        URLClassLoader additionalJarsClassloader = null;
+
+        clu.verifyTsvFiles(this.getClass().getName(),this.rewriteURLClassLoader);
 
         // Load additional JARs if specified
-        URLClassLoader additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), this.rewriteURLClassLoader);
-        // Create an OpenRewrite ScanClassLoader with the classloader including: openrewrite artifacts and additional jars: recipes
-        env.scanClassLoader(additionalJarsClassloader);
+        if (rewriteConfig.getAdditionalJarPaths() != null) {
+            additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), this.rewriteURLClassLoader);
+            
+            LOG.debug("Show the resources of the classloader: " + additionalJarsClassloader);
+            clu.exportClassLoaderResources(additionalJarsClassloader,
+                    "org.openrewrite",
+                    "org/openrewrite",
+                    "com/todo",
+                    "com.todo",
+                    "classpath.tsv.gz");
+
+            LOG.debug("Show the resources of the parent classloader: " + additionalJarsClassloader.getParent());
+            clu.exportClassLoaderResources(additionalJarsClassloader.getParent(),
+                    "org.openrewrite",
+                    "org/openrewrite",
+                    "com/todo",
+                    "com.todo",
+                    "classpath.tsv.gz");
+
+            // Create an OpenRewrite ScanClassLoader with the classloader including: openrewrite artifacts and additional jars: recipes
+            env.scanClassLoader(additionalJarsClassloader);
+        } else {
+            env.scanRuntimeClasspath();
+        }
+
+        clu.verifyTsvFiles(this.getClass().getName(),additionalJarsClassloader);
 
         // Old code replaced now with env.scanClassLoader()
         //
@@ -192,22 +218,6 @@ public class RewriteService {
         //    env.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
         //    LOG.info("Loaded recipes from additional JARs");
         //}
-
-        LOG.debug("Show the resources of the classloader: " + additionalJarsClassloader);
-        clu.exportClassLoaderResources(additionalJarsClassloader,
-                "org.openrewrite",
-                "org/openrewrite",
-                "com/todo",
-                "com.todo",
-                "classpath.tsv.gz");
-
-        LOG.debug("Show the resources of the parent classloader: " + additionalJarsClassloader.getParent());
-        clu.exportClassLoaderResources(additionalJarsClassloader.getParent(),
-                "org.openrewrite",
-                "org/openrewrite",
-                "com/todo",
-                "com.todo",
-                "classpath.tsv.gz");
 
         // Load YAML recipes if configured, while the builder is still open
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {

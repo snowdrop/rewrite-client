@@ -188,7 +188,7 @@ public class RewriteCommand implements Runnable {
             URLClassLoader mergedClassLoader = clu.loadAdditionalJars(rewriteJars, null);
 
             // Verify if the mergedClassLoader contains: META-INF/rewrite/classpath.tsv.gz
-            // verifyTsvFiles(mergedClassLoader);
+            clu.verifyTsvFiles(this.getClass().getName(),mergedClassLoader);
 
             Class<?> rewriteServiceClass = mergedClassLoader.loadClass("dev.snowdrop.rewrite.service.RewriteService");
             System.out.printf("RewriteService loaded via: %s%n", rewriteServiceClass.getClassLoader());
@@ -241,12 +241,5 @@ public class RewriteCommand implements Runnable {
 
         cfg.setVerbose(verbose);
         return cfg;
-    }
-
-    // Verify if the mergedClassLoader contains: META-INF/rewrite/classpath.tsv.gz
-    public static void verifyTsvFiles(ClassLoader mergedClassLoader) {
-        Stream<URL> urls = mergedClassLoader.resources("META-INF/rewrite/classpath.tsv.gz");
-        System.out.println("RewriteCommand: Printing the classpath.tsv.gz files found: ");
-        urls.forEach(System.out::println);
     }
 }

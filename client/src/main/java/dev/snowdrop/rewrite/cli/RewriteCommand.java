@@ -243,16 +243,20 @@ public class RewriteCommand implements Runnable {
             String shadedGav = "dev.snowdrop.openrewrite:service:jar:shaded:" + spec.version()[0];
             Path shadedJarPath = resolver.resolveArtifact(shadedGav);
 
-            // Resolve the JBoss LogManager using also its GAV coodinate
+            // Resolve the JBoss LogManager & slf4j
+            String slf4jGav = "org.jboss.slf4j:slf4j-jboss-logmanager:2.1.0.Final";
+            Path slf4jPath = resolver.resolveArtifact(slf4jGav);
+
             String logManagerGav = "org.jboss.logmanager:jboss-logmanager:3.2.1.Final";
             Path logManagerPath = resolver.resolveArtifact(logManagerGav);
 
             // Build the classpath: shaded jar + JBoss LogManager + additional jars
-            List<String> classpathEntries = new ArrayList<>();
-            classpathEntries.add(shadedJarPath.toAbsolutePath().toString());
-            classpathEntries.add(logManagerPath.toAbsolutePath().toString());
-            classpathEntries.addAll(resolvedJarPaths);
-            String classpath = String.join(File.pathSeparator, classpathEntries);
+            List<String> cpe = new ArrayList<>();
+            cpe.add(shadedJarPath.toAbsolutePath().toString());
+            cpe.add(slf4jPath.toAbsolutePath().toString());
+            cpe.add(logManagerPath.toAbsolutePath().toString());
+            cpe.addAll(resolvedJarPaths);
+            String classpath = String.join(File.pathSeparator, cpe);
 
             // Build the java command
             String javaHome = System.getProperty("java.home");

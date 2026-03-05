@@ -2,6 +2,7 @@ package dev.snowdrop.rewrite.service;
 
 import dev.snowdrop.rewrite.ResultsContainer;
 import dev.snowdrop.rewrite.config.RewriteConfig;
+import org.jboss.logging.Logger;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -11,18 +12,20 @@ import java.util.*;
  * Reads RewriteConfig from system properties passed by the parent process.
  */
 public class RewriteServiceLauncher {
+    private static Logger logger = Logger.getLogger(RewriteServiceLauncher.class.getName());
 
     public static void main(String[] args) {
         RewriteConfig cfg = buildConfigFromSystemProperties();
 
         try {
+            logger.infof("Starting the Rewrite Service from java process: %d",ProcessHandle.current().pid());
             RewriteService rewriteService = new RewriteService(cfg);
             rewriteService.init();
             ResultsContainer results = rewriteService.runScanner();
+            logger.infof("RunScanner finished");
             rewriteService.showResults(results);
         } catch (Exception e) {
-            System.err.println("Rewrite service failed: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Rewrite service failed: ",e);
             System.exit(1);
         }
     }

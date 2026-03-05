@@ -223,7 +223,7 @@ public class RewriteCommand implements Runnable {
     /**
      * Launch a separate Java process to run RewriteService with an isolated classpath.
      * The classpath includes the additionalJars (resolved to full paths) and the
-     * service-0.2.12-SNAPSHOT-shaded.jar. The child process creates a RewriteService,
+     * service-x-shaded.jar. The child process creates a RewriteService,
      * calls init() and runScanner() using the provided RewriteConfig.
      *
      * @param cfg the RewriteConfig
@@ -243,11 +243,19 @@ public class RewriteCommand implements Runnable {
             String shadedGav = "dev.snowdrop.openrewrite:service:jar:shaded:" + spec.version()[0];
             Path shadedJarPath = resolver.resolveArtifact(shadedGav);
 
-            // Build the classpath: shaded jar + additional jars
+            // Resolve the JBoss LogManager using also its GAV coodinate
+            String logManagerGav = "org.jboss.logmanager:jboss-logmanager:3.2.1.Final";
+            Path logManagerPath = resolver.resolveArtifact(logManagerGav);
+
+            // Build the classpath: shaded jar + JBoss LogManager + additional jars
             List<String> classpathEntries = new ArrayList<>();
             classpathEntries.add(shadedJarPath.toAbsolutePath().toString());
+            classpathEntries.add(logManagerPath.toAbsolutePath().toString());
             classpathEntries.addAll(resolvedJarPaths);
             String classpath = String.join(File.pathSeparator, classpathEntries);
+
+            // Set the System property for the JBoss LogManager
+            System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
 
             // Build the java command
             String javaHome = System.getProperty("java.home");

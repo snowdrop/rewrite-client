@@ -11,6 +11,12 @@
     <description>Openrewrite client and library to apply recipes</description>
     <inceptionYear>2026</inceptionYear>
     <url>https://github.com/snowdrop/rewrite-client</url>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>service</module>
+        <module>client</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -28,12 +34,8 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.29.4</quarkus.platform.version>
 
-        <quarkus.package.type>uber-jar</quarkus.package.type>
-
-        <classgraph.version>4.8.184</classgraph.version>
-
-        <openrewrite-bom.version>8.70.4</openrewrite-bom.version>
-        <openrewrite-rewrite-polyglot.version>2.9.1</openrewrite-rewrite-polyglot.version>
+        <openrewrite-bom.version>8.74.3</openrewrite-bom.version>
+        <openrewrite-rewrite-polyglot.version>2.9.6</openrewrite-rewrite-polyglot.version>
 
         <aesh.version>3.1</aesh.version>
         <jboss-logmanager.version>3.2.1.Final</jboss-logmanager.version>
@@ -114,116 +116,6 @@
             <groupId>org.jboss.logmanager</groupId>
             <artifactId>jboss-logmanager</artifactId>
             <version>${jboss-logmanager.version}</version>
-        </dependency>
-
-        <!-- Scan classes for additional jars
-        <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-            <version>${classgraph.version}</version>
-        </dependency>
-        -->
-
-        <!-- Quarkus dependencies -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-picocli</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-config-yaml</artifactId>
-        </dependency>
-
-        <!-- OpenRewrite dependencies -->
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-java</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-java-21</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-kotlin</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-polyglot</artifactId>
-            <version>${openrewrite-rewrite-polyglot.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-yaml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-xml</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-properties</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-json</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-gradle</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.openrewrite</groupId>
-            <artifactId>rewrite-maven</artifactId>
-        </dependency>
-
-        <!-- Maven -->
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-        </dependency>
-
-        <!-- MIMA -->
-        <dependency>
-            <groupId>eu.maveniverse.maven.mima</groupId>
-            <artifactId>context</artifactId>
-            <version>${mima.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>eu.maveniverse.maven.mima.extensions</groupId>
-            <artifactId>mmr</artifactId>
-            <version>${mima.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>eu.maveniverse.maven.mima.runtime</groupId>
-            <artifactId>standalone-static</artifactId>
-            <version>${mima.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Test dependencies -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <version>3.0</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

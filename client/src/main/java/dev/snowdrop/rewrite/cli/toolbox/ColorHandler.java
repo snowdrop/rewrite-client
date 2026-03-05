@@ -16,9 +16,8 @@ public class ColorHandler extends ExtHandler {
      * Creates a new handler with the given command spec and darken level.
      *
      * @param spec the Picocli command spec for output routing
-     * @param darken the darken level for the color formatter
      */
-    public ColorHandler(CommandLine.Model.CommandSpec spec, int darken) {
+    public ColorHandler(CommandLine.Model.CommandSpec spec) {
         this.spec = spec;
     }
 

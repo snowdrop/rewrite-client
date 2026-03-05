@@ -254,15 +254,14 @@ public class RewriteCommand implements Runnable {
             classpathEntries.addAll(resolvedJarPaths);
             String classpath = String.join(File.pathSeparator, classpathEntries);
 
-            // Set the System property for the JBoss LogManager
-            System.setProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager");
-
             // Build the java command
             String javaHome = System.getProperty("java.home");
             String javaBin = Path.of(javaHome, "bin", "java").toString();
 
             List<String> command = new ArrayList<>();
             command.add(javaBin);
+            // Set the System property for the JBoss LogManager
+            command.add("-Djava.util.logging.manager=org.jboss.logmanager.LogManager");
             command.add("-cp");
             command.add(classpath);
 
@@ -292,6 +291,9 @@ public class RewriteCommand implements Runnable {
             if (cfg.getPlainTextMasks() != null && !cfg.getPlainTextMasks().isEmpty()) {
                 command.add("-Drewrite.plainTextMasks=" + String.join(",", cfg.getPlainTextMasks()));
             }
+
+            // Load the logging.properties file
+            command.add("-Dlogging.properties=%s".formatted(ClassLoader.getSystemClassLoader().getResource("/logging.properties")));
 
             // Main class entry point in the shaded jar
             command.add("dev.snowdrop.rewrite.service.RewriteServiceLauncher");

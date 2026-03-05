@@ -14,7 +14,7 @@ public class LoggerUtils {
     static LogManager logManager = (LogManager) LogManager.getLogManager();
 
     public static void setupLogManagerAndHandler(String logMsgFormat, CommandLine.Model.CommandSpec spec, int darken) {
-        ColorHandler handler = new ColorHandler(spec, darken);
+        ColorHandler handler = new ColorHandler(spec);
         handler.setLevel(Level.TRACE);
         handler.setFormatter(new ColorPatternFormatter(darken, logMsgFormat));
 

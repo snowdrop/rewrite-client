@@ -37,7 +37,7 @@
         <openrewrite-bom.version>8.74.3</openrewrite-bom.version>
         <openrewrite-rewrite-polyglot.version>2.9.6</openrewrite-rewrite-polyglot.version>
 
-        <aesh.version>3.1</aesh.version>
+        <aesh.version>3.3</aesh.version>
         <jboss-logmanager.version>3.2.1.Final</jboss-logmanager.version>
 
         <skipITs>true</skipITs>

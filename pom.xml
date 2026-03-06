@@ -23,16 +23,16 @@
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.release>21</maven.compiler.release>
 
-        <!-- These two should be kept in lockstep (MIMA 2.4.38 = Maven 3.9.11 + Resolver 1.9.24) -->
-        <mima.version>2.4.38</mima.version>
-        <maven.version>3.9.11</maven.version>
+        <!-- These two should be kept in lockstep (MIMA 2.4.39 = Maven 3.9.12 + Resolver 1.9.25) -->
+        <mima.version>2.4.39</mima.version>
+        <maven.version>3.9.12</maven.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.29.4</quarkus.platform.version>
+        <quarkus.platform.version>3.32.2</quarkus.platform.version>
 
         <openrewrite-bom.version>8.74.3</openrewrite-bom.version>
         <openrewrite-rewrite-polyglot.version>2.9.6</openrewrite-rewrite-polyglot.version>

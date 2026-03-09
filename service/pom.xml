@@ -20,38 +20,12 @@
     </properties>
 
     <dependencies>
-        <!-- Maven -->
         <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
+            <groupId>dev.snowdrop.openrewrite</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-        </dependency>
-
-        <!-- MIMA -->
-        <dependency>
-            <groupId>eu.maveniverse.maven.mima</groupId>
-            <artifactId>context</artifactId>
-            <version>${mima.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>eu.maveniverse.maven.mima.extensions</groupId>
-            <artifactId>mmr</artifactId>
-            <version>${mima.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>eu.maveniverse.maven.mima.runtime</groupId>
-            <artifactId>standalone-static</artifactId>
-            <version>${mima.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- OpenRewrite dependencies -->
         <dependency>
             <groupId>org.openrewrite</groupId>
@@ -145,6 +119,15 @@
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
                             <shadedClassifierName>shaded</shadedClassifierName>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>org/jboss/logmanager/**</exclude>
+                                        <exclude>org/slf4j/impl/**</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>

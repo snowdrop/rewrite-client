@@ -2,7 +2,6 @@ package dev.snowdrop.rewrite.cli.toolbox;
 
 import org.aesh.terminal.tty.TerminalColorDetector;
 import org.aesh.terminal.tty.TerminalConnection;
-import org.jboss.logging.Logger;
 import org.jboss.logmanager.Level;
 import org.jboss.logmanager.LogManager;
 import org.jboss.logmanager.formatters.ColorPatternFormatter;

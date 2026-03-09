@@ -28,15 +28,8 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         -->
-        <!-- Project GAVs -->
-        <dependency>
-            <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>service</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- Shaded jar including the openrewrite artifacts -->
-        <!--
+
+        <!-- Shaded jar including the openrewrite artifacts
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>service</artifactId>
@@ -46,6 +39,13 @@
             <scope>provided</scope>
         </dependency>
         -->
+
+        <dependency>
+            <groupId>dev.snowdrop.openrewrite</groupId>
+            <artifactId>utils</artifactId>
+            <version>0.2.12-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
 
         <!-- Quarkus dependencies -->
         <dependency>

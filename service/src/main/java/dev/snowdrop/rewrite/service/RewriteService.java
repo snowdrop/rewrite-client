@@ -2,7 +2,6 @@ package dev.snowdrop.rewrite.service;
 
 import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.ResultsContainer;
-import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
 import dev.snowdrop.rewrite.toolbox.MavenArtifactResolver;
 import dev.snowdrop.rewrite.toolbox.SanitizedMarkerPrinter;
 
@@ -36,7 +35,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -70,7 +68,6 @@ public class RewriteService {
     private boolean sourceSetInitialized;
     private final List<String> yamlDefinedRecipeNames = new ArrayList<>();
     private URLClassLoader rewriteURLClassLoader;
-    private URLClassLoader additionalJarsClassloader;
 
     /**
      * Creates a new RewriteService with the given configuration.
@@ -178,60 +175,9 @@ public class RewriteService {
     private Environment buildOpenRewriteEnvironment() throws Exception {
         Environment.Builder builder = Environment.builder();
 
-        /*
-        ClassLoaderUtils clu = new ClassLoaderUtils();
-
-        // Load additional JARs if specified
-        if (rewriteConfig.getAdditionalJarPaths() != null) {
-            additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(),this.rewriteURLClassLoader);
-            builder.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-
-            //LOG.debug("Show the resources of the classloader: " + additionalJarsClassloader);
-            //clu.exportClassLoaderResources(additionalJarsClassloader,
-            //        "org.openrewrite",
-            //        "org/openrewrite",
-            //        "com/todo",
-            //        "com.todo",
-            //        "classpath.tsv.gz");
-
-            //LOG.debug("Show the resources of the parent classloader: " + additionalJarsClassloader.getParent());
-            //clu.exportClassLoaderResources(additionalJarsClassloader.getParent(),
-            //        "org.openrewrite",
-            //        "org/openrewrite",
-            //        "com/todo",
-            //        "com.todo",
-            //        "classpath.tsv.gz");
-        } else {
-            builder.load(new ClasspathScanningLoader(new Properties(), this.rewriteURLClassLoader));
-        }
-
-        // Old code replaced now with builder.scanClassLoader()
-        //
-        // if (additionalJarsClassloader != null) {
-        //    // Load recipes using the ClasspathScanningLoader with the additional classloader
-        //    builder.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-        //    LOG.info("Loaded recipes from additional JARs");
-        //}
-
-        // Load YAML recipes if configured, while the builder is still open
-        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
-            loadRecipesFromYAML(builder, yamlClassLoader);
-        }
-         */
-
-        ClassLoaderUtils clu = new ClassLoaderUtils();
-
-        // rewriteURLClassLoader is null when we don't use RewriteCommand !
-        if (rewriteURLClassLoader == null) {
-            additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), getClass().getClassLoader());
-        } else {
-            additionalJarsClassloader = rewriteURLClassLoader;
-        }
-
         // Create the ResourceLoaders
         if (!rewriteConfig.getAdditionalJarPaths().isEmpty()) {
-            builder.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
+            builder.load(new ClasspathScanningLoader(new Properties(), rewriteURLClassLoader));
             // TODO: Use it when Level is Trace or Debug
             // clu.checkClassLoaderResourcesFiles(this.getClass().getName(), rewriteURLClassLoader,"META-INF/rewrite/classpath.tsv.gz","org/openrewrite");
         } else {
@@ -242,7 +188,7 @@ public class RewriteService {
 
         // Load YAML recipes if configured, while the builder is still open
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
+            ClassLoader yamlClassLoader = rewriteURLClassLoader != null ? rewriteURLClassLoader : getClass().getClassLoader();
             loadRecipesFromYAML(builder, yamlClassLoader);
         }
 
@@ -409,33 +355,6 @@ public class RewriteService {
         }
 
         return rr;
-    }
-
-
-    /**
-     * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection
-     * using the merged classloader so that additional-JAR recipes are visible.
-     */
-    @Deprecated
-    private ResultsContainer runWithMergedClassloader() {
-        try {
-            String launcherClassName = "dev.snowdrop.openrewrite.cli.toolbox.OpenRewriteLauncher";
-
-            Class<?> launcherClass;
-            launcherClass = rewriteURLClassLoader.loadClass(launcherClassName);
-            Object launcherInstance = launcherClass.getDeclaredConstructor().newInstance();
-
-            Method initMethod = launcherClass.getMethod("init",
-                    ExecutionContext.class, URLClassLoader.class, LargeSourceSet.class,
-                    RewriteConfig.class, List.class);
-            initMethod.invoke(launcherInstance, ctx, rewriteURLClassLoader, sourceSet, rewriteConfig, yamlDefinedRecipeNames);
-
-            Method applyMethod = launcherClass.getMethod("apply");
-            return (ResultsContainer) applyMethod.invoke(launcherInstance);
-        } catch (Exception e) {
-            LOG.error("Execution of recipe(s) failed!", e);
-            return new ResultsContainer(Collections.emptyMap());
-        }
     }
 
 

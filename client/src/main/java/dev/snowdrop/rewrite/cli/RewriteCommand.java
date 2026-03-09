@@ -149,7 +149,6 @@ public class RewriteCommand implements Runnable {
     String rewriteConfigClassName = "dev.snowdrop.rewrite.config.RewriteConfig";
     String rewriteServiceClassName = "dev.snowdrop.rewrite.service.RewriteService";
     String resultsContainerClassName = "dev.snowdrop.rewrite.ResultsContainer";
-    String classLoaderUtilClassName = "dev.snowdrop.rewrite.toolbox.ClassLoaderUtils";
 
     /**
      * {@inheritDoc}
@@ -179,27 +178,6 @@ public class RewriteCommand implements Runnable {
 
             // Include the shaded jar of OpenRewrite and Rewrite services
             additionalJarPaths.add("dev.snowdrop.openrewrite:service:jar:shaded:" + spec.version()[0]);
-
-            /*
-             List<String> paths = List.of(
-                    "/Users/cmoullia/.m2/repository/dev/snowdrop/openrewrite/service/0.2.12-SNAPSHOT/service-0.2.12-SNAPSHOT-shaded.jar",
-                    "/Users/cmoullia/.m2/repository/org/openrewrite/recipe/rewrite-java-dependencies/1.51.1/rewrite-java-dependencies-1.51.1.jar",
-                    "/Users/cmoullia/.m2/repository/com/todo/app/0.0.1-SNAPSHOT/app-0.0.1-SNAPSHOT.jar"
-             );
-
-             URL[] urlArray = paths.stream()
-                    .map(File::new)
-                    .map(f -> {
-                        try {
-                            return f.toURI().toURL();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    })
-                    .toArray(URL[]::new);
-
-              rewriteURLClassLoader = new URLClassLoader(urlArray, appClassLoader);
-             */
 
             // Create the UrlClassLoader
             ClassLoader appClassLoader = this.getClass().getClassLoader();

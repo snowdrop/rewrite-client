@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 public class RecipesJarTSVFileTest extends BaseReflectionTest {
 
     /*
@@ -20,7 +18,6 @@ public class RecipesJarTSVFileTest extends BaseReflectionTest {
          org.openrewrite.java.ReplaceAnnotation$1.visitAnnotation(ReplaceAnnotation.java:86)
 
      */
-    //@Disabled
     @Test
     void useRecipesJarToUpgradeDependencies() throws Exception {
 

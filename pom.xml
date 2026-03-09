@@ -17,6 +17,7 @@
         <module>utils</module>
         <module>service</module>
         <module>client</module>
+        <module>integration-tests</module>
     </modules>
 
     <properties>

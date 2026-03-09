@@ -1,0 +1,145 @@
+package dev.snowdrop.rewrite;
+
+import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;import org.jboss.logging.Logger;
+
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
+
+public class RewriteServiceProxy {
+    private final Logger logger = Logger.getLogger(RewriteServiceProxy.class);
+
+    private String rewriteConfigClassName = "dev.snowdrop.rewrite.config.RewriteConfig";
+    private String rewriteServiceClassName = "dev.snowdrop.rewrite.service.RewriteService";
+    private String resultsContainerClassName = "dev.snowdrop.rewrite.ResultsContainer";
+    private final String REWRITE_SHADED_VERSION = "0.2.12-SNAPSHOT";
+
+    private Path projectRoot;
+    private List<String> additionalJarPaths;
+    private String recipeName;
+    private Set<String> recipeOptions;
+    private String yamlRecipesPath;
+    private boolean exportDatatables;
+    private Set<String> exclusions;
+    private Set<String> plainTextMasks;
+    private boolean dryRun;
+    private boolean verbose;
+
+    public Object runScanner() {
+
+        // Set up the RewriteConfiguration
+        Object cfg = null;
+        try {
+            // Create the UrlClassLoader
+            ClassLoader appClassLoader = this.getClass().getClassLoader();
+
+            ClassLoaderUtils clu = new ClassLoaderUtils();
+            URLClassLoader rewriteURLClassLoader = clu.loadAdditionalJars(additionalJarPaths, appClassLoader);
+
+            Thread.currentThread().setContextClassLoader(rewriteURLClassLoader);
+            cfg = setupRewriteCfg(rewriteURLClassLoader);
+
+            // Load the RewriteService Class
+            Class<?> rewriteServiceClass = rewriteURLClassLoader.loadClass(rewriteServiceClassName);
+            logger.infof("Class found: %s in classloader: %s.", rewriteServiceClass.getName(), rewriteServiceClass.getClassLoader());
+
+            // Load the RewriteConfig Class
+            Class<?> configClass = rewriteURLClassLoader.loadClass(rewriteConfigClassName);
+            logger.infof("Class found: %s in classloader: %s.", configClass.getName(), configClass.getClassLoader());
+
+            // Instantiate the RewriteService using the constructor and pass as parameters: RewriteConfig and URLClassLoader
+            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(configClass, URLClassLoader.class).newInstance(cfg, rewriteURLClassLoader);
+
+            // Execute the init() method
+            Method initMethod = rewriteServiceClass.getMethod("init");
+            initMethod.invoke(rewriteServiceInstance);
+
+            // Run the scanner()
+            Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
+            return runScannerMethod.invoke(rewriteServiceInstance);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Object setupRewriteCfg(ClassLoader urlClassLoader) throws Exception {
+        Class<?> cfgClass = urlClassLoader.loadClass(rewriteConfigClassName);
+        Object cfg = cfgClass.getDeclaredConstructor().newInstance();
+
+        invoke(cfg, "setAppPath", Path.class, projectRoot.normalize().toAbsolutePath());
+        invoke(cfg, "setAdditionalJarPaths", List.class, additionalJarPaths);
+
+        if (recipeName != null) {
+            invoke(cfg, "setFqNameRecipe", String.class, recipeName);
+            invoke(cfg, "setRecipeOptions", Set.class, recipeOptions);
+        }
+
+        if (yamlRecipesPath != null) {
+            invoke(cfg, "setYamlRecipesPath", String.class, yamlRecipesPath);
+        }
+
+        invoke(cfg, "setExportDatatables", Boolean.class, exportDatatables);
+        invoke(cfg, "setExclusions", Set.class, exclusions);
+        invoke(cfg, "setPlainTextMasks", Set.class, plainTextMasks);
+        invoke(cfg, "setDryRun", boolean.class, dryRun);
+        invoke(cfg, "setVerbose", boolean.class, verbose);
+
+        return cfg;
+    }
+
+    /**
+     * Utility method to reduce reflection boilerplate
+     *
+     * @param target     The target class
+     * @param methodName The method name to be invoked on the target class
+     * @param paramType  The type of the parameter
+     * @param value      The value of the parameter
+     * @throws Exception
+     */
+    private void invoke(Object target, String methodName, Class<?> paramType, Object value) throws Exception {
+        Method method = target.getClass().getMethod(methodName, paramType);
+        method.invoke(target, value);
+    }
+
+    public void setProjectRoot(Path projectRoot) {
+        this.projectRoot = projectRoot;
+    }
+
+    public void setAdditionalJarPaths(List<String> additionalJarPaths) {
+        this.additionalJarPaths = additionalJarPaths;
+    }
+
+    public void setFQRecipeName(String recipeName) {
+        this.recipeName = recipeName;
+    }
+
+    public void setRecipeOptions(Set<String> recipeOptions) {
+        this.recipeOptions = recipeOptions;
+    }
+
+    public void setYamlRecipesPath(String yamlRecipesPath) {
+        this.yamlRecipesPath = yamlRecipesPath;
+    }
+
+    public void setExportDatatables(boolean exportDatatables) {
+        this.exportDatatables = exportDatatables;
+    }
+
+    public void setExclusions(Set<String> exclusions) {
+        this.exclusions = exclusions;
+    }
+
+    public void setPlainTextMasks(Set<String> plainTextMasks) {
+        this.plainTextMasks = plainTextMasks;
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+}

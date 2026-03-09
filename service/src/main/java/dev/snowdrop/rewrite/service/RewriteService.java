@@ -4,7 +4,7 @@ import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.ResultsContainer;
 import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
 import dev.snowdrop.rewrite.toolbox.MavenArtifactResolver;
-import dev.snowdrop.rewrite.toolbox.SanitizedMarkerPrinter;
+import dev.snowdrop.rewrite.utils.SanitizedMarkerPrinter;
 
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;

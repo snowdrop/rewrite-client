@@ -1,7 +1,7 @@
 package dev.snowdrop.rewrite;
 
 import dev.snowdrop.rewrite.config.RewriteConfig;
-import dev.snowdrop.rewrite.toolbox.DataTableUtils;
+import dev.snowdrop.rewrite.utils.DataTableUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.openrewrite.RecipeRun;
 

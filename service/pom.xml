@@ -24,7 +24,7 @@
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>utils</artifactId>
             <version>${project.version}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
 
         <!-- OpenRewrite dependencies -->

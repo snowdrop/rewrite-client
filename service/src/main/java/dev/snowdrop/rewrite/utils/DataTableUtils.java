@@ -1,4 +1,4 @@
-package dev.snowdrop.rewrite.toolbox;
+package dev.snowdrop.rewrite.utils;
 
 import org.openrewrite.RecipeRun;
 

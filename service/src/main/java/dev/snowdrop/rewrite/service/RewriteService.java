@@ -2,6 +2,7 @@ package dev.snowdrop.rewrite.service;
 
 import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.ResultsContainer;
+import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
 import dev.snowdrop.rewrite.toolbox.MavenArtifactResolver;
 import dev.snowdrop.rewrite.toolbox.SanitizedMarkerPrinter;
 
@@ -173,17 +174,20 @@ public class RewriteService {
     }
 
     private Environment buildOpenRewriteEnvironment() throws Exception {
+        boolean hasAdditionalRecipesJars = !rewriteConfig.getAdditionalJarPaths().isEmpty();
+
+        // The rewriteURLClassLoader is null when we use the Java Service Lib or executing it from a Test case
+        if (hasAdditionalRecipesJars && rewriteURLClassLoader == null) {
+            rewriteURLClassLoader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(),this.getClass().getClassLoader());
+        }
+
         Environment.Builder builder = Environment.builder();
 
         // Create the ResourceLoaders
-        if (!rewriteConfig.getAdditionalJarPaths().isEmpty()) {
+        if (hasAdditionalRecipesJars) {
             builder.load(new ClasspathScanningLoader(new Properties(), rewriteURLClassLoader));
-            // TODO: Use it when Level is Trace or Debug
-            // clu.checkClassLoaderResourcesFiles(this.getClass().getName(), rewriteURLClassLoader,"META-INF/rewrite/classpath.tsv.gz","org/openrewrite");
         } else {
             builder.scanRuntimeClasspath();
-            // TODO: Use it when Level is Trace or Debug
-            //clu.checkClassLoaderResourcesFiles(this.getClass().getName(), getClass().getClassLoader(),"META-INF/rewrite/classpath.tsv.gz","org/openrewrite");
         }
 
         // Load YAML recipes if configured, while the builder is still open

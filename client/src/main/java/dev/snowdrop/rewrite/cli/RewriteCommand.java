@@ -211,24 +211,27 @@ public class RewriteCommand implements Runnable {
             // Set up the RewriteConfiguration
             Object cfg = setupRewriteCfg(rewriteURLClassLoader);
 
-            Class<?> rewriteServiceClass = null;
+            // Load the RewriteService Class
+            Class<?> rewriteServiceClass = rewriteURLClassLoader.loadClass(rewriteServiceClassName);
+            logger.infof("Class found: %s in classloader: %s.", rewriteServiceClass.getName(), rewriteServiceClass.getClassLoader());
 
-            rewriteServiceClass = rewriteURLClassLoader.loadClass(rewriteServiceClassName);
-            logger.infof("Class found: %s in classloader: %s. %n", rewriteServiceClass.getName(), rewriteServiceClass.getClassLoader());
-
+            // Load the RewriteConfig Class
             Class<?> configClass = rewriteURLClassLoader.loadClass(rewriteConfigClassName);
-            logger.infof("Class found: %s in classloader: %s. %n", configClass.getName(), configClass.getClassLoader());
+            logger.infof("Class found: %s in classloader: %s.", configClass.getName(), configClass.getClassLoader());
 
+            // Instantiate the RewriteService using the constructor and pass as parameters: RewriteConfig and URLClassLoader
             Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(configClass, URLClassLoader.class).newInstance(cfg, rewriteURLClassLoader);
 
-
+            // Execute the init() method
             Method initMethod = rewriteServiceClass.getMethod("init");
             initMethod.invoke(rewriteServiceInstance);
 
+            // Run the scanner()
             Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
             Class<?> resultsContainerClazz = rewriteURLClassLoader.loadClass(resultsContainerClassName);
             Object resultsContainer = runScannerMethod.invoke(rewriteServiceInstance);
 
+            // Got the results
             Method showResultsMethod = rewriteServiceClass.getMethod("showResults",resultsContainerClazz);
             showResultsMethod.invoke(rewriteServiceInstance,resultsContainer);
 

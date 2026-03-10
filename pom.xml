@@ -14,7 +14,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>utils</module>
+        <module>common</module>
         <module>service</module>
         <module>client</module>
         <module>integration-tests</module>

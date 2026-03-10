@@ -9,7 +9,7 @@
         <version>0.2.12-SNAPSHOT</version>
     </parent>
 
-    <artifactId>utils</artifactId>
+    <artifactId>common</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

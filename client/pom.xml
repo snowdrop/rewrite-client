@@ -24,7 +24,7 @@
         <!-- ClassLoaderUtility and MavenResolver needed to create the URLClassLoader with the shaded jar of rewrite and additional jars of recipes -->
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>utils</artifactId>
+            <artifactId>common</artifactId>
             <version>0.2.12-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>utils</artifactId>
+            <artifactId>common</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>

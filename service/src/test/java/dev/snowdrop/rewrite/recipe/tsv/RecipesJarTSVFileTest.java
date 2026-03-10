@@ -5,17 +5,22 @@ import dev.snowdrop.rewrite.service.RewriteService;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
+import org.openrewrite.maven.table.DependenciesInUse;
+import org.openrewrite.table.SearchResults;
+import org.wildfly.common.Assert;
 
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 public class RecipesJarTSVFileTest extends BaseTest {
 
-    @Disabled
+    //@Disabled
     @Test
     void useRecipesJarToUpgradeDependencies() throws Exception {
 
@@ -35,9 +40,14 @@ public class RecipesJarTSVFileTest extends BaseTest {
         var results = rewriteService.runScanner();
 
         RecipeRun run = results.getRecipeRuns().get(recipeName);
-        var result = run.getChangeset().getAllResults().getFirst();
-        String diff = result.diff();
-        String versionChanged = "<version>3.5.10</version>";
-        assertTrue(diff.contains(versionChanged));
+        List<DependenciesInUse.Row> rows = findDataTableRows(run, "DependenciesInUse", DependenciesInUse.Row.class);
+        assertEquals(46, rows.size());
+
+        DependenciesInUse.Row record = rows.getFirst();
+        assertEquals("spring-boot-todo-app", record.getProjectName());
+        assertEquals("main", record.getSourceSet());
+        assertEquals("org.springframework.boot", record.getGroupId());
+        assertEquals("spring-boot-starter-data-jpa", record.getArtifactId());
+        assertEquals("3.5.3", record.getVersion());
     }
 }

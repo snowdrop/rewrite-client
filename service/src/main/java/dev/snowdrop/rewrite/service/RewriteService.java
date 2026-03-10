@@ -60,17 +60,16 @@ import static org.openrewrite.Tree.randomId;
  * resources parsing, recipe running, and result processing.
  */
 public class RewriteService {
-    private static Logger LOG = Logger.getLogger(RewriteService.class.getName());
+    private final Logger LOG = Logger.getLogger(RewriteService.class.getName());
 
     private ExecutionContext ctx;
-    private List<Throwable> throwables = new ArrayList<>();
+    private final List<Throwable> throwables = new ArrayList<>();
     private Environment env;
     private LargeSourceSet sourceSet;
     private RewriteConfig rewriteConfig;
     private boolean sourceSetInitialized;
     private final List<String> yamlDefinedRecipeNames = new ArrayList<>();
     private URLClassLoader rewriteURLClassLoader;
-    private URLClassLoader additionalJarsClassloader;
 
     /**
      * Creates a new RewriteService with the given configuration.
@@ -111,8 +110,8 @@ public class RewriteService {
     }
 
     /**
-     *
-     * @return
+     * Load the recipes and execute them
+     * @return the ResultsContainer containing the RecipeRuns and DataTables
      * @throws Exception
      */
     public ResultsContainer runScanner() throws Exception {
@@ -176,79 +175,37 @@ public class RewriteService {
     }
 
     private Environment buildOpenRewriteEnvironment() throws Exception {
+        boolean hasAdditionalRecipesJars = !rewriteConfig.getAdditionalJarPaths().isEmpty();
+
+        // The rewriteURLClassLoader is null when we use the Java Service Lib, a Test class, etc
+        if (hasAdditionalRecipesJars && rewriteURLClassLoader == null) {
+            rewriteURLClassLoader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(),this.getClass().getClassLoader());
+        }
+
         Environment.Builder builder = Environment.builder();
 
-        /*
-        ClassLoaderUtils clu = new ClassLoaderUtils();
-
-        // Load additional JARs if specified
-        if (rewriteConfig.getAdditionalJarPaths() != null) {
-            additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(),this.rewriteURLClassLoader);
-            builder.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-
-            //LOG.debug("Show the resources of the classloader: " + additionalJarsClassloader);
-            //clu.exportClassLoaderResources(additionalJarsClassloader,
-            //        "org.openrewrite",
-            //        "org/openrewrite",
-            //        "com/todo",
-            //        "com.todo",
-            //        "classpath.tsv.gz");
-
-            //LOG.debug("Show the resources of the parent classloader: " + additionalJarsClassloader.getParent());
-            //clu.exportClassLoaderResources(additionalJarsClassloader.getParent(),
-            //        "org.openrewrite",
-            //        "org/openrewrite",
-            //        "com/todo",
-            //        "com.todo",
-            //        "classpath.tsv.gz");
-        } else {
-            builder.load(new ClasspathScanningLoader(new Properties(), this.rewriteURLClassLoader));
-        }
-
-        // Old code replaced now with builder.scanClassLoader()
-        //
-        // if (additionalJarsClassloader != null) {
-        //    // Load recipes using the ClasspathScanningLoader with the additional classloader
-        //    builder.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-        //    LOG.info("Loaded recipes from additional JARs");
-        //}
-
-        // Load YAML recipes if configured, while the builder is still open
-        if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
-            loadRecipesFromYAML(builder, yamlClassLoader);
-        }
-         */
-
-        ClassLoaderUtils clu = new ClassLoaderUtils();
-
-        // rewriteURLClassLoader is null when we don't use RewriteCommand !
-        if (rewriteURLClassLoader == null) {
-            additionalJarsClassloader = clu.loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(), getClass().getClassLoader());
-        } else {
-            additionalJarsClassloader = rewriteURLClassLoader;
-        }
-
         // Create the ResourceLoaders
-        if (!rewriteConfig.getAdditionalJarPaths().isEmpty()) {
-            builder.load(new ClasspathScanningLoader(new Properties(), additionalJarsClassloader));
-            // TODO: Use it when Level is Trace or Debug
-            // clu.checkClassLoaderResourcesFiles(this.getClass().getName(), rewriteURLClassLoader,"META-INF/rewrite/classpath.tsv.gz","org/openrewrite");
+        if (hasAdditionalRecipesJars) {
+            builder.load(new ClasspathScanningLoader(new Properties(), rewriteURLClassLoader));
         } else {
             builder.scanRuntimeClasspath();
-            // TODO: Use it when Level is Trace or Debug
-            //clu.checkClassLoaderResourcesFiles(this.getClass().getName(), getClass().getClassLoader(),"META-INF/rewrite/classpath.tsv.gz","org/openrewrite");
         }
 
         // Load YAML recipes if configured, while the builder is still open
         if (rewriteConfig.getYamlRecipesPath() != null && !rewriteConfig.getYamlRecipesPath().isEmpty()) {
-            ClassLoader yamlClassLoader = additionalJarsClassloader != null ? additionalJarsClassloader : getClass().getClassLoader();
+            ClassLoader yamlClassLoader = rewriteURLClassLoader != null ? rewriteURLClassLoader : getClass().getClassLoader();
             loadRecipesFromYAML(builder, yamlClassLoader);
         }
 
         return builder.build();
     }
 
+    /**
+     *
+     * @param envBuilder
+     * @param additionalJarsClassloader
+     * @throws Exception
+     */
     private void loadRecipesFromYAML(Environment.Builder envBuilder, ClassLoader additionalJarsClassloader) throws Exception {
         Path configPath;
         if (Paths.get(rewriteConfig.getYamlRecipesPath()).isAbsolute()) {

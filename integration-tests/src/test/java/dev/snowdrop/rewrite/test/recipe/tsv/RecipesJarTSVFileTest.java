@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.test.recipe.tsv;
 
+//import dev.snowdrop.rewrite.ResultsContainer;
 import dev.snowdrop.rewrite.test.BaseReflectionTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,25 @@ public class RecipesJarTSVFileTest extends BaseReflectionTest {
 
         proxy.initClassLoader();
         proxy.runScanner();
+        //ResultsContainer results = (ResultsContainer) proxy.runScanner();
         Object results = proxy.runScanner();
         Assertions.assertNotNull(results);
+
+        List<?> rows = proxy.findDataTableRows(
+                results,
+                "org.openrewrite.quarkus.spring.SpringBootToQuarkus",
+                "DependenciesInUse",
+                "org.openrewrite.maven.table.DependenciesInUse$Row"
+        );
+
+        /*
+          The first record should be =>
+          "DependenciesInUse.Row(projectName=spring-boot-todo-app, sourceSet=main, groupId=org.springframework.boot, artifactId=spring-boot-starter-data-jpa, version=3.5.3, datedSnapshotVersion=3.5.3, scope=compile, count=1)"
+         */
+
+        Assertions.assertEquals(46, rows.size());
+
+
+
     }
 }

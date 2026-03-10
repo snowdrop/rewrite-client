@@ -8,6 +8,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class RewriteServiceProxy {
@@ -72,6 +73,30 @@ public class RewriteServiceProxy {
             // Run the scanner()
             Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
             return runScannerMethod.invoke(rewriteServiceInstance);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> List<T> findDataTableRows(Object resultsContainer, String recipeName, String dataTableName, String rowTypeName) {
+        try {
+            // Get the RecipeRun from ResultsContainer: results.getRecipeRuns().get(recipeName)
+            Method getRecipeRunsMethod = resultsContainer.getClass().getMethod("getRecipeRuns");
+            Map<?, ?> recipeRuns = (Map<?, ?>) getRecipeRunsMethod.invoke(resultsContainer);
+            Object recipeRun = recipeRuns.get(recipeName);
+
+            if (recipeRun == null) {
+                throw new IllegalArgumentException("RecipeRun not found for recipe: " + recipeName);
+            }
+
+            // Load DataTableUtils and invoke findDataTableRows via reflection
+            Class<?> dataTableUtilsClass = rewriteURLClassLoader.loadClass("dev.snowdrop.rewrite.utils.DataTableUtils");
+            Class<?> recipeRunClass = rewriteURLClassLoader.loadClass("org.openrewrite.RecipeRun");
+            Class<?> rowTypeClass = rewriteURLClassLoader.loadClass(rowTypeName);
+
+            Method findMethod = dataTableUtilsClass.getMethod("findDataTableRows", recipeRunClass, String.class, Class.class);
+            return (List<T>) findMethod.invoke(null, recipeRun, dataTableName, rowTypeClass);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

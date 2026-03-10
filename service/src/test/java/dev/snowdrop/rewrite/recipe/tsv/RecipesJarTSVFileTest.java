@@ -2,25 +2,17 @@ package dev.snowdrop.rewrite.recipe.tsv;
 
 import dev.snowdrop.rewrite.BaseTest;
 import dev.snowdrop.rewrite.service.RewriteService;
-import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 import org.openrewrite.maven.table.DependenciesInUse;
-import org.openrewrite.table.SearchResults;
-import org.wildfly.common.Assert;
 
 import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@QuarkusTest
 public class RecipesJarTSVFileTest extends BaseTest {
 
-    //@Disabled
     @Test
     void useRecipesJarToUpgradeDependencies() throws Exception {
 

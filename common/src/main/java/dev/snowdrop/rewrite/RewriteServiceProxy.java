@@ -1,20 +1,25 @@
 package dev.snowdrop.rewrite;
 
-import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;import org.jboss.logging.Logger;
+import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
+import org.jboss.logging.Logger;
 
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 public class RewriteServiceProxy {
     private final Logger logger = Logger.getLogger(RewriteServiceProxy.class);
 
+    private URLClassLoader rewriteURLClassLoader;
+
     private String rewriteConfigClassName = "dev.snowdrop.rewrite.config.RewriteConfig";
     private String rewriteServiceClassName = "dev.snowdrop.rewrite.service.RewriteService";
     private String resultsContainerClassName = "dev.snowdrop.rewrite.ResultsContainer";
-    private final String REWRITE_SHADED_VERSION = "0.2.12-SNAPSHOT";
+    private final String REWRITE_SERVICE_GAV = "dev.snowdrop.openrewrite:service:jar:shaded";
+    private final String REWRITE_SERVICE_VERSION = "0.2.12-SNAPSHOT";
 
     private Path projectRoot;
     private List<String> additionalJarPaths;
@@ -27,19 +32,27 @@ public class RewriteServiceProxy {
     private boolean dryRun;
     private boolean verbose;
 
+    public RewriteServiceProxy() {}
+
+    public RewriteServiceProxy(URLClassLoader urlClassLoader) {
+        rewriteURLClassLoader = urlClassLoader;
+    }
+
+    public void initClassLoader() {
+        // Add the RewriteServiceGAV to the additional JARs and use it too to create the URLClassLoader
+        // able to find the Rewrite client or OpenRewrite classes
+        List<String> jars = new ArrayList<>(additionalJarPaths);
+        jars.add(REWRITE_SERVICE_GAV + ":" + REWRITE_SERVICE_VERSION);
+
+        ClassLoader appClassLoader = this.getClass().getClassLoader();
+        ClassLoaderUtils clu = new ClassLoaderUtils();
+        rewriteURLClassLoader = clu.loadAdditionalJars(jars, appClassLoader);
+    }
+
     public Object runScanner() {
-
-        // Set up the RewriteConfiguration
-        Object cfg = null;
         try {
-            // Create the UrlClassLoader
-            ClassLoader appClassLoader = this.getClass().getClassLoader();
-
-            ClassLoaderUtils clu = new ClassLoaderUtils();
-            URLClassLoader rewriteURLClassLoader = clu.loadAdditionalJars(additionalJarPaths, appClassLoader);
-
             Thread.currentThread().setContextClassLoader(rewriteURLClassLoader);
-            cfg = setupRewriteCfg(rewriteURLClassLoader);
+            Object cfg = setupRewriteCfg();
 
             // Load the RewriteService Class
             Class<?> rewriteServiceClass = rewriteURLClassLoader.loadClass(rewriteServiceClassName);
@@ -64,8 +77,17 @@ public class RewriteServiceProxy {
         }
     }
 
-    public Object setupRewriteCfg(ClassLoader urlClassLoader) throws Exception {
-        Class<?> cfgClass = urlClassLoader.loadClass(rewriteConfigClassName);
+    public void showResults(Object results) throws Exception {
+        Class<?> rewriteServiceClass = rewriteURLClassLoader.loadClass(rewriteServiceClassName);
+        Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor().newInstance();
+
+        Class<?> resultscontainerClass = rewriteURLClassLoader.loadClass(resultsContainerClassName);
+
+        invoke(rewriteServiceInstance,"showResults",resultscontainerClass,results);
+    }
+
+    public Object setupRewriteCfg() throws Exception {
+        Class<?> cfgClass = rewriteURLClassLoader.loadClass(rewriteConfigClassName);
         Object cfg = cfgClass.getDeclaredConstructor().newInstance();
 
         invoke(cfg, "setAppPath", Path.class, projectRoot.normalize().toAbsolutePath());

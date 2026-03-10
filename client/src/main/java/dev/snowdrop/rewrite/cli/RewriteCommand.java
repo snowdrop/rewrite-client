@@ -21,9 +21,8 @@
 
 package dev.snowdrop.rewrite.cli;
 
+import dev.snowdrop.rewrite.RewriteServiceProxy;
 import dev.snowdrop.rewrite.cli.toolbox.LoggerUtils;
-import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
-import io.quarkus.logging.Log;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
 import jakarta.inject.Inject;
 
@@ -31,10 +30,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 
 import java.lang.reflect.Method;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
@@ -49,9 +46,13 @@ import org.jboss.logging.Logger;
         description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {
+    private final Logger logger = Logger.getLogger(RewriteCommand.class.getName());
+
+    /**
+     * The Rewrite Configuration
+     */
     @Inject
-    RewriteConfiguration rewriteConfiguration;
-    private Logger logger = Logger.getLogger(RewriteCommand.class.getName());
+    RewriteConfiguration config;
 
     /**
      * Creates a new RewriteCommand instance.
@@ -138,18 +139,6 @@ public class RewriteCommand implements Runnable {
             description = "Enable verbose output")
     private boolean verbose;
 
-    /*
-       The @Inject annotation is disabled and replaced with ConfigProvider.getConfig()
-       as we got an Arc error during the execution of the jbang export command
-       Unsatisfied dependency for type dev.snowdrop.rewrite.cli.RewriteConfiguration and qualifiers [@Default]
-     */
-    @Inject
-    RewriteConfiguration config;
-
-    String rewriteConfigClassName = "dev.snowdrop.rewrite.config.RewriteConfig";
-    String rewriteServiceClassName = "dev.snowdrop.rewrite.service.RewriteService";
-    String resultsContainerClassName = "dev.snowdrop.rewrite.ResultsContainer";
-
     /**
      * {@inheritDoc}
      */
@@ -176,100 +165,33 @@ public class RewriteCommand implements Runnable {
                 exclusions.addAll(Arrays.asList(config.exclusions().get().split(",")));
             }
 
-            // Include the shaded jar of OpenRewrite and Rewrite services
-            additionalJarPaths.add("dev.snowdrop.openrewrite:service:jar:shaded:" + spec.version()[0]);
-
             // Create the UrlClassLoader
-            ClassLoader appClassLoader = this.getClass().getClassLoader();
-            ClassLoaderUtils clu = new ClassLoaderUtils();
-            URLClassLoader rewriteURLClassLoader = clu.loadAdditionalJars(additionalJarPaths, appClassLoader);
+            RewriteServiceProxy serviceProxy = new RewriteServiceProxy();
+            // TODO: To be reviewed. Should we continue to use the RewriteConfiguration client class or RewriteConfig
+            serviceProxy.setProjectRoot(projectRoot);
+            serviceProxy.setFQRecipeName(recipeName);
+            serviceProxy.setRecipeOptions(recipeOptions);
+            serviceProxy.setYamlRecipesPath(yamlRecipesPath);
 
-            Thread.currentThread().setContextClassLoader(rewriteURLClassLoader);
+            serviceProxy.setAdditionalJarPaths(additionalJarPaths);
+            serviceProxy.setDryRun(dryRun);
+            serviceProxy.setExportDatatables(exportDatatables);
 
-            // Set up the RewriteConfiguration
-            Object cfg = setupRewriteCfg(rewriteURLClassLoader);
+            serviceProxy.setExclusions(exclusions);
+            serviceProxy.setPlainTextMasks(plainTextMasks);
 
-            // Load the RewriteService Class
-            Class<?> rewriteServiceClass = rewriteURLClassLoader.loadClass(rewriteServiceClassName);
-            logger.infof("Class found: %s in classloader: %s.", rewriteServiceClass.getName(), rewriteServiceClass.getClassLoader());
+            // This step will create the URLClassLoader and add the Rewrite Shaded service
+            serviceProxy.initClassLoader();
 
-            // Load the RewriteConfig Class
-            Class<?> configClass = rewriteURLClassLoader.loadClass(rewriteConfigClassName);
-            logger.infof("Class found: %s in classloader: %s.", configClass.getName(), configClass.getClassLoader());
+            // Run the scanner, recipes
+            Object results = serviceProxy.runScanner();
 
-            // Instantiate the RewriteService using the constructor and pass as parameters: RewriteConfig and URLClassLoader
-            Object rewriteServiceInstance = rewriteServiceClass.getDeclaredConstructor(configClass, URLClassLoader.class).newInstance(cfg, rewriteURLClassLoader);
-
-            // Execute the init() method
-            Method initMethod = rewriteServiceClass.getMethod("init");
-            initMethod.invoke(rewriteServiceInstance);
-
-            // Run the scanner()
-            Method runScannerMethod = rewriteServiceClass.getMethod("runScanner");
-            Class<?> resultsContainerClazz = rewriteURLClassLoader.loadClass(resultsContainerClassName);
-            Object resultsContainer = runScannerMethod.invoke(rewriteServiceInstance);
-
-            // Got the results
-            Method showResultsMethod = rewriteServiceClass.getMethod("showResults",resultsContainerClazz);
-            showResultsMethod.invoke(rewriteServiceInstance,resultsContainer);
+            // Display the results on the console
+            serviceProxy.showResults(results);
 
         } catch (Exception e) {
             logger.error("Rewrite service failed !", e);
             System.exit(1);
         }
-    }
-
-    public Object setupRewriteCfg(ClassLoader urlClassLoader) throws Exception {
-
-        Class<?> cfgClass = urlClassLoader.loadClass(rewriteConfigClassName);
-        Object cfg = cfgClass.getDeclaredConstructor().newInstance();
-
-        invoke(cfg, "setAppPath", Path.class, projectRoot.normalize().toAbsolutePath());
-        invoke(cfg, "setAdditionalJarPaths", List.class, additionalJarPaths);
-
-        if (recipeName != null) {
-            invoke(cfg, "setFqNameRecipe", String.class, recipeName);
-            invoke(cfg, "setRecipeOptions", Set.class, recipeOptions);
-        }
-
-        if (yamlRecipesPath != null) {
-            invoke(cfg, "setYamlRecipesPath", String.class, yamlRecipesPath);
-        }
-
-        invoke(cfg, "setExportDatatables", Boolean.class, exportDatatables);
-        invoke(cfg, "setExclusions", Set.class, exclusions);
-        invoke(cfg, "setPlainTextMasks", Set.class, plainTextMasks);
-        invoke(cfg, "setDryRun", boolean.class, dryRun);
-        invoke(cfg, "setVerbose", boolean.class, verbose);
-
-        return cfg;
-    }
-
-    /**
-     * Utility method to reduce reflection boilerplate
-     *
-     * @param target     The target class
-     * @param methodName The method name to be invoked on the target class
-     * @param paramType  The type of the parameter
-     * @param value      The value of the parameter
-     * @throws Exception
-     */
-    private void invoke(Object target, String methodName, Class<?> paramType, Object value) throws Exception {
-        Method method = target.getClass().getMethod(methodName, paramType);
-        method.invoke(target, value);
-    }
-
-    public void searchResource(URLClassLoader ucl, String... findNames) {
-        for (String s : findNames) {
-            Log.infof("Search about: %s in: %s", s, ucl.findResource(s));
-        }
-    }
-
-    public void listClassLoaders() {
-        Set<ClassLoader> loaders = Thread.getAllStackTraces().keySet().stream()
-                .map(Thread::getContextClassLoader)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        loaders.forEach(cl -> Log.infof("ClassLoader active: %s.", cl));
     }
 }

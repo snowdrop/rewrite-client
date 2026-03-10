@@ -28,11 +28,11 @@ public class RecipesJarTSVFileTest extends BaseReflectionTest {
         proxy.setProjectRoot(Paths.get(appPath));
         proxy.setFQRecipeName(recipeName);
         proxy.setAdditionalJarPaths(List.of(
-                "dev.snowdrop.openrewrite:service:jar:shaded:0.2.12-SNAPSHOT",
                 "org.openrewrite.recipe:rewrite-spring-to-quarkus:0.6.0",
                 "org.openrewrite.recipe:rewrite-java-dependencies:1.51.0"
         ));
 
+        proxy.initClassLoader();
         proxy.runScanner();
         Object results = proxy.runScanner();
         Assertions.assertNotNull(results);

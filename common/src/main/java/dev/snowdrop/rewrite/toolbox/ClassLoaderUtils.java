@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
@@ -16,8 +17,7 @@ import org.jboss.logging.Logger;
  * Utility methods for loading additional JARs and merging classloaders.
  */
 public class ClassLoaderUtils {
-    Logger LOG = Logger.getLogger(ClassLoaderUtils.class.getName());
-
+    private final Logger LOG = Logger.getLogger(ClassLoaderUtils.class.getName());
 
     /**
      * Creates a new ClassLoaderUtils instance.
@@ -215,5 +215,20 @@ public class ClassLoaderUtils {
             );
         }
 
+    }
+
+
+    public void searchResource(URLClassLoader ucl, String... findNames) {
+        for (String s : findNames) {
+            LOG.infof("Search about: %s in: %s", s, ucl.findResource(s));
+        }
+    }
+
+    public void listClassLoaders() {
+        Set<ClassLoader> loaders = Thread.getAllStackTraces().keySet().stream()
+                .map(Thread::getContextClassLoader)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        loaders.forEach(cl -> LOG.infof("ClassLoader active: %s.", cl));
     }
 }

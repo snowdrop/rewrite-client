@@ -71,6 +71,11 @@ public class RewriteService {
     private URLClassLoader rewriteURLClassLoader;
 
     /**
+     * Default RewriteService constructor
+     */
+    public RewriteService() {}
+
+    /**
      * Creates a new RewriteService with the given configuration.
      *
      * @param cfg the rewrite configuration

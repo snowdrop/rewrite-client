@@ -21,31 +21,13 @@
     </properties>
 
     <dependencies>
-        <!-- INCLUDED TO HACK AND CHECK IF THAT WORKS ;-)
-        <dependency>
-            <groupId>com.todo</groupId>
-            <artifactId>app</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        -->
-        <!-- Project GAVs -->
-        <dependency>
-            <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>service</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- Shaded jar including the openrewrite artifacts -->
-        <!--
+        <!-- Shaded jar including our Rewrite Service code and openrewrite artifacts -->
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>service</artifactId>
             <version>${project.version}</version>
             <classifier>shaded</classifier>
-            <type>jar</type>
-            <scope>provided</scope>
         </dependency>
-        -->
 
         <!-- Quarkus dependencies -->
         <dependency>

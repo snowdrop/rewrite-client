@@ -1,3 +1,5 @@
 idea/
 target/
 tmp/
+
+*/dependency-reduced-pom.xml

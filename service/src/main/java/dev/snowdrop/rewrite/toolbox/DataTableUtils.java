@@ -9,16 +9,17 @@ import java.util.List;
  */
 public class DataTableUtils {
 
-    private DataTableUtils() {}
+    private DataTableUtils() {
+    }
 
     /**
      * Find a DataTable object from the list of the DataTables created from recipes executed
      *
-     * @param run the RecipeRun executed
+     * @param run           the RecipeRun executed
      * @param dataTableName the name of the DataTable to search about (example: SearchResults)
-     * @param rowType The OpenRewrite Row record class
+     * @param rowType       The OpenRewrite Row record class
+     * @param <T>           The type of the Row record
      * @return The list of the Rows
-     * @param <T> The type of the Row record
      */
     @SuppressWarnings("unchecked")
     public static <T> List<T> findDataTableRows(RecipeRun run, String dataTableName, Class<T> rowType) {
@@ -26,9 +27,17 @@ public class DataTableUtils {
             throw new IllegalArgumentException("DataTables should not be empty");
         }
         return run.getDataTables().entrySet().stream()
-            .filter(entry -> entry.getKey().getName().contains(dataTableName))
-            .findFirst()
-            .map(entry -> (List<T>) entry.getValue())
-            .orElseThrow(() -> new IllegalArgumentException("DataTable containing '" + dataTableName + "' not found"));
+                .filter(entry -> entry.getKey().getName().contains(dataTableName))
+                .filter(entry -> entry.getKey().getType().equals(rowType))
+                .findFirst()
+                .map(entry -> {
+                    List<?> rows = entry.getValue();
+                    return rows.stream()
+                            .map(rowType::cast)
+                            .toList();
+                })
+                .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("DataTable '%s' with row type %s not found", dataTableName, rowType.getSimpleName())
+                ));
     }
 }

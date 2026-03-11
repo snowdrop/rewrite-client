@@ -6,6 +6,7 @@ import dev.snowdrop.rewrite.toolbox.ClassLoaderUtils;
 import dev.snowdrop.rewrite.toolbox.MavenArtifactResolver;
 import dev.snowdrop.rewrite.toolbox.SanitizedMarkerPrinter;
 
+import org.jboss.logging.Logger;
 import org.jspecify.annotations.Nullable;
 import org.openrewrite.*;
 import org.openrewrite.binary.Binary;
@@ -46,8 +47,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import org.jboss.logging.Logger;
 
 import java.util.stream.Stream;
 
@@ -837,9 +836,6 @@ public class RewriteService {
         results.getRecipeRuns().forEach((k, v) -> {
             if (!v.getDataTables().isEmpty()) {
                 LOG.info(String.format("Execution of the recipe %s succeeded.%n", k));
-
-                //System.out.printf("Execution of the recipe %s succeeded\n",k);
-                // The DataTable<SearchResult> will be available starting from: 8.69.0 !
 
                 Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
                 if (searchResults != null) {

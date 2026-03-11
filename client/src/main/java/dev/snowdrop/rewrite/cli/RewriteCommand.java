@@ -31,7 +31,6 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import picocli.CommandLine;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -167,6 +166,7 @@ public class RewriteCommand implements Runnable {
             RewriteConfig cfg = setupRewriteCfg();
 
             // Use RewriteService class
+            logger.info("Launching the rewrite service ...");
             RewriteService rewriteService;
             try {
                 rewriteService = new RewriteService(cfg);

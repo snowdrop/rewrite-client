@@ -1,24 +1,26 @@
-package dev.snowdrop.rewrite.cli.toolbox;
+package dev.snowdrop.rewrite.cli.logging;
 
 import org.aesh.terminal.tty.TerminalColorDetector;
 import org.aesh.terminal.tty.TerminalConnection;
-import org.jboss.logmanager.Level;
 import org.jboss.logmanager.LogManager;
 import org.jboss.logmanager.formatters.ColorPatternFormatter;
 import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class LoggerUtils {
     static LogManager logManager = (LogManager) LogManager.getLogManager();
 
-    public static void setupLogManagerAndHandler(String logMsgFormat, String logMsgLevel, CommandLine.Model.CommandSpec spec, int darken) {
+    public static void setupLogManagerAndHandler(LoggingConfiguration cfg, CommandLine.Model.CommandSpec spec, int darken) {
         ColorHandler handler = new ColorHandler(spec);
-        handler.setLevel(Level.ALL);
-        handler.setFormatter(new ColorPatternFormatter(darken, logMsgFormat));
+        handler.setLevel(java.util.logging.Level.parse(cfg.level()));
+        handler.setFormatter(new ColorPatternFormatter(darken, cfg.format()));
 
-        logManager.getLogger("dev.snowdrop.rewrite").addHandler(handler);
-        logManager.getLogger("dev.snowdrop.rewrite").setLevel(java.util.logging.Level.parse(logMsgLevel));
+        for (Map.Entry<String, LoggingConfiguration.LevelConfig> category : cfg.levels().entrySet()) {
+            logManager.getLogger(category.getKey()).addHandler(handler);
+            logManager.getLogger(category.getKey()).setLevel(java.util.logging.Level.parse(category.getValue().level()));
+        }
     }
 
     public static int isTerminalDark() {

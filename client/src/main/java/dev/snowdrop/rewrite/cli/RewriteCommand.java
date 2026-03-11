@@ -22,7 +22,8 @@
 package dev.snowdrop.rewrite.cli;
 
 import dev.snowdrop.rewrite.ResultsContainer;
-import dev.snowdrop.rewrite.cli.toolbox.LoggerUtils;
+import dev.snowdrop.rewrite.cli.logging.LoggerUtils;
+import dev.snowdrop.rewrite.cli.logging.LoggingConfiguration;
 import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.service.RewriteService;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
@@ -48,12 +49,6 @@ import org.jboss.logging.Logger;
 )
 public class RewriteCommand implements Runnable {
     private final Logger logger = Logger.getLogger("dev.snowdrop.rewrite");
-
-    @ConfigProperty(name = "cli.log.console.format")
-    String logMsgFormat;
-
-    @ConfigProperty(name = "cli.log.console.level")
-    String logMsgLevel;
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -134,6 +129,9 @@ public class RewriteCommand implements Runnable {
     @Inject
     RewriteConfiguration config;
 
+    @Inject
+    LoggingConfiguration loggingConfig;
+
     /**
      * Creates a new RewriteCommand instance.
      */
@@ -146,7 +144,7 @@ public class RewriteCommand implements Runnable {
     @Override
     public void run() {
         var darken = LoggerUtils.isTerminalDark();
-        LoggerUtils.setupLogManagerAndHandler(logMsgFormat, logMsgLevel, spec, darken);
+        LoggerUtils.setupLogManagerAndHandler(loggingConfig, spec, darken);
 
         try {
             // TODO: To be reviewed as the LogFactory object is created when setSpec is called

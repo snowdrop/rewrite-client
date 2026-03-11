@@ -59,7 +59,7 @@ import static org.openrewrite.Tree.randomId;
  * resources parsing, recipe running, and result processing.
  */
 public class RewriteService {
-    private final Logger LOG = Logger.getLogger(RewriteService.class.getName());
+    private final Logger LOG = Logger.getLogger("dev.snowdrop.rewrite");
 
     private ExecutionContext ctx;
     private final List<Throwable> throwables = new ArrayList<>();

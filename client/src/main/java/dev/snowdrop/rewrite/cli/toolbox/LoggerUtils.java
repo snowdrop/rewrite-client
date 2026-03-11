@@ -2,7 +2,6 @@ package dev.snowdrop.rewrite.cli.toolbox;
 
 import org.aesh.terminal.tty.TerminalColorDetector;
 import org.aesh.terminal.tty.TerminalConnection;
-import org.jboss.logging.Logger;
 import org.jboss.logmanager.Level;
 import org.jboss.logmanager.LogManager;
 import org.jboss.logmanager.formatters.ColorPatternFormatter;
@@ -13,13 +12,13 @@ import java.io.IOException;
 public class LoggerUtils {
     static LogManager logManager = (LogManager) LogManager.getLogManager();
 
-    public static void setupLogManagerAndHandler(String logMsgFormat, CommandLine.Model.CommandSpec spec, int darken) {
+    public static void setupLogManagerAndHandler(String logMsgFormat, String logMsgLevel, CommandLine.Model.CommandSpec spec, int darken) {
         ColorHandler handler = new ColorHandler(spec);
-        handler.setLevel(Level.TRACE);
+        handler.setLevel(Level.ALL);
         handler.setFormatter(new ColorPatternFormatter(darken, logMsgFormat));
 
-        logManager.getLogger(LoggerUtils.class.getName()).addHandler(handler);
-        logManager.getLogger(LoggerUtils.class.getName()).setLevel(Level.ALL);
+        logManager.getLogger("dev.snowdrop.rewrite").addHandler(handler);
+        logManager.getLogger("dev.snowdrop.rewrite").setLevel(java.util.logging.Level.parse(logMsgLevel));
     }
 
     public static int isTerminalDark() {

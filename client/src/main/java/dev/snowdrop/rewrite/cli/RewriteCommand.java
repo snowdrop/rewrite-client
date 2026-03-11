@@ -47,10 +47,13 @@ import org.jboss.logging.Logger;
         description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {
-    private final Logger logger = Logger.getLogger(RewriteCommand.class.getName());
+    private final Logger logger = Logger.getLogger("dev.snowdrop.rewrite");
 
-    @ConfigProperty(name = "cli.log.msg.format")
+    @ConfigProperty(name = "cli.log.console.format")
     String logMsgFormat;
+
+    @ConfigProperty(name = "cli.log.console.level")
+    String logMsgLevel;
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -143,7 +146,7 @@ public class RewriteCommand implements Runnable {
     @Override
     public void run() {
         var darken = LoggerUtils.isTerminalDark();
-        LoggerUtils.setupLogManagerAndHandler(logMsgFormat, spec, darken);
+        LoggerUtils.setupLogManagerAndHandler(logMsgFormat, logMsgLevel, spec, darken);
 
         try {
             // TODO: To be reviewed as the LogFactory object is created when setSpec is called

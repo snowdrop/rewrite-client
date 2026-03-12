@@ -11,6 +11,15 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Test to verify if we can process recipes from a jar packaging classpath.tsv.gz file(s)
+ *
+ * mvn org.openrewrite.maven:rewrite-maven-plugin:dryRun \
+ *    -Drewrite.activeRecipes=org.openrewrite.quarkus.spring.SpringBootToQuarkus \
+ *    -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-spring-to-quarkus:0.6.0
+ *
+ *
+ */
 public class RecipesJarTSVFileTest extends BaseTest {
 
     @Test

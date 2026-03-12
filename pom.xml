@@ -38,7 +38,6 @@
         <openrewrite-rewrite-polyglot.version>2.9.6</openrewrite-rewrite-polyglot.version>
 
         <aesh.version>3.3</aesh.version>
-        <jboss-logmanager.version>3.2.1.Final</jboss-logmanager.version>
 
         <skipITs>true</skipITs>
 
@@ -122,11 +121,6 @@
             <groupId>org.aesh</groupId>
             <artifactId>terminal-tty</artifactId>
             <version>${aesh.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.logmanager</groupId>
-            <artifactId>jboss-logmanager</artifactId>
-            <version>${jboss-logmanager.version}</version>
         </dependency>
     </dependencies>
 

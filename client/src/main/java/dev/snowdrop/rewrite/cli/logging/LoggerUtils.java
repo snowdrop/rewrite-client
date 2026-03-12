@@ -34,7 +34,7 @@ public class LoggerUtils {
             if (verbosity == 0) {
                 logManager.getLogger(category.getKey()).setLevel(java.util.logging.Level.parse(category.getValue().level()));
             } else {
-                System.out.printf("Verbosity: %d, strLevel: %s and Level: %s.%n",verbosity,getLevelFromVerbosity(verbosity),java.util.logging.Level.parse(getLevelFromVerbosity(verbosity)));
+                // System.out.printf("Verbosity: %d, strLevel: %s and Level: %s.%n",verbosity,getLevelFromVerbosity(verbosity),java.util.logging.Level.parse(getLevelFromVerbosity(verbosity)));
                 logManager.getLogger(category.getKey()).setLevel(java.util.logging.Level.parse(getLevelFromVerbosity(verbosity)));
             }
         }
@@ -42,9 +42,8 @@ public class LoggerUtils {
 
     private String getLevelFromVerbosity(int verbosity) {
         return switch (verbosity) {
-            case 1  -> "WARN";  // -v
-            case 2  -> "DEBUG"; // -vv
-            case 3  -> "TRACE"; // -vvv
+            case 1  -> "DEBUG";  // -v
+            case 2  -> "TRACE"; // -vv
             default -> "INFO";
         };
     }

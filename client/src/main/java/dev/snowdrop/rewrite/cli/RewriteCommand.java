@@ -123,7 +123,7 @@ public class RewriteCommand implements Runnable {
 
     @CommandLine.Option(
             names = {"-v"},
-            description = "Enable more tracing output: WARN, DEBUG, TRACE using -v, -vv or -vvv respectively")
+            description = "Enable more tracing output: DEBUG, TRACE using -v, -vv respectively")
     boolean[] verbosity = new boolean[0];
 
     @Inject

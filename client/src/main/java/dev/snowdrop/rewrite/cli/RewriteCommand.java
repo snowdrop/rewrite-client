@@ -48,7 +48,7 @@ import org.jboss.logging.Logger;
         description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {
-    private final Logger logger = Logger.getLogger("dev.snowdrop.rewrite");
+    private final Logger logger = Logger.getLogger(RewriteCommand.class.getName());
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -122,9 +122,9 @@ public class RewriteCommand implements Runnable {
     boolean dryRun = true;
 
     @CommandLine.Option(
-            names = {"-v", "--verbose"},
-            description = "Enable verbose output")
-    private boolean verbose;
+            names = {"-v"},
+            description = "Enable more tracing output: WARN, DEBUG, TRACE using -v, -vv or -vvv respectively")
+    boolean[] verbosity = new boolean[0];
 
     @Inject
     RewriteConfiguration config;
@@ -143,13 +143,10 @@ public class RewriteCommand implements Runnable {
      */
     @Override
     public void run() {
-        var darken = LoggerUtils.isTerminalDark();
-        LoggerUtils.setupLogManagerAndHandler(loggingConfig, spec, darken);
+        LoggerUtils loggerUtils = new LoggerUtils();
+        loggerUtils.setupLogManagerAndHandler(loggingConfig, verbosity.length, spec);
 
         try {
-            // TODO: To be reviewed as the LogFactory object is created when setSpec is called
-            //this.LOG.setVerbose(verbose);
-
             // Use injected defaults if not specified via command line
             if (sizeThresholdMb == 0) {
                 sizeThresholdMb = config.sizeThresholdMb();
@@ -204,8 +201,6 @@ public class RewriteCommand implements Runnable {
         cfg.setExclusions(exclusions);
         cfg.setPlainTextMasks(plainTextMasks);
         cfg.setDryRun(dryRun);
-
-        cfg.setVerbose(verbose);
         return cfg;
     }
 }

@@ -59,7 +59,7 @@ import static org.openrewrite.Tree.randomId;
  * resources parsing, recipe running, and result processing.
  */
 public class RewriteService {
-    private final Logger LOG = Logger.getLogger("dev.snowdrop.rewrite");
+    private final Logger LOG = Logger.getLogger(RewriteService.class.getName());
 
     private ExecutionContext ctx;
     private final List<Throwable> throwables = new ArrayList<>();
@@ -121,6 +121,8 @@ public class RewriteService {
 
         if (rewriteConfig.isDryRun()) {
             LOG.warn("Recipe executed in dry run mode !");
+        } else {
+            LOG.warn("Recipe NOT executed in dry run mode !");
         }
 
         ResultsContainer results = processRecipes();

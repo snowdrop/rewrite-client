@@ -27,6 +27,7 @@ import dev.snowdrop.rewrite.cli.logging.LoggingConfiguration;
 import dev.snowdrop.rewrite.config.RewriteConfig;
 import dev.snowdrop.rewrite.service.RewriteService;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
+import io.quarkus.runtime.LaunchMode;
 import jakarta.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -130,7 +131,13 @@ public class RewriteCommand implements Runnable {
     RewriteConfiguration config;
 
     @Inject
+    LoggerUtils loggerUtils;
+
+    @Inject
     LoggingConfiguration loggingConfig;
+
+    @Inject
+    LaunchMode mode;
 
     /**
      * Creates a new RewriteCommand instance.
@@ -143,8 +150,9 @@ public class RewriteCommand implements Runnable {
      */
     @Override
     public void run() {
-        LoggerUtils loggerUtils = new LoggerUtils();
-        loggerUtils.setupLogManagerAndHandler(loggingConfig, verbosity.length, spec);
+        if (mode.isProduction()) {
+            loggerUtils.setupLogManagerAndHandler(loggingConfig, verbosity.length, spec);
+        }
 
         try {
             // Use injected defaults if not specified via command line

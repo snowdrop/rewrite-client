@@ -2,7 +2,6 @@ package dev.snowdrop.rewrite.logging;
 
 import org.jboss.logmanager.ExtHandler;
 import org.jboss.logmanager.ExtLogRecord;
-import org.jboss.logmanager.formatters.ColorPatternFormatter;
 
 import java.io.PrintWriter;
 

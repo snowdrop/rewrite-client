@@ -119,9 +119,7 @@ public class RewriteService {
         LOG.info(String.format("Project root: %s", rewriteConfig));
         LOG.info(String.format("Fully Qualified named of the Recipe java class: %s", rewriteConfig.getFqNameRecipe()));
 
-        if (rewriteConfig.isDryRun()) {
-            LOG.warn("Recipe executed in dry run mode !");
-        }
+        LOG.warnf("Recipe executed in dry run mode: {}", rewriteConfig.isDryRun());
 
         ResultsContainer results = processRecipes();
         // Create the patch file and apply the changes

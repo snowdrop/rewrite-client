@@ -1,4 +1,4 @@
-package dev.snowdrop.rewrite.cli.toolbox;
+package dev.snowdrop.rewrite.cli.logging;
 
 import org.jboss.logmanager.ExtHandler;
 import org.jboss.logmanager.ExtLogRecord;

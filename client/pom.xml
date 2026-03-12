@@ -29,6 +29,13 @@
             <classifier>shaded</classifier>
         </dependency>
 
+        <!-- Slf4j logger needed when we run quarkus:dev -->
+        <dependency>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logmanager</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Quarkus dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>

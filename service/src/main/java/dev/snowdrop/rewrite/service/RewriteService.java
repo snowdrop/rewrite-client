@@ -48,10 +48,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
 import static org.openrewrite.Tree.randomId;
 
 /**
@@ -319,7 +319,7 @@ public class RewriteService {
         List<Validated.Invalid<Object>> failedValidations = validations.stream()
                 .map(Validated::failures)
                 .flatMap(Collection::stream)
-                .collect(toList());
+                .toList();
 
         if (!failedValidations.isEmpty()) {
             failedValidations.forEach(failedValidation ->
@@ -359,6 +359,7 @@ public class RewriteService {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
             Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
             LOG.info("Printing available datatables to: " + datatableDirectoryPath);
+            assert rr != null;
             rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
         }
 
@@ -504,13 +505,17 @@ public class RewriteService {
         // TODO: Do we need such Styles for the Java parser. To be investigated !
         // List<NamedStyles> styles = env.activateStyles(emptySet());
 
-        LOG.info("Parsing source files...");
-        List<SourceFile> sourceFiles = new ArrayList<>();
+        Set<Path> alreadyParsed = new HashSet<>();
+        Stream<SourceFile> sourceFiles = Stream.of();
+        //Set<SourceFile> sourceFiles = new LinkedHashSet<>();
 
         LOG.info("Application absolute path: " + rewriteConfig.getAppPath());
+        LOG.info("Parsing source files...");
 
         // Parse Java files
         List<Path> javaFiles = findFiles(rewriteConfig.getAppPath(), ".java");
+        alreadyParsed.addAll(javaFiles);
+
         if (!javaFiles.isEmpty()) {
             // If we have java files, then we assume that we have a pom and dependencies
             // Collect the GAVs and their transitive dependencies
@@ -532,26 +537,31 @@ public class RewriteService {
 
             // Load the Java source files
             JavaParser jp = javaParserBuilder.build();
-            sourceFiles.addAll(jp.parse(javaFiles, rewriteConfig.getAppPath(), ctx).toList());
+
+            sourceFiles = Stream.concat(sourceFiles, jp.parse(javaFiles, rewriteConfig.getAppPath(), ctx));
             LOG.info("Parsed " + javaFiles.size() + " Java files");
         }
 
         // Parse Kotlin files
         List<Path> kotlinFiles = findFiles(rewriteConfig.getAppPath(), ".kt");
+        alreadyParsed.addAll(kotlinFiles);
+
         if (!kotlinFiles.isEmpty()) {
             KotlinParser kotlinParser = KotlinParser.builder().build();
-            sourceFiles.addAll(kotlinParser.parse(kotlinFiles, rewriteConfig.getAppPath(), ctx).toList());
+            sourceFiles = Stream.concat(sourceFiles, kotlinParser.parse(kotlinFiles, rewriteConfig.getAppPath(), ctx));
             LOG.info("Parsed " + kotlinFiles.size() + " Kotlin files");
         }
 
         List<Path> poms = findFiles(rewriteConfig.getAppPath(), ".xml");
-        MavenParser.Builder mavenParserBuilder = MavenParser.builder();
-        List<SourceFile> mavens = mavenParserBuilder.build()
-                .parse(poms, rewriteConfig.getAppPath(), ctx)
-                .toList();
-        sourceFiles.addAll(mavens);
+        alreadyParsed.addAll(poms);
 
-        // Parse other files (XML, YAML, properties, etc.)
+        MavenParser.Builder mavenParserBuilder = MavenParser.builder();
+        sourceFiles = Stream.concat(sourceFiles,mavenParserBuilder.build()
+                .parse(poms, rewriteConfig.getAppPath(), ctx));
+
+        // Parse other files like XML, YAML, properties, etc. using the following parsers:
+        // JsonParser, XmlParser, YamlParser, PropertiesParser, ProtoParser, TomlParser, DockerParser, HclParser, GroovyParser, GradleParser
+        // and PlainTestParser
         Set<String> masks = rewriteConfig.getPlainTextMasks().isEmpty() ? getDefaultPlainTextMasks() : rewriteConfig.getPlainTextMasks();
         OmniParser omniParser = OmniParser.builder(
                         OmniParser.defaultResourceParsers(),
@@ -559,31 +569,33 @@ public class RewriteService {
                                 .plainTextMasks(rewriteConfig.getAppPath(), masks)
                                 .build()
                 )
+                .exclusions(alreadyParsed)
                 .sizeThresholdMb(rewriteConfig.getSizeThresholdMb())
                 .build();
 
-        List<Path> otherFiles = omniParser.acceptedPaths(rewriteConfig.getAppPath(), rewriteConfig.getAppPath());
-        sourceFiles.addAll(omniParser.parse(otherFiles, rewriteConfig.getAppPath(), ctx).toList());
+        List<Path> accepted = omniParser.acceptedPaths(rewriteConfig.getAppPath());
+        sourceFiles = Stream.concat(sourceFiles, omniParser.parse(accepted, rewriteConfig.getAppPath(), ctx));
 
-        // Add provenance markers
+        // Add provenance markers otherwise openrewrite don't parse the sources !!
+        // The provenance contains information about the OS, JDK, version, project, build tool, etc
         List<Marker> provenance = generateProvenance();
-        sourceFiles = sourceFiles.stream()
+        Set<SourceFile> sourceFileSet = sourceFiles
                 .map(sf -> addProvenance(sf, provenance))
-                .collect(toList());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        LOG.info("Total source files parsed: " + sourceFiles.size());
-        if (!sourceFiles.isEmpty()) {
+        LOG.info("Total source files parsed: " + sourceFileSet.size());
+        if (!sourceFileSet.isEmpty()) {
             sourceSetInitialized = true;
         } else {
             throw new IllegalStateException("No source files parsed from the project scanned !");
         }
 
         LOG.debug("List of resources loaded");
-        sourceFiles.forEach(f -> {
+        sourceFileSet.forEach(f -> {
             LOG.debug(f.getSourcePath().toString());
         });
 
-        return new InMemoryLargeSourceSet(sourceFiles);
+        return new InMemoryLargeSourceSet(new ArrayList<>(sourceFileSet));
     }
 
 
@@ -629,6 +641,10 @@ public class RewriteService {
         return files;
     }
 
+    /**
+     * Generate for the different java sources their provenance
+     * @return the List of Marker
+     */
     private List<Marker> generateProvenance() {
         BuildEnvironment buildEnvironment = BuildEnvironment.build(System::getenv);
         String javaRuntimeVersion = System.getProperty("java.specification.version");
@@ -645,6 +661,13 @@ public class RewriteService {
         );
     }
 
+    /**
+     *
+     * @param sourceFile the java source file
+     * @param provenance the provenance
+     * @return the SourceFile enriched with its provenance
+     * @param <T> the Javatype of the java file
+     */
     private <T extends SourceFile> T addProvenance(T sourceFile, List<Marker> provenance) {
         Markers markers = sourceFile.getMarkers();
         for (Marker marker : provenance) {
@@ -673,40 +696,16 @@ public class RewriteService {
     private Set<String> getDefaultPlainTextMasks() {
         return new HashSet<>(Arrays.asList(
                 "**/*.adoc",
+                "**/*.md",
                 "**/*.bash",
-                "**/*.bat",
-                "**/CODEOWNERS",
-                "**/*.css",
+                "**/*.sh",
+                "**/[mM]akefile",
                 "**/*.config",
+                "**/*.env",
                 "**/[dD]ockerfile*",
                 "**/*.[dD]ockerfile",
-                "**/*.env",
-                "**/.gitattributes",
-                "**/.gitignore",
-                "**/*.htm*",
-                "**/gradlew",
-                "**/.java-version",
-                "**/*.jelly",
-                "**/*.jsp",
-                "**/*.ksh",
-                "**/*.lock",
-                "**/lombok.config",
-                "**/[mM]akefile",
-                "**/*.md",
-                "**/*.mf",
-                "**/META-INF/services/**",
-                "**/META-INF/spring/**",
-                "**/META-INF/spring.factories",
-                "**/mvnw",
-                "**/mvnw.cmd",
-                "**/*.qute.java",
-                "**/.sdkmanrc",
-                "**/*.sh",
                 "**/*.sql",
-                "**/*.svg",
-                "**/*.tsx",
-                "**/*.txt",
-                "**/*.py"
+                "**/*.txt"
         ));
     }
 

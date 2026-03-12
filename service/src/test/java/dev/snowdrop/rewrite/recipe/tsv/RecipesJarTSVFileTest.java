@@ -13,11 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test to verify if we can process recipes from a jar packaging classpath.tsv.gz file(s)
- *
+ * <p>
  * mvn org.openrewrite.maven:rewrite-maven-plugin:dryRun \
  *    -Drewrite.activeRecipes=org.openrewrite.quarkus.spring.SpringBootToQuarkus \
  *    -Drewrite.recipeArtifactCoordinates=org.openrewrite.recipe:rewrite-spring-to-quarkus:0.6.0
- *
+ * <p>
+ * rewrite . \
+ *   -r org.openrewrite.quarkus.spring.SpringBootToQuarkus \
+ *   --jar org.openrewrite.recipe:rewrite-spring-to-quarkus:0.6.0,org.openrewrite.recipe:rewrite-java-dependencies:1.51.1
  *
  */
 public class RecipesJarTSVFileTest extends BaseTest {

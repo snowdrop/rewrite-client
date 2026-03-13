@@ -1,5 +1,5 @@
 /// usr/bin/env jbang “$0” “$@” ; exit $?
-//DEPS dev.snowdrop.openrewrite:rewrite-client:0.3.1
+//DEPS dev.snowdrop.openrewrite:service:0.3.2-SNAPSHOT:shaded
 //DEPS io.quarkus.platform:quarkus-bom:3.29.4@pom
 //DEPS io.quarkus:quarkus-picocli
 //DEPS io.quarkus:quarkus-config-yaml
@@ -45,7 +45,7 @@ import org.jboss.logging.Logger;
 @CommandLine.Command(
         name = "rewrite",
         mixinStandardHelpOptions = true,
-        version = "0.3.1",
+        versionProvider = QuarkusVersionProvider.class,
         description = "Standalone OpenRewrite CLI tool for applying recipe on the code source of an application"
 )
 public class RewriteCommand implements Runnable {

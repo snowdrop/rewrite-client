@@ -40,14 +40,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Bump to the next Snapshot
+      - name: Bump to the next snapshot
         run: |
-          # 1. Increment the version (e.g., 1.0.0 -> 1.0.1-SNAPSHOT)
+          OLD_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          
+          # We bump
           ./mvnw -ntp -B versions:set -DnextSnapshot=true versions:commit
           
+          # Got the new version
           NEW_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           
-          # 2. Commit and Push
-          git add pom.xml
+          # Replace the old with the new version within the properties, markdown and sample pom.xml files
+          find . -type f \( \
+               -name "*.java" -o \
+               -name "*.properties" -o \
+               -name "*.md" -o \
+               -path "./samples/*/pom.xml" \
+             \) \
+            -exec sed -i -e "s/$OLD_VERSION/$VERSION/g" {} +
+          
+          git add .
           git commit -m "chore: Bump the project to the version: $NEW_VERSION [skip ci]"
           git push origin main

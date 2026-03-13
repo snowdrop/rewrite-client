@@ -8,8 +8,8 @@
         <artifactId>rewrite-client</artifactId>
         <version>0.2.12-SNAPSHOT</version>
     </parent>
-
     <artifactId>client</artifactId>
+    <name>OpenRewrite :: Java Quarkus Client</name>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

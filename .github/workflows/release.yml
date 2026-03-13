@@ -65,8 +65,7 @@ jobs:
       - name: Build the uber-jar and run jreleaser
         run: |
           mvn -ntp -B clean install
-          mvn -ntp -B -pl :service jreleaser:full-release
-          mvn -ntp -B -pl :client jreleaser:full-release
+          mvn -ntp -B jreleaser:full-release -N
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

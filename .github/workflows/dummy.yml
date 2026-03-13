@@ -32,7 +32,7 @@ jobs:
           ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
 
           echo "Bump the version within the markdown, properties & samples"
-          find . -type f \( -name "*.java" -o -name "*.properties" -o -name "*.md" -o name "pom.xml" \) \
+          find . -type f \( -name "*.java" -o -name "*.properties" -o -name "*.md" -o -name "pom.xml" \) \
             -exec sed -i 's/${OLD_VERSION}/${VERSION}/g' {} +
 
       - name: Update jbang-catalog.json

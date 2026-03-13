@@ -25,8 +25,9 @@ Add the dependency to your project:
 ```xml
 <dependency>
     <groupId>dev.snowdrop.openrewrite</groupId>
-    <artifactId>rewrite-client</artifactId>
-    <version>0.3.1</version>
+    <artifactId>service</artifactId>
+    <classifier>shaded</classifier>
+    <version>0.3.2-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -60,7 +61,7 @@ jbang app install rewrite@snowdrop/rewrite-client
 > [!NOTE]
 > To install a released version, append to the reference of the version
 ```shell
-jbang app install rewrite@snowdrop/rewrite-client/0.3.1
+jbang app install rewrite@snowdrop/rewrite-client/0.3.2-SNAPSHOT
 ```
 
 Run a recipe:
@@ -167,7 +168,7 @@ cfg.setConfigPath(Paths.get("rewrite.yml"));
 Load recipes from external JAR files using Maven GAV coordinates:
 
 ```bash
-rewrite --jar dev.snowdrop:openrewrite-recipes:0.3.1 \
+rewrite --jar dev.snowdrop:openrewrite-recipes:0.3.2-SNAPSHOT \
   /path/to/project \
   -r dev.snowdrop.custom.MyRecipe
 ```

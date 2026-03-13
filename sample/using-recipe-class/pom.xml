@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dev.snowdrop</groupId>
     <artifactId>simple-rewrite-scanner</artifactId>
-    <version>0.3.1</version>
+    <version>0.3.2-SNAPSHOT</version>
     <name>simple-rewrite-scanner</name>
     <description>Simple Rewrite Scanner</description>
 
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>rewrite-client</artifactId>
-            <version>0.3.1</version>
+            <version>0.3.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

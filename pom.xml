@@ -150,6 +150,13 @@
                 <artifactId>jreleaser-maven-plugin</artifactId>
                 <version>${maven-jreleaser-plugin.version}</version>
                 <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                   <configFile>${project.basedir}/jreleaser.yml</configFile>
                 </configuration>

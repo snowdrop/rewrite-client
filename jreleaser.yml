@@ -23,7 +23,12 @@ release:
         format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
 
 distributions:
-  openrewrite-cli:
+  service-module:
+    type: SINGLE_JAR
+    artifacts:
+      - path: target/{{projectName}}-{{projectVersion}}-shaded.jar
+      - path: target/{{projectName}}-{{projectVersion}}.jar
+  client-module:
     type: SINGLE_JAR
     artifacts:
       - path: target/{{projectName}}-{{projectVersion}}-runner.jar

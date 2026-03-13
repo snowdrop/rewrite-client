@@ -65,15 +65,13 @@ jobs:
       - name: Build the uber-jar and run jreleaser
         run: |
           mvn -ntp -B clean install
-          mvn -ntp -B -pl service jreleaser:full-release
-          mvn -ntp -B -pl client jreleaser:full-release
+          mvn -ntp -B jreleaser:full-release
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy the maven GAV on central
         run: |
-          mvn -B deploy -pl service -Prelease -DskipTests
-          mvn -B deploy -pl client -Prelease -DskipTests
+          mvn -B deploy -Prelease -DskipTests
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}

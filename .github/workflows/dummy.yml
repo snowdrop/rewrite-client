@@ -31,7 +31,8 @@ jobs:
           VERSION=${{ github.event.inputs.version }}
           ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
 
-          echo "Bump the version within the markdown, properties & samples"
+          echo "Bump the old version: ${OLD_VERSION} to the new version: ${VERSION} within the markdown, properties & samples"
+          set -x
           find . -type f \( -name "*.java" -o -name "*.properties" -o -name "*.md" -o -name "pom.xml" \) \
             -exec sed -i 's/${OLD_VERSION}/${VERSION}/g' {} +
 

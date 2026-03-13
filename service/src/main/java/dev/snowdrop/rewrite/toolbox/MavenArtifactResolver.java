@@ -29,6 +29,7 @@ import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.*;
+import org.jboss.logging.Logger;
 
 import java.io.Closeable;
 import java.nio.file.Path;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  * Supports downloading artifacts from Maven repositories and caching them locally.
  */
 public class MavenArtifactResolver implements Closeable {
+    private final Logger logger = Logger.getLogger(MavenArtifactResolver.class.getName());
 
     private final Context context;
     private final MavenModelReader mavenModelReader;
@@ -124,10 +126,10 @@ public class MavenArtifactResolver implements Closeable {
 
         for (String jarPathOrCoordinate : jarPathsOrCoordinates) {
             if (isGavCoordinate(jarPathOrCoordinate)) {
-                System.out.println("Resolving Maven artifact: " + jarPathOrCoordinate);
+                logger.debugf("Resolving Maven artifact: %s",jarPathOrCoordinate);
                 Path resolvedPath = resolveArtifact(jarPathOrCoordinate);
                 resolvedPaths.add(resolvedPath);
-                System.out.println("Resolved to: " + resolvedPath);
+                logger.debugf("Resolved to: %s",resolvedPath);
             } else {
                 // It's a file path, use as-is
                 resolvedPaths.add(Paths.get(jarPathOrCoordinate));

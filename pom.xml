@@ -149,6 +149,7 @@
                 <groupId>org.jreleaser</groupId>
                 <artifactId>jreleaser-maven-plugin</artifactId>
                 <version>${maven-jreleaser-plugin.version}</version>
+                <inherited>false</inherited>
                 <configuration>
                   <configFile>${project.basedir}/jreleaser.yml</configFile>
                 </configuration>

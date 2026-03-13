@@ -1,5 +1,6 @@
 package dev.snowdrop.rewrite.cli.logging;
 
+import jakarta.inject.Singleton;
 import org.aesh.terminal.tty.TerminalColorDetector;
 import org.aesh.terminal.tty.TerminalConnection;
 import org.jboss.logging.Logger;
@@ -10,6 +11,7 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.util.Map;
 
+@Singleton
 public class LoggerUtils {
     private static final Logger LOG = Logger.getLogger("");
     private final static LogManager logManager = (LogManager) LogManager.getLogManager();
@@ -25,7 +27,6 @@ public class LoggerUtils {
         }
 
         // Set the root level (= no category or package name defined !)
-        // logManager.getLogger("").addHandler(colorHandler);
         logManager.getLogger("").setLevel(java.util.logging.Level.parse(cfg.level()));
 
         // Iterate over the list of the categories (= package names) to register their level

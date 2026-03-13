@@ -141,6 +141,8 @@
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.jboss.logmanager:jboss-logmanager</exclude>
+                                    <exclude>org.jboss.slf4j:slf4j-jboss-logmanager</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>

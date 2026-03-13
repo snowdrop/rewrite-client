@@ -2,8 +2,8 @@ project:
   # JReleaser will fill these from Maven automatically:
   # name: ${project.artifactId}
   # version: ${project.version}
-  # description: Openrewrite client to apply recipes
-  # longDescription: Openrewrite client to apply recipes
+  # description: OpenRewrite client to apply recipes
+  # longDescription: OpenRewrite client to apply recipes
   # authors: [ "snowdrop" ]
   # license: Apache-2.0
   links:
@@ -27,13 +27,3 @@ distributions:
     type: SINGLE_JAR
     artifacts:
       - path: target/{{projectName}}-{{projectVersion}}-runner.jar
-
-#packagers:
-#  # https://jreleaser.org/guide/latest/reference/packagers/jbang.html
-#  jbang:
-#    active: ALWAYS
-#    alias: openrewrite
-#    repository:
-#      active: ALWAYS
-#      owner: snowdrop
-#      name: rewrite-client

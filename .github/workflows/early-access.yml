@@ -93,12 +93,12 @@ jobs:
 
       - name: Build the uber-jar
         run: |
-          mvn -ntp -B clean install -Dquarkus.package.type=uber-jar
+          mvn -ntp -B clean install
 
       - name: Update jBang catalog for snapshot
         if: github.ref == 'refs/heads/main'
         run: |
-          SNAPSHOT_URL="https://github.com/${{ github.repository }}/releases/download/early-access/rewrite-client-${{ needs.precheck.outputs.VERSION }}-runner.jar"
+          SNAPSHOT_URL="https://github.com/${{ github.repository }}/releases/download/early-access/client-${{ needs.precheck.outputs.VERSION }}-runner.jar"
           jq --arg url "$SNAPSHOT_URL" '.aliases.rewrite."script-ref" = $url' jbang-catalog.json > tmp.json && mv tmp.json jbang-catalog.json
 
       - name: Commit the changes
@@ -115,14 +115,17 @@ jobs:
 
       - name: Release the project and publish the uber-jar as early access release
         run: |
-          mvn -ntp -B jreleaser:full-release
+          
+          mvn -ntp -B -pl service jreleaser:full-release
+          mvn -ntp -B -pl client jreleaser:full-release
         env:
           JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy the maven GAV on central
-        run: |          
-          mvn -B deploy -Prelease -DskipTests
+        run: |
+          mvn -B deploy -pl service -Prelease -DskipTests
+          mvn -B deploy -pl client -Prelease -DskipTests
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}

@@ -1,0 +1,30 @@
+project:
+  # JReleaser will fill these from Maven automatically:
+  # name: ${project.artifactId}
+  # version: ${project.version}
+  # description: OpenRewrite client to apply recipes
+  # longDescription: OpenRewrite client to apply recipes
+  # authors: [ "snowdrop" ]
+  # license: Apache-2.0
+  links:
+    homepage: https://github.com/snowdrop/rewrite-client
+
+release:
+  github:
+    enabled: true
+    tagName: "{{projectVersion}}"
+    releaseName: "{{tagName}}"
+    overwrite: true
+    changelog:
+      formatted: ALWAYS
+      links: true
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+
+distributions:
+  openrewrite-service:
+    type: SINGLE_JAR
+    artifacts:
+      - path: target/{{projectName}}-{{projectVersion}}-shaded.jar
+      - path: target/{{projectName}}-{{projectVersion}}.jar

@@ -14,9 +14,9 @@ release:
     enabled: true
     tagName: "{{projectVersion}}"
     releaseName: "{{tagName}}"
-    overwrite: true
+    overwrite: false
     update:
-      enabled: true
+      enabled: false
     changelog:
       formatted: ALWAYS
       links: true

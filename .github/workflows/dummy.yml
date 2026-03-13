@@ -35,7 +35,7 @@ jobs:
           echo "Bump the old version: ${OLD_VERSION} to the new version: ${VERSION} within the markdown, properties & samples"
           set -x
           find . -type f \( -name "*.java" -o -name "*.properties" -o -name "*.md" -o -name "pom.xml" \) \
-            -exec sed -i 's/$OLD_VERSION/$VERSION/g' {} +
+            -exec sed -i -e "s/$OLD_VERSION/$VERSION/g" {} +
 
       - name: Update jbang-catalog.json
         run: |

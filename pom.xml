@@ -23,7 +23,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.release>21</maven.compiler.release>
 
-        <!-- These two should be kept in lockstep (MIMA 2.4.39 = Maven 3.9.12 + Resolver 1.9.25) -->
+        <!-- These two should be kept in lockstep (MIMA 2.4.42 = Maven 3.9.14 + Resolver 1.9.27) -->
         <mima.version>2.4.42</mima.version>
         <maven.version>3.9.14-01</maven.version>
 

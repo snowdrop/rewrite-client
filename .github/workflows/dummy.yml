@@ -1,0 +1,47 @@
+name: "Dummy workflow"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.vars.outputs.VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: 'maven'
+
+      - name: Set the maven version to the release version
+        run: |
+          OLD_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          VERSION=${{ github.event.inputs.version }}
+          ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
+
+          echo "Bump the version within the markdown, properties & samples"
+          find . -type f \( -name "*.java" -o -name "*.properties" -o -name "*.md" \) \
+            -exec sed -i 's/${OLD_VERSION}/${${OLD_VERSION}}/g' {} +
+
+      - name: Update jbang-catalog.json
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/$VERSION/client-$VERSION-runner.jar"
+          echo "Updating catalog with new URL: ${RELEASE_URL}"
+          jq --arg url "$RELEASE_URL" '.aliases.rewrite["script-ref"] = $url' jbang-catalog.json > temp.json && mv temp.json jbang-catalog.json
+
+      - name: List the changes
+        run: |
+          git diff

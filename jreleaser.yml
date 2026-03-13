@@ -26,9 +26,9 @@ distributions:
   service-module:
     type: SINGLE_JAR
     artifacts:
-      - path: target/{{projectName}}-{{projectVersion}}-shaded.jar
-      - path: target/{{projectName}}-{{projectVersion}}.jar
+      - path: service/target/{{projectName}}-{{projectVersion}}-shaded.jar
+      - path: service/target/{{projectName}}-{{projectVersion}}.jar
   client-module:
     type: SINGLE_JAR
     artifacts:
-      - path: target/{{projectName}}-{{projectVersion}}-runner.jar
+      - path: client/target/{{projectName}}-{{projectVersion}}-runner.jar

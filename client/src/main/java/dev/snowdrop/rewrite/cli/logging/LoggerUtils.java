@@ -11,11 +11,22 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Utility class able create a ColorHandler, register it for each logger - category
+ * During the creation process, aesh is used to detect if the terminal is dark or light
+ */
 @Singleton
 public class LoggerUtils {
     private static final Logger LOG = Logger.getLogger("");
     private final static LogManager logManager = (LogManager) LogManager.getLogManager();
 
+    /**
+     * Register the ColorHandler to the different loggers using the JBoss LogManager
+     *
+     * @param cfg The logging configuration with parameters coming from application.properties or picocli command
+     * @param verbosity The verbosity level selected by the user: -v or -vv
+     * @param spec The Picocli CommandSpec able to provide the Print writers: out or err
+     */
     public void setupLogManagerAndHandler(LoggingConfiguration cfg, int verbosity, CommandLine.Model.CommandSpec spec) {
         ColorHandler colorHandler = new ColorHandler(spec);
         colorHandler.setFormatter(new ColorPatternFormatter(isTerminalDark(), cfg.format()));
@@ -41,6 +52,12 @@ public class LoggerUtils {
         }
     }
 
+    /**
+     * Convert the verbosity value to its corresponding Log Level
+     *
+     * @param verbosity The verbosity level selected by the user: -v or -vv
+     * @return The string Level
+     */
     private String getLevelFromVerbosity(int verbosity) {
         return switch (verbosity) {
             case 1  -> "DEBUG";  // -v
@@ -49,6 +66,11 @@ public class LoggerUtils {
         };
     }
 
+    /**
+     * Detect if the terminal is dark or light
+     *
+     * @return The int value 0 or 1 indicating if the terminal is light or dark
+     */
     private int isTerminalDark() {
         int darken = 0;
         try {

@@ -3,7 +3,7 @@
   "aliases": {
     "rewrite": {
       "description": "Quarkus OpenRewrite client to execute recipes",
-      "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/0.3.1/client-0.3.1-runner.jar"
+      "script-ref": "https://github.com/snowdrop/rewrite-client/releases/download/0.3.2/client-0.3.2-runner.jar"
     }
   },
   "templates": {}

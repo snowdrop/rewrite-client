@@ -46,8 +46,18 @@ jobs:
 
       - name: Set the maven version to the release version
         run: |
+          OLD_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           VERSION=${{ github.event.inputs.version }}
           ./mvnw -ntp -B versions:set versions:commit -DnewVersion=$VERSION
+
+          echo "Bump the old version: ${OLD_VERSION} to the new version: ${VERSION} within the markdown, properties & samples"
+          find . -type f \( \
+               -name "*.java" -o \
+               -name "*.properties" -o \
+               -name "*.md" -o \
+               -path "./samples/*/pom.xml" \
+             \) \
+            -exec sed -i -e "s/$OLD_VERSION/$VERSION/g" {} +
 
       - name: Update jbang-catalog.json
         run: |

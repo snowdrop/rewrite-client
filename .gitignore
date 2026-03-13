@@ -1,5 +1,16 @@
-idea/
+.idea/
 target/
 tmp/
 
 */dependency-reduced-pom.xml
+
+# AI
+.bob
+.claude
+
+# Mac OS
+.DS_Store
+
+# JBang dev config file(s), commands, etc
+*-dev.json
+*.txt

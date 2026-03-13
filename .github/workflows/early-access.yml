@@ -115,7 +115,8 @@ jobs:
 
       - name: Release the project and publish the uber-jar as early access release
         run: |
-          mvn -ntp -B jreleaser:full-release
+          mvn -ntp -B -pl :service jreleaser:full-release
+          mvn -ntp -B -pl :client jreleaser:full-release
         env:
           JRELEASER_PROJECT_VERSION: ${{ needs.precheck.outputs.VERSION }}
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

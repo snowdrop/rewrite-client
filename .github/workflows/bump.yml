@@ -57,7 +57,7 @@ jobs:
                -name "*.md" -o \
                -path "./samples/*/pom.xml" \
              \) \
-            -exec sed -i -e "s/$OLD_VERSION/$VERSION/g" {} +
+            -exec sed -i -e "s/$OLD_VERSION/$NEW_VERSION/g" {} +
           
           git add .
           git commit -m "chore: Bump the project to the version: $NEW_VERSION [skip ci]"

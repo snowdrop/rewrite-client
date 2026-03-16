@@ -29,11 +29,23 @@
             <classifier>shaded</classifier>
         </dependency>
 
-        <!-- Override the slf4j api version to use 2.x fixing the slf4j warning displayed in the console using quarkus dev -->
+        <!--
+             We removed the slf4j-api to use the version 2.x declaration here as it is now packaged within the service shaded jar.
+             But the warning "No SLF4J providers were found" still appears even if we declare the following GAV when we run mvn quarkus:dev
+
+             SLF4J(W): No SLF4J providers were found.
+             SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+             SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+             SLF4J(W): Class path contains SLF4J bindings targeting slf4j-api versions 1.7.x or earlier.
+             SLF4J(W): Ignoring binding found at [jar:file:///Users/cmoullia/.m2/repository/org/jboss/slf4j/slf4j-jboss-logmanager/2.0.2.Final/slf4j-jboss-logmanager-2.0.2.Final.jar!/org/slf4j/impl/StaticLoggerBinder.class]
+             SLF4J(W): See https://www.slf4j.org/codes.html#ignoredBindings for an explanation.
+
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId>slf4j-jboss-logmanager</artifactId>
+            <version>2.1.0.Final</version>
         </dependency>
+        -->
 
         <!-- Quarkus dependencies -->
         <dependency>

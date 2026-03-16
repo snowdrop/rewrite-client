@@ -44,7 +44,7 @@ cfg.setRecipes(List.of("org.openrewrite.java.format.AutoFormat"));
 
 RewriteService scanner = new RewriteService(cfg);
 scanner.init();
-ResultsContainer results = scanner.run();
+ResultsContainer results = scanner.runScanner();
 
 // Access results
 RecipeRun run = results.getRecipeRuns().get("org.openrewrite.java.format.AutoFormat");
@@ -112,7 +112,7 @@ cfg.setFqNameRecipe("org.openrewrite.java.format.AutoFormat");
 
 RewriteService scanner = new RewriteService(cfg);
 scanner.init();
-ResultsContainer results = scanner.run();
+ResultsContainer results = scanner.runScanner();
 ```
 
 ### Recipe with Parameters
@@ -184,7 +184,7 @@ rewrite --jar /path/to/recipes.jar /path/to/project -r com.example.MyRecipe
 The `ResultsContainer` provides access to recipe execution results:
 
 ```java
-ResultsContainer results = scanner.run();
+ResultsContainer results = scanner.runScanner();
 
 // Get results for a specific recipe
 RecipeRun run = results.getRecipeRuns().get("org.openrewrite.java.search.FindAnnotations");
@@ -221,7 +221,7 @@ if (svc.isSourceSetInitialized()) {
 }
 
 // Execute now a recipe
-ResultsContainer run = svc.run();
+ResultsContainer run = svc.runScanner();
 ```
 
 ## Development

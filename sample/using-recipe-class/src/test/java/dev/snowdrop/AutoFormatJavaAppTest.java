@@ -27,7 +27,7 @@ public class AutoFormatJavaAppTest {
         RewriteScanner scanner = new RewriteScanner(cfg);
         scanner.init();
         try {
-            ResultsContainer results = scanner.run();
+            ResultsContainer results = scanner.runScanner();
             RecipeRun run = results.getRecipeRuns().get(RECIPE_NAME);
 
             Optional<Map.Entry<DataTable<?>, List<?>>> resultMap = run.getDataTables().entrySet().stream()

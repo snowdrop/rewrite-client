@@ -15,11 +15,6 @@
         <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.jboss.logmanager</groupId>

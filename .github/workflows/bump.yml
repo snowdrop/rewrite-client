@@ -51,12 +51,8 @@ jobs:
           NEW_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           
           # Replace the old with the new version within the properties, markdown and sample pom.xml files
-          find . -type f \( \
-               -name "*.java" -o \
-               -name "*.properties" -o \
-               -name "*.md" -o \
-               -path "./samples/*/pom.xml" \
-             \) \
+          find . \( -path "./.idea" -o -path "./.mvn" -o -path "./test-project" -o -name "target" \) -prune -o \
+            -type f \( -name "*.xml" -o -name "*.properties" -o -name "*.md" -o -path "./sample/*/pom.xml" \) -print \
             -exec sed -i -e "s/$OLD_VERSION/$NEW_VERSION/g" {} +
           
           git add .

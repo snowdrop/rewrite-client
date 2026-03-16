@@ -6,7 +6,7 @@
 
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>rewrite-client</artifactId>
-    <version>0.3.3</version>
+    <version>0.3.4-SNAPSHOT</version>
     <name>OpenRewrite :: Java Client &amp; Library project</name>
     <description>Openrewrite Java Quarkus client and library to execute recipes</description>
     <inceptionYear>2026</inceptionYear>

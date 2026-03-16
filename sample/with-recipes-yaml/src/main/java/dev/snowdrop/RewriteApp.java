@@ -1,6 +1,6 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS org.jboss.slf4j:slf4j-jboss-logmanager:2.1.0.Final
-//DEPS dev.snowdrop.openrewrite:service:0.3.3:shaded
+//DEPS dev.snowdrop.openrewrite:service:0.3.4-SNAPSHOT:shaded
 //NOINTEGRATIONS
 //RUNTIME_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 

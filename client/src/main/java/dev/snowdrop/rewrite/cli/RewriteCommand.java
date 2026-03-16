@@ -111,16 +111,18 @@ public class RewriteCommand implements Runnable {
 
     @CommandLine.Option(
             names = {"--size-threshold-mb"},
+            defaultValue = "10",
             description = "Size threshold in MB for large files (default: ${DEFAULT-VALUE})"
     )
-    int sizeThresholdMb = 10;
+    int sizeThresholdMb;
 
     @CommandLine.Option(
             names = {"-d", "--dry-run"},
             arity = "1",
+            defaultValue = "true",
             description = "Execute the recipes in dry run mode"
     )
-    boolean dryRun = true;
+    boolean dryRun;
 
     @CommandLine.Option(
             names = {"-v"},

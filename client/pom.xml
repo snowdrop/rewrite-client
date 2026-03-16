@@ -12,10 +12,6 @@
     <name>OpenRewrite :: Java Quarkus Client</name>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
         <quarkus.package.type>uber-jar</quarkus.package.type>
         <quarkus.package.jar.filter-optional-dependencies>true</quarkus.package.jar.filter-optional-dependencies>
     </properties>

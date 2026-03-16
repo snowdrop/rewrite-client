@@ -1,13 +1,13 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS dev.snowdrop.openrewrite:service:0.3.3-SNAPSHOT:shaded
+//DEPS dev.snowdrop.openrewrite:service:0.3.2:shaded
 //NOINTEGRATIONS
 //RUNTIME_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 
 package dev.snowdrop;
 
-import dev.snowdrop.openrewrite.cli.RewriteService;
-import dev.snowdrop.openrewrite.cli.model.RewriteConfig;
-import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
+import dev.snowdrop.rewrite.service.RewriteService;
+import dev.snowdrop.rewrite.config.RewriteConfig;
+import dev.snowdrop.rewrite.ResultsContainer;
 import org.openrewrite.DataTable;
 import org.openrewrite.RecipeRun;
 

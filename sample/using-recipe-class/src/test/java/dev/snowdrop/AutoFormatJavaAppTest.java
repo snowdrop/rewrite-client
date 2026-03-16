@@ -1,8 +1,8 @@
 package dev.snowdrop;
 
-import dev.snowdrop.openrewrite.cli.RewriteScanner;
-import dev.snowdrop.openrewrite.cli.model.Config;
-import dev.snowdrop.openrewrite.cli.model.ResultsContainer;
+import dev.snowdrop.rewrite.service.RewriteService;
+import dev.snowdrop.rewrite.config.RewriteConfig;
+import dev.snowdrop.rewrite.ResultsContainer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.openrewrite.DataTable;
@@ -16,15 +16,15 @@ import java.util.Optional;
 
 public class AutoFormatJavaAppTest {
     @Test
-    public void shouldAutoFormatTest() {
+    public void shouldAutoFormatTest() throws Exception {
         String RECIPE_NAME = "org.openrewrite.java.format.AutoFormat";
-        String APP_PATH = "demo";
+        String APP_PATH = "../demo";
 
-        Config cfg = new Config();
+        RewriteConfig cfg = new RewriteConfig();
         cfg.setAppPath(Paths.get(APP_PATH));
-        cfg.setActiveRecipes(List.of(RECIPE_NAME));
+        cfg.setFqNameRecipe(RECIPE_NAME);
 
-        RewriteScanner scanner = new RewriteScanner(cfg);
+        RewriteService scanner = new RewriteService(cfg);
         scanner.init();
         try {
             ResultsContainer results = scanner.runScanner();

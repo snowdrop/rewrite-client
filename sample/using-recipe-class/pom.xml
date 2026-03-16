@@ -18,8 +18,9 @@
     <dependencies>
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>rewrite-client</artifactId>
-            <version>0.3.2-SNAPSHOT</version>
+            <artifactId>service</artifactId>
+            <version>0.3.3-SNAPSHOT</version>
+            <classifier>shaded</classifier>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

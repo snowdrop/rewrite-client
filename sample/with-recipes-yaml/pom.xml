@@ -16,8 +16,9 @@
     <dependencies>
         <dependency>
             <groupId>dev.snowdrop.openrewrite</groupId>
-            <artifactId>client</artifactId>
+            <artifactId>service</artifactId>
             <version>0.3.3-SNAPSHOT</version>
+            <classifier>shaded</classifier>
         </dependency>
     </dependencies>
 </project>

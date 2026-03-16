@@ -22,7 +22,6 @@
             <groupId>dev.snowdrop.openrewrite</groupId>
             <artifactId>service</artifactId>
             <version>${project.version}</version>
-            <classifier>shaded</classifier>
         </dependency>
 
         <!--

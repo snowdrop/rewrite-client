@@ -27,7 +27,7 @@ Add the dependency to your project:
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>service</artifactId>
     <classifier>shaded</classifier>
-    <version>0.3.3-SNAPSHOT</version>
+    <version>0.3.3</version>
 </dependency>
 ```
 

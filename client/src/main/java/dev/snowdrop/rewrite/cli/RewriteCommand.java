@@ -1,5 +1,5 @@
 /// usr/bin/env jbang “$0” “$@” ; exit $?
-//DEPS dev.snowdrop.openrewrite:service:0.3.3-SNAPSHOT:shaded
+//DEPS dev.snowdrop.openrewrite:service:0.3.3:shaded
 //DEPS io.quarkus.platform:quarkus-bom:3.29.4@pom
 //DEPS io.quarkus:quarkus-picocli
 //DEPS io.quarkus:quarkus-config-yaml

@@ -34,13 +34,13 @@ Add the dependency to your project:
 Use the `RewriteService` to process a Java project:
 
 ```java
-import dev.snowdrop.openrewrite.RewriteService;
-import dev.snowdrop.openrewrite.Config;
-import dev.snowdrop.openrewrite.ResultsContainer;
+import dev.snowdrop.rewrite.service.RewriteService;
+import dev.snowdrop.rewrite.config.RewriteConfig;
+import dev.snowdrop.rewrite.ResultsContainer;
 
-Config cfg = new Config();
+RewriteConfig cfg = new RewriteConfig();
 cfg.setAppPath(Paths.get("/path/to/your/project"));
-cfg.setRecipes(List.of("org.openrewrite.java.format.AutoFormat"));
+cfg.setFqNameRecipe("org.openrewrite.java.format.AutoFormat");
 
 RewriteService scanner = new RewriteService(cfg);
 scanner.init();
@@ -106,8 +106,8 @@ rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 **In code:**
 
 ```java
-Config cfg = new Config();
-cfg.setAppPath(Paths.get("/path/to/project"));
+RewriteConfig cfg = new RewriteConfig();
+cfg.setAppPath(Paths.get("/path/to/your/project"));
 cfg.setFqNameRecipe("org.openrewrite.java.format.AutoFormat");
 
 RewriteService scanner = new RewriteService(cfg);
@@ -160,7 +160,7 @@ rewrite /path/to/project -c rewrite.yml
 **In code:**
 
 ```java
-cfg.setConfigPath(Paths.get("rewrite.yml"));
+cfg.setYamlRecipesPath(Paths.get("rewrite.yml"));
 ```
 
 ### Loading External Recipe JARs

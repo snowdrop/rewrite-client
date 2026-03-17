@@ -27,7 +27,7 @@ Add the dependency to your project:
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>service</artifactId>
     <classifier>shaded</classifier>
-    <version>0.3.4-SNAPSHOT</version>
+    <version>0.3.4</version>
 </dependency>
 ```
 
@@ -61,7 +61,7 @@ jbang app install rewrite@snowdrop/rewrite-client
 > [!NOTE]
 > To install a released version, append to the reference of the version
 ```shell
-jbang app install rewrite@snowdrop/rewrite-client/0.3.2
+jbang app install rewrite@snowdrop/rewrite-client/0.3.4
 ```
 
 Run a recipe:
@@ -112,7 +112,7 @@ rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS org.slf4j:slf4j-api:2.0.17
 //DEPS org.jboss.slf4j:slf4j-jboss-logmanager:2.1.0.Final
-//DEPS dev.snowdrop.openrewrite:service:0.3.4-SNAPSHOT:shaded
+//DEPS dev.snowdrop.openrewrite:service:0.3.4:shaded
 //NOINTEGRATIONS
 //RUNTIME_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 

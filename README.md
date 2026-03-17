@@ -106,13 +106,38 @@ rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 **In code:**
 
 ```java
-RewriteConfig cfg = new RewriteConfig();
-cfg.setAppPath(Paths.get("/path/to/your/project"));
-cfg.setFqNameRecipe("org.openrewrite.java.format.AutoFormat");
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//DEPS org.slf4j:slf4j-api:2.0.17
+//DEPS org.jboss.slf4j:slf4j-jboss-logmanager:2.1.0.Final
+//DEPS dev.snowdrop.openrewrite:service:0.3.4-SNAPSHOT:shaded
+//NOINTEGRATIONS
+//RUNTIME_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 
-RewriteService scanner = new RewriteService(cfg);
-scanner.init();
-ResultsContainer results = scanner.runScanner();
+package dev.snowdrop;
+
+import dev.snowdrop.rewrite.service.RewriteService;
+import dev.snowdrop.rewrite.config.RewriteConfig;
+import dev.snowdrop.rewrite.ResultsContainer;
+import org.openrewrite.DataTable;
+import org.openrewrite.RecipeRun;
+
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+public class RewriteApp {
+    public static void main(String[] args) throws Exception {
+        RewriteConfig cfg = new RewriteConfig();
+        cfg.setAppPath(Paths.get("/path/to/your/project"));
+        cfg.setFqNameRecipe("org.openrewrite.java.format.AutoFormat");
+
+        RewriteService scanner = new RewriteService(cfg);
+        scanner.init();
+        ResultsContainer results = scanner.runScanner();
+        ...
+    }
+}
 ```
 
 ### Recipe with Parameters

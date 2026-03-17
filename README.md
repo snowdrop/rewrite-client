@@ -104,7 +104,7 @@ rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 ```
 
 **In code:**
-
+Note that the first lines of the script are JBang headers. They declare the required dependencies (//DEPS) and runtime options (//RUNTIME_OPTIONS) so that JBang can resolve and run the script correctly. //NOINTEGRATIONS prevents JBang from automatically activating any framework integrations that could interfere with the execution.
 ```java
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS org.slf4j:slf4j-api:2.0.17

@@ -25,25 +25,10 @@
             <artifactId>jboss-logmanager</artifactId>
         </dependency>
 
-        <!-- -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>2.0.17</version>
-        </dependency>
-
         <!-- Maven -->
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
         </dependency>
 
         <!-- MIMA -->
@@ -149,6 +134,7 @@
                                 <excludes>
                                     <exclude>org.jboss.logmanager:jboss-logmanager</exclude>
                                     <exclude>org.jboss.slf4j:slf4j-jboss-logmanager</exclude>
+                                    <exclude>org.slf4j:slf4j-api</exclude>
                                 </excludes>
                             </artifactSet>
                         </configuration>

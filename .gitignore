@@ -14,3 +14,8 @@ tmp/
 # JBang dev config file(s), commands, etc
 *-dev.json
 *.txt
+
+# Project
+service/dependency-reduced-pom.xml
+.moderne
+CLAUDE.md

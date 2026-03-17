@@ -27,7 +27,7 @@ Add the dependency to your project:
     <groupId>dev.snowdrop.openrewrite</groupId>
     <artifactId>service</artifactId>
     <classifier>shaded</classifier>
-    <version>0.3.4-SNAPSHOT</version>
+    <version></version>
 </dependency>
 ```
 
@@ -112,7 +112,7 @@ rewrite /path/to/project -r org.openrewrite.java.format.AutoFormat
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS org.slf4j:slf4j-api:2.0.17
 //DEPS org.jboss.slf4j:slf4j-jboss-logmanager:2.1.0.Final
-//DEPS dev.snowdrop.openrewrite:service:0.3.4-SNAPSHOT:shaded
+//DEPS dev.snowdrop.openrewrite:service::shaded
 //NOINTEGRATIONS
 //RUNTIME_OPTIONS -Djava.util.logging.manager=org.jboss.logmanager.LogManager
 

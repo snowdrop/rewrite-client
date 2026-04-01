@@ -37,7 +37,7 @@
         <openrewrite-bom.version>8.75.6</openrewrite-bom.version>
         <openrewrite-rewrite-polyglot.version>2.9.9</openrewrite-rewrite-polyglot.version>
 
-        <aesh.version>3.3</aesh.version>
+        <aesh.version>3.5</aesh.version>
 
         <skipITs>true</skipITs>
 

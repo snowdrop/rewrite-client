@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @Singleton
 public class LoggerUtils {
-    private static final Logger LOG = Logger.getLogger("");
+    private static final Logger LOG = Logger.getLogger(LoggerUtils.class);
     private final static LogManager logManager = (LogManager) LogManager.getLogManager();
 
     /**

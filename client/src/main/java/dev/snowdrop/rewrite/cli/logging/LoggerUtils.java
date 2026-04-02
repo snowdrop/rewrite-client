@@ -10,6 +10,7 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * Utility class able create a ColorHandler, register it for each logger - category
@@ -38,16 +39,17 @@ public class LoggerUtils {
         }
 
         // Set the root level (= no category or package name defined !)
-        logManager.getLogger("").setLevel(java.util.logging.Level.parse(cfg.level()));
+        rootLogger.setLevel(Level.parse(cfg.level()));
 
         // Iterate over the list of the categories (= package names) to register their level
         for (Map.Entry<String, LoggingConfiguration.LevelConfig> category : cfg.levels().entrySet()) {
-            logManager.getLogger(category.getKey()).addHandler(colorHandler);
+            final var logger = logManager.getLogger(category.getKey());
+            logger.addHandler(colorHandler);
             if (verbosity == 0) {
-                logManager.getLogger(category.getKey()).setLevel(java.util.logging.Level.parse(category.getValue().level()));
+                logger.setLevel(Level.parse(category.getValue().level()));
             } else {
                 // System.out.printf("Verbosity: %d, strLevel: %s and Level: %s.%n",verbosity,getLevelFromVerbosity(verbosity),java.util.logging.Level.parse(getLevelFromVerbosity(verbosity)));
-                logManager.getLogger(category.getKey()).setLevel(java.util.logging.Level.parse(getLevelFromVerbosity(verbosity)));
+                logger.setLevel(Level.parse(getLevelFromVerbosity(verbosity)));
             }
         }
     }
@@ -58,7 +60,7 @@ public class LoggerUtils {
      * @param verbosity The verbosity level selected by the user: -v or -vv
      * @return The string Level
      */
-    private String getLevelFromVerbosity(int verbosity) {
+    private static String getLevelFromVerbosity(int verbosity) {
         return switch (verbosity) {
             case 1  -> "DEBUG";  // -v
             case 2  -> "TRACE"; // -vv
@@ -71,7 +73,7 @@ public class LoggerUtils {
      *
      * @return The int value 0 or 1 indicating if the terminal is light or dark
      */
-    private int isTerminalDark() {
+    private static int isTerminalDark() {
         int darken = 0;
         try {
             long start = System.currentTimeMillis();

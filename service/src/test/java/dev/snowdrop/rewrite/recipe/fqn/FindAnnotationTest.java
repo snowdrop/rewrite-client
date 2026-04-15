@@ -47,7 +47,7 @@ public class FindAnnotationTest extends BaseTest {
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.Row.class);
+        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.class).toList();
         assertEquals(1, rows.size());
 
         SearchResults.Row record = rows.getFirst();

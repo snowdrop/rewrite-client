@@ -48,7 +48,7 @@ public class FindParamAnnotationTest extends BaseTest {
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.Row.class);
+        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.class).toList();
         assertEquals(4, rows.size());
 
         SearchResults.Row record = rows.getFirst();
@@ -72,7 +72,7 @@ public class FindParamAnnotationTest extends BaseTest {
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.Row.class);
+        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.class).toList();
         assertEquals(3, rows.size());
 
         SearchResults.Row record = rows.getFirst();

@@ -30,7 +30,7 @@ public class AutoFormatTest extends BaseTest {
         rewriteService.init();
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
-        assertFalse(run.getDataTables().isEmpty());
+        assertFalse(run.getDataTableStore().getDataTables().isEmpty());
 
         String patchContent = Files.readString(rewritePatchFile);
         assertNotNull(patchContent);

@@ -23,18 +23,17 @@ public class DataTableUtils {
      */
     @SuppressWarnings("unchecked")
     public static <T> List<T> findDataTableRows(RecipeRun run, String dataTableName, Class<T> rowType) {
-        if (run.getDataTables().isEmpty()) {
+        if (run.getDataTableStore().getDataTables().isEmpty()) {
             throw new IllegalArgumentException("DataTables should not be empty");
         }
-        return run.getDataTables().entrySet().stream()
-                .filter(entry -> entry.getKey().getName().contains(dataTableName))
-                .filter(entry -> entry.getKey().getType().equals(rowType))
+        return run.getDataTableStore().getDataTables().stream()
+                .filter(entry -> entry.getType().getName().contains(dataTableName))
+                .filter(entry -> entry.getType().equals(rowType))
                 .findFirst()
-                .map(entry -> {
-                    List<?> rows = entry.getValue();
-                    return rows.stream()
-                            .map(rowType::cast)
-                            .toList();
+                .map(dt -> {
+                    @SuppressWarnings("rawtypes")
+                    Class dtClass = dt.getClass();
+                    return (List<T>) run.getDataTableStore().getRows(dtClass).toList();
                 })
                 .orElseThrow(() -> new IllegalArgumentException(
                         String.format("DataTable '%s' with row type %s not found", dataTableName, rowType.getSimpleName())

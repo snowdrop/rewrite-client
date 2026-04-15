@@ -55,8 +55,8 @@ import static java.util.Collections.emptyList;
 import static org.openrewrite.Tree.randomId;
 
 /**
- * Service that orchestrates OpenRewrite recipe execution including environment setup,
- * resources parsing, recipe running, and result processing.
+ * Service that orchestrates OpenRewrite recipe execution including environment setup, resources parsing, recipe running, and
+ * result processing.
  */
 public class RewriteService {
     private final Logger LOG = Logger.getLogger(RewriteService.class.getName());
@@ -82,7 +82,7 @@ public class RewriteService {
     /**
      * Creates a new RewriteService with the given configuration and classloader
      *
-     * @param cfg                   the rewrite configuration
+     * @param cfg the rewrite configuration
      * @param rewriteURLClassLoader the URLClassloader containing the OpenRewrite GAVs
      */
     public RewriteService(RewriteConfig cfg, URLClassLoader rewriteURLClassLoader) {
@@ -110,6 +110,7 @@ public class RewriteService {
 
     /**
      * Load the recipes and execute them
+     *
      * @return the ResultsContainer containing the RecipeRuns and DataTables
      * @throws Exception
      */
@@ -130,9 +131,9 @@ public class RewriteService {
     /**
      * Configure Openrewrite by creating the:
      * <p>
-     * - Environment holding the resource loaders able to find Recipe classes from jar, classes loaded or Yaml
-     * - ExecutionContext able to collect from the execution of the different Recipe the messages containing the Map of the DataTable, etc
-     * - LargeSourceSet using different parsers able to read: Java, Maven, Properties, XML, JSON, etc files
+     * - Environment holding the resource loaders able to find Recipe classes from jar, classes loaded or Yaml -
+     * ExecutionContext able to collect from the execution of the different Recipe the messages containing the Map of the
+     * DataTable, etc - LargeSourceSet using different parsers able to read: Java, Maven, Properties, XML, JSON, etc files
      *
      * @throws Exception if initialization fails
      */
@@ -176,7 +177,8 @@ public class RewriteService {
 
         // The rewriteURLClassLoader is null when we use the Java Service Lib, a Test class, etc
         if (hasAdditionalRecipesJars && rewriteURLClassLoader == null) {
-            rewriteURLClassLoader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(),this.getClass().getClassLoader());
+            rewriteURLClassLoader = new ClassLoaderUtils().loadAdditionalJars(rewriteConfig.getAdditionalJarPaths(),
+                    this.getClass().getClassLoader());
         }
 
         Environment.Builder builder = Environment.builder();
@@ -220,7 +222,8 @@ public class RewriteService {
         if (Files.exists(configPath)) {
             try (InputStream is = Files.newInputStream(configPath)) {
                 var yamlRecipesPath = configPath.normalize().toUri();
-                YamlResourceLoader loader = new YamlResourceLoader(is, yamlRecipesPath, new Properties(), additionalJarsClassloader);
+                YamlResourceLoader loader = new YamlResourceLoader(is, yamlRecipesPath, new Properties(),
+                        additionalJarsClassloader);
                 loader.listRecipes().forEach(rd -> yamlDefinedRecipeNames.add(rd.getName()));
                 envBuilder.load(loader);
             } catch (IOException e) {
@@ -246,9 +249,8 @@ public class RewriteService {
     }
 
     /**
-     * Process the different recipes: FQN or YAML
-     * Create the Recipe(s) using env.activateRecipes() and set the values using the options
-     * Call run() to run the Recipe and get the results
+     * Process the different recipes: FQN or YAML Create the Recipe(s) using env.activateRecipes() and set the values using the
+     * options Call run() to run the Recipe and get the results
      *
      * @return the ResultsContainer containing the DataTables and changes
      */
@@ -282,7 +284,8 @@ public class RewriteService {
 
         var listRecipes = env.listRecipes();
         if (env.listRecipes().isEmpty()) {
-            LOG.warn(String.format("No recipes found in active selection or YAML configuration for path: %s", rewriteConfig.getAppPath()));
+            LOG.warn(String.format("No recipes found in active selection or YAML configuration for path: %s",
+                    rewriteConfig.getAppPath()));
             return new ResultsContainer(Collections.emptyMap());
         }
 
@@ -338,8 +341,17 @@ public class RewriteService {
      */
     private RecipeRun runRecipe(Recipe recipe) {
         LOG.info("Running recipe(s)...");
-
         RecipeRun rr = null;
+
+        CsvDataTableStore csvDataTableStore = null;
+        if (rewriteConfig.canExportDatatables()) {
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
+            Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables")
+                    .resolve(timestamp);
+
+            csvDataTableStore = new CsvDataTableStore(datatableDirectoryPath);
+            DataTableExecutionContextView.view(ctx).setDataTableStore(csvDataTableStore);
+        }
 
         if (rewriteURLClassLoader != null) {
             ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
@@ -355,21 +367,16 @@ public class RewriteService {
             rr = recipe.run(sourceSet, ctx);
         }
 
-        if (rewriteConfig.canExportDatatables()) {
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss-SSS"));
-            Path datatableDirectoryPath = rewriteConfig.getAppPath().resolve("target").resolve("rewrite").resolve("datatables").resolve(timestamp);
-            LOG.info("Printing available datatables to: " + datatableDirectoryPath);
-            assert rr != null;
-            rr.exportDatatablesToCsv(datatableDirectoryPath, ctx);
+        if (csvDataTableStore != null) {
+            csvDataTableStore.close();
         }
 
         return rr;
     }
 
-
     /**
-     * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection
-     * using the merged classloader so that additional-JAR recipes are visible.
+     * Invokes {@code OpenRewriteLauncher.init()} and {@code apply()} via reflection using the merged classloader so that
+     * additional-JAR recipes are visible.
      */
     @Deprecated
     private ResultsContainer runWithMergedClassloader() {
@@ -392,7 +399,6 @@ public class RewriteService {
             return new ResultsContainer(Collections.emptyMap());
         }
     }
-
 
     private ExecutionContext createExecutionContext(List<Throwable> throwables) {
         return new InMemoryExecutionContext(t -> {
@@ -500,7 +506,6 @@ public class RewriteService {
         }
     }
 
-
     private LargeSourceSet loadSourceSet(ExecutionContext ctx) throws Exception {
         // TODO: Do we need such Styles for the Java parser. To be investigated !
         // List<NamedStyles> styles = env.activateStyles(emptySet());
@@ -521,7 +526,8 @@ public class RewriteService {
             // Collect the GAVs and their transitive dependencies
             List<Path> classpaths;
             try (MavenArtifactResolver mar = new MavenArtifactResolver()) {
-                classpaths = mar.resolveArtifactsWithDependencies(mar.loadModel(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml")));
+                classpaths = mar.resolveArtifactsWithDependencies(
+                        mar.loadModel(Paths.get(rewriteConfig.getAppPath().toString(), "pom.xml")));
             }
 
             LOG.trace("Classpath jar entries size: " + classpaths.size());
@@ -531,7 +537,8 @@ public class RewriteService {
             });
 
             // Create the JavaParser and set the classpaths
-            JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion().logCompilationWarningsAndErrors(false);
+            JavaParser.Builder<? extends JavaParser, ?> javaParserBuilder = JavaParser.fromJavaVersion()
+                    .logCompilationWarningsAndErrors(false);
             JavaTypeCache typeCache = new JavaTypeCache();
             javaParserBuilder.classpath(classpaths).typeCache(typeCache);
 
@@ -556,13 +563,15 @@ public class RewriteService {
         alreadyParsed.addAll(poms);
 
         MavenParser.Builder mavenParserBuilder = MavenParser.builder();
-        sourceFiles = Stream.concat(sourceFiles,mavenParserBuilder.build()
+        sourceFiles = Stream.concat(sourceFiles, mavenParserBuilder.build()
                 .parse(poms, rewriteConfig.getAppPath(), ctx));
 
         // Parse other files like XML, YAML, properties, etc. using the following parsers:
         // JsonParser, XmlParser, YamlParser, PropertiesParser, ProtoParser, TomlParser, DockerParser, HclParser, GroovyParser, GradleParser
         // and PlainTestParser
-        Set<String> masks = rewriteConfig.getPlainTextMasks().isEmpty() ? getDefaultPlainTextMasks() : rewriteConfig.getPlainTextMasks();
+        Set<String> masks = rewriteConfig.getPlainTextMasks().isEmpty()
+                ? getDefaultPlainTextMasks()
+                : rewriteConfig.getPlainTextMasks();
         OmniParser omniParser = OmniParser.builder(
                         OmniParser.defaultResourceParsers(),
                         PlainTextParser.builder()
@@ -597,7 +606,6 @@ public class RewriteService {
 
         return new InMemoryLargeSourceSet(new ArrayList<>(sourceFileSet));
     }
-
 
     private List<Path> findFiles(Path root, String extension) throws IOException {
         List<Path> files = new ArrayList<>();
@@ -643,6 +651,7 @@ public class RewriteService {
 
     /**
      * Generate for the different java sources their provenance
+     *
      * @return the List of Marker
      */
     private List<Marker> generateProvenance() {
@@ -665,8 +674,8 @@ public class RewriteService {
      *
      * @param sourceFile the java source file
      * @param provenance the provenance
-     * @return the SourceFile enriched with its provenance
      * @param <T> the Javatype of the java file
+     * @return the SourceFile enriched with its provenance
      */
     private <T extends SourceFile> T addProvenance(T sourceFile, List<Marker> provenance) {
         Markers markers = sourceFile.getMarkers();
@@ -831,24 +840,19 @@ public class RewriteService {
 
     public void showResults(ResultsContainer results) {
         results.getRecipeRuns().forEach((k, v) -> {
-            if (!v.getDataTables().isEmpty()) {
+            if (!v.getDataTableStore().getDataTables().isEmpty()) {
                 LOG.info(String.format("Execution of the recipe %s succeeded.%n", k));
 
-                Map<DataTable<?>, List<?>> searchResults = v.getDataTables();
-                if (searchResults != null) {
-                    searchResults.forEach((result, list) -> {
-                        if (result.getClass().getSimpleName().startsWith("SearchResults")) {
-                            LOG.info("# Found " + list.size() + " search results.");
-                            list.forEach(r -> {
-                                var row = (SearchResults.Row) r;
-                                LOG.info("# SourcePath: " + row.getSourcePath());
-                                LOG.info("# Result: " + row.getResult());
-                                LOG.info("# Recipe: " + row.getRecipe());
-                                LOG.info("==============================================");
-                            });
-                        }
-                    });
-                }
+                Collection<DataTable<?>> searchResults = v.getDataTableStore().getDataTables();
+                searchResults.forEach(result -> {
+                    if (result.getClass().getSimpleName().startsWith("SearchResults")) {
+                        // LOG.info("# Found " + list.size() + " search results.");
+                        LOG.info("# SourcePath: " + result.getType().getName());
+                        //LOG.info("# Result: " + row.getResult());
+                        //LOG.info("# Recipe: " + row.getRecipe());
+                        //LOG.info("==============================================");
+                    }
+                });
             }
         });
         LOG.info("Client execution is finishing ...");

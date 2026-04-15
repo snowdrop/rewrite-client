@@ -32,7 +32,7 @@ public class RecipesYamlTest extends BaseTest {
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        Assert.assertTrue(run.getChangeset().getAllResults().size() == 3);
+        Assert.assertFalse(run.getChangeset().getAllResults().isEmpty());
         List<Result> changes = run.getChangeset().getAllResults();
 
         /*
@@ -44,8 +44,14 @@ public class RecipesYamlTest extends BaseTest {
              +import org.jboss.resteasy.reactive.RestPath;
              +import org.jboss.resteasy.reactive.RestQuery;
          */
-        assertNotNull(changes.get(0).getAfter());
-        assertEquals("src/main/java/com/demo/library/BookResource.java", changes.get(0).getAfter().getSourcePath().toString());
+        boolean found = changes.stream()
+                .anyMatch(r -> {
+                    String diff = r.diff();
+                    return diff.contains("-import org.jboss.resteasy.annotations.jaxrs.HeaderParam;")
+                           && diff.contains("+import org.jboss.resteasy.reactive.RestHeader;")
+                           && diff.contains("a/src/main/java/com/demo/library/BookResource.java");
+                });
+        assertTrue(found, "Expected new import not found in any changeSet results");
 
         /*
             EXPECT: GAVs and version replaced in: pom.xml
@@ -62,8 +68,13 @@ public class RecipesYamlTest extends BaseTest {
              +      <artifactId>quarkus-rest-jackson</artifactId>
                 </dependency>
          */
-        assertNotNull(changes.get(0).getAfter());
-        assertEquals("pom.xml", changes.get(1).getAfter().getSourcePath().toString());
+        found = changes.stream()
+                .anyMatch(r -> {
+                    String diff = r.diff();
+                    return diff.contains("<artifactId>quarkus-rest</artifactId>")
+                            && diff.contains("<artifactId>quarkus-rest-jackson</artifactId>");
+                });
+        assertTrue(found, "Expected new artifacts within the pom.xml file not found in any changeSet results");
 
         /*
            EXPECT: Properties replaced  in resources/application.properties
@@ -72,7 +83,14 @@ public class RecipesYamlTest extends BaseTest {
              +quarkus.rest.gzip.enabled=true
              +quarkus.rest.gzip.max-input=10M
         */
-        assertNotNull(changes.get(2).getAfter());
-        assertEquals("src/main/resources/application.properties", changes.get(2).getAfter().getSourcePath().toString());
+        found = changes.stream()
+                .anyMatch(r -> {
+                    String diff = r.diff();
+                    return diff.contains("-quarkus.resteasy.gzip.enabled=true")
+                            && diff.contains("-quarkus.resteasy.gzip.max-input=10M")
+                            && diff.contains("+quarkus.rest.gzip.enabled=true")
+                            && diff.contains("+quarkus.rest.gzip.max-input=10M");
+                });
+        assertTrue(found, "Expected properties changed not found in any changeSet results");
     }
 }

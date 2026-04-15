@@ -47,7 +47,7 @@ public class ReplaceAnnotationAttributeTest extends BaseTest {
         var results = rewriteService.runScanner();
         RecipeRun run = results.getRecipeRuns().get(recipeName);
 
-        List<SourcesFileResults.Row> rows = findDataTableRows(run, "SourcesFileResults", SourcesFileResults.Row.class);
+        List<SourcesFileResults.Row> rows = findDataTableRows(run, SourcesFileResults.Row.class);
         assertEquals(1, rows.size());
 
         SourcesFileResults.Row record = rows.getFirst();

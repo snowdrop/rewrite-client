@@ -22,7 +22,7 @@ public class BaseTest {
         cfg.setDryRun(true);
     }
 
-    protected <T> List<T> findDataTableRows(RecipeRun run, String dataTableName, Class<T> rowType) {
-        return DataTableUtils.findDataTableRows(run, dataTableName, rowType);
+    protected <T> List<T> findDataTableRows(RecipeRun run, Class<T> rowType) {
+        return DataTableUtils.findDataTableRows(run, rowType);
     }
 }

@@ -44,7 +44,7 @@ public class RecipesJarTSVFileTest extends BaseTest {
         var results = rewriteService.runScanner();
 
         RecipeRun run = results.getRecipeRuns().get(recipeName);
-        List<DependenciesInUse.Row> rows = findDataTableRows(run, "DependenciesInUse", DependenciesInUse.Row.class);
+        List<DependenciesInUse.Row> rows = findDataTableRows(run, DependenciesInUse.Row.class);
         assertEquals(46, rows.size());
 
         DependenciesInUse.Row record = rows.getFirst();

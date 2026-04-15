@@ -51,7 +51,7 @@ public class FindPropertiesKeyTest extends BaseTest {
         String patchContent = Files.readString(rewritePatchFile);
         assertNotNull(patchContent);
 
-        List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
+        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.Row.class);
         assertEquals(1, rows.size());
 
         SearchResults.Row record = rows.getFirst();
@@ -79,7 +79,7 @@ public class FindPropertiesKeyTest extends BaseTest {
         String patchContent = Files.readString(rewritePatchFile);
         assertNotNull(patchContent);
 
-        List<SearchResults.Row> rows = findDataTableRows(run, "SearchResults", SearchResults.Row.class);
+        List<SearchResults.Row> rows = findDataTableRows(run, SearchResults.Row.class);
         assertEquals(1, rows.size());
 
         SearchResults.Row record = rows.getFirst();

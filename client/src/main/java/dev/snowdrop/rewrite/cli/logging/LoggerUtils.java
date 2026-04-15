@@ -1,6 +1,7 @@
 package dev.snowdrop.rewrite.cli.logging;
 
 import jakarta.inject.Singleton;
+import org.aesh.terminal.TerminalFeatures;
 import org.aesh.terminal.tty.TerminalColorDetector;
 import org.aesh.terminal.tty.TerminalConnection;
 import org.jboss.logging.Logger;
@@ -78,7 +79,8 @@ public class LoggerUtils {
         try {
             long start = System.currentTimeMillis();
             TerminalConnection connection = new TerminalConnection();
-            var cap = TerminalColorDetector.detect(connection);
+            TerminalFeatures terminalFeatures = new TerminalFeatures(connection);
+            var cap = TerminalColorDetector.detect(terminalFeatures);
             long elapsed = System.currentTimeMillis() - start;
             LOG.debugf("Theme detection took: [%s ms]%n", elapsed);
 

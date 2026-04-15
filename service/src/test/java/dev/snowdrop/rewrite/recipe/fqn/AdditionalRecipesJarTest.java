@@ -37,7 +37,7 @@ public class AdditionalRecipesJarTest extends BaseTest {
         RecipeRun run = results.getRecipeRuns().get(recipeName);
         Assert.assertNotNull(run);
 
-        assertFalse(run.getDataTables().isEmpty());
+        assertFalse(run.getDataTableStore().getDataTables().isEmpty());
 
         String patchContent = Files.readString(rewritePatchFile);
         assertNotNull(patchContent);
